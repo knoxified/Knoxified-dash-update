@@ -9,7 +9,7 @@ export async function getAutomationSchedules(userId: string) {
     .from("automation_schedules")
     .select("*")
     .eq("user_id", userId)
-    .order("scheduled_at", { ascending: true });
+    .order("scheduled_for", { ascending: true });
 
   if (error) throw new Error(`Failed to load automation schedules: ${error.message}`);
   return data;
@@ -20,7 +20,7 @@ export async function getCallSchedules(userId: string) {
     .from("call_schedules")
     .select("*")
     .eq("user_id", userId)
-    .order("scheduled_at", { ascending: true });
+    .order("scheduled_for", { ascending: true });
 
   if (error) throw new Error(`Failed to load call schedules: ${error.message}`);
   return data;
@@ -37,7 +37,7 @@ export async function createAutomationSchedule(
     .insert({
       user_id: userId,
       automation_id: automationId,
-      scheduled_at: scheduledAt,
+      scheduled_for: scheduledAt,
       recurrence: recurrence || null,
       requires_approval: false, // Human creating it IS the approval
       status: 'pending'
@@ -64,7 +64,7 @@ export async function createCallSchedule(
     .insert({
       user_id: userId,
       phone_number: phoneNumber,
-      scheduled_at: scheduledAt,
+      scheduled_for: scheduledAt,
       recurrence: recurrence || null,
       requires_approval: false, // Human creating it IS the approval
       status: 'pending'

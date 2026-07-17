@@ -170,7 +170,7 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
                 return (
                   <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="px-5 py-4 whitespace-nowrap text-slate-900 dark:text-white">
-                      {new Date(s.scheduled_at).toLocaleString()}
+                      {new Date(s.scheduled_for).toLocaleString()}
                     </td>
                     {type === "call" && (
                       <td className="px-5 py-4 whitespace-nowrap">
