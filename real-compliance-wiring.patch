@@ -1,0 +1,867 @@
+diff --git a/.env.example b/.env.example
+index 7a550fe..235b742 100644
+--- a/.env.example
++++ b/.env.example
+@@ -7,3 +7,12 @@ GEMINI_API_KEY="MY_GEMINI_API_KEY"
+ # AI Studio automatically injects this at runtime with the Cloud Run service URL.
+ # Used for self-referential links, OAuth callbacks, and API endpoints.
+ APP_URL="MY_APP_URL"
++
++# SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY: required for compliance features
++# (suppression list, audit logs, disclosure settings, account suspension).
++# Get these from your Supabase project settings. NEVER commit real values —
++# put them in .env.local (gitignored) for local dev, or your deployment
++# platform's environment variable / secrets settings for production.
++# The service role key is server-only — see lib/supabase/server.ts.
++SUPABASE_URL="https://your-project-ref.supabase.co"
++SUPABASE_SERVICE_ROLE_KEY="your-service-role-key-here"
+diff --git a/app/compliance/page.tsx b/app/compliance/page.tsx
+index d848d41..2646c75 100644
+--- a/app/compliance/page.tsx
++++ b/app/compliance/page.tsx
+@@ -1,225 +1,210 @@
+ "use client";
+-import React, { useState } from "react";
++import React, { useState, useEffect, useTransition } from "react";
+ import { ShieldCheck, PhoneOff, AlertTriangle, Scale, Lock, FileText, CheckCircle2, History, Plus } from "lucide-react";
+ import { toast } from "sonner";
++import {
++  getSuppressionList,
++  addToSuppressionList,
++  removeFromSuppressionList,
++  getAuditLogs,
++  getDisclosureSettings,
++  toggleRecordingDisclosure,
++} from "@/lib/actions/compliance-actions";
++
++// TODO: replace with real authenticated user id once auth is wired up.
++// This is intentionally NOT hidden — there is no auth system in this
++// project yet, and pretending there is one here would just create a
++// new fake thing in place of the old one.
++const CURRENT_USER_ID = "REPLACE_WITH_REAL_AUTH_USER_ID";
+ 
+ export default function CompliancePage() {
+-  const [suppressionList, setSuppressionList] = useState([
+-    { id: "1", phone: "+1 (555) 019-2834", source: "In-Call Opt Out", date: "Jul 10, 2026" },
+-    { id: "2", phone: "+1 (555) 837-9921", source: "Manual Upload", date: "Jul 09, 2026" }
+-  ]);
+-  const [newPhone, setNewPhone] = useState("");
++  const [suppressionList, setSuppressionList] = useState<any[]>([]);
++  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+   const [recordingDisclosure, setRecordingDisclosure] = useState(true);
+-  const [auditLogs, setAuditLogs] = useState([
+-    { id: "ack_9921xj", action: "Compliance Acknowledgment Signed", details: "User accepted the Outbound Campaign guidelines and usage policies.", date: "Jul 10, 2026 at 10:45 AM", icon: CheckCircle2, color: "emerald" },
+-    { id: "blk_x201kf", action: "Call Blocked by Suppression List", details: "Attempted to call +1 (555) 019-2834 in Campaign C-001. System blocked the dispatch.", date: "Jul 10, 2026 at 09:12 AM", icon: PhoneOff, color: "rose" },
+-    { id: "cfg_8829ma", action: "Recording Disclosure Toggled", details: "Admin user changed 'Call Recording Disclosure' state to Enabled.", date: "Jul 08, 2026 at 14:22 PM", icon: Lock, color: "slate" }
+-  ]);
++  const [newPhone, setNewPhone] = useState("");
++  const [loading, setLoading] = useState(true);
++  const [loadError, setLoadError] = useState<string | null>(null);
++  const [isPending, startTransition] = useTransition();
++
++  useEffect(() => {
++    async function loadData() {
++      try {
++        const [suppression, logs, disclosure] = await Promise.all([
++          getSuppressionList(CURRENT_USER_ID),
++          getAuditLogs(CURRENT_USER_ID),
++          getDisclosureSettings(CURRENT_USER_ID),
++        ]);
++        setSuppressionList(suppression);
++        setAuditLogs(logs);
++        setRecordingDisclosure(disclosure.require_recording_disclosure);
++      } catch (err: any) {
++        setLoadError(err.message);
++        toast.error("Failed to load compliance data — see console for details.");
++        console.error(err);
++      } finally {
++        setLoading(false);
++      }
++    }
++    loadData();
++  }, []);
+ 
+   const handleAddSuppression = (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!newPhone.trim()) return;
+-    const newEntry = {
+-      id: Math.random().toString(36).substring(7),
+-      phone: newPhone,
+-      source: "Manual Entry",
+-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+-    };
+-    setSuppressionList([newEntry, ...suppressionList]);
+-    setNewPhone("");
+-    toast.success("Number added to suppression list");
+-    addAuditLog("Manual Suppression Added", `Added ${newPhone} to the suppression list manually.`);
+-  };
+-
+-  const handleRemoveSuppression = (id: string) => {
+-    const entry = suppressionList.find(e => e.id === id);
+-    setSuppressionList(suppressionList.filter(e => e.id !== id));
+-    toast.success("Number removed from suppression list");
+-    if (entry) {
+-      addAuditLog("Suppression Removed", `Removed ${entry.phone} from the suppression list.`);
+-    }
++    startTransition(async () => {
++      try {
++        await addToSuppressionList(CURRENT_USER_ID, newPhone, "manual_upload");
++        const [suppression, logs] = await Promise.all([
++          getSuppressionList(CURRENT_USER_ID),
++          getAuditLogs(CURRENT_USER_ID),
++        ]);
++        setSuppressionList(suppression);
++        setAuditLogs(logs);
++        setNewPhone("");
++        toast.success("Number added to suppression list");
++      } catch (err: any) {
++        toast.error(`Failed to add number: ${err.message}`);
++      }
++    });
+   };
+ 
+-  const toggleRecordingDisclosure = () => {
+-    const newState = !recordingDisclosure;
+-    setRecordingDisclosure(newState);
+-    addAuditLog("Recording Disclosure Toggled", `Admin user changed 'Call Recording Disclosure' state to ${newState ? 'Enabled' : 'Disabled'}.`);
+-    toast.success(`Recording disclosure ${newState ? 'enabled' : 'disabled'}`);
++  const handleRemoveSuppression = (id: string, phone: string) => {
++    startTransition(async () => {
++      try {
++        await removeFromSuppressionList(CURRENT_USER_ID, id, phone);
++        const [suppression, logs] = await Promise.all([
++          getSuppressionList(CURRENT_USER_ID),
++          getAuditLogs(CURRENT_USER_ID),
++        ]);
++        setSuppressionList(suppression);
++        setAuditLogs(logs);
++        toast.success("Number removed from suppression list");
++      } catch (err: any) {
++        toast.error(`Failed to remove number: ${err.message}`);
++      }
++    });
+   };
+ 
+-  const addAuditLog = (action: string, details: string) => {
+-    const newLog = {
+-      id: Math.random().toString(36).substring(7),
+-      action,
+-      details,
+-      date: new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+-      icon: History,
+-      color: "sky"
+-    };
+-    setAuditLogs([newLog, ...auditLogs]);
++  const handleToggleDisclosure = (enabled: boolean) => {
++    startTransition(async () => {
++      try {
++        await toggleRecordingDisclosure(CURRENT_USER_ID, enabled);
++        setRecordingDisclosure(enabled);
++        const logs = await getAuditLogs(CURRENT_USER_ID);
++        setAuditLogs(logs);
++        toast.success(`Recording disclosure ${enabled ? "enabled" : "disabled"}`);
++      } catch (err: any) {
++        toast.error(`Failed to update disclosure setting: ${err.message}`);
++      }
++    });
+   };
+ 
+-  return (
+-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+-        <div>
+-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+-            <ShieldCheck className="text-emerald-600 dark:text-[#10B981]" />
+-            Compliance & Legal Guardrails
+-          </h1>
+-          <p className="text-slate-500 dark:text-[#888] text-sm max-w-2xl">
+-            Knoxified is designed to support compliant calling practices. Manage your suppression lists, review audit logs, and enforce default disclosures here to help you meet your compliance obligations.
++  if (loadError) {
++    return (
++      <div className="p-8">
++        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-red-400">
++          <p className="font-semibold mb-2">Could not load compliance data</p>
++          <p className="text-sm">{loadError}</p>
++          <p className="text-sm mt-2 text-slate-400">
++            Check that SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in .env.local,
++            and that CURRENT_USER_ID in this file points at a real row in the users table.
+           </p>
+         </div>
+       </div>
++    );
++  }
+ 
+-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+-        <div className="lg:col-span-2 space-y-6">
+-          {/* Suppression List Management */}
+-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden flex flex-col">
+-            <div className="p-5 border-b border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+-              <div className="flex items-center gap-2">
+-                <PhoneOff size={18} className="text-rose-500" />
+-                <h3 className="text-slate-900 dark:text-white font-semibold">Do-Not-Call / Suppression List</h3>
+-              </div>
+-              <form onSubmit={handleAddSuppression} className="flex gap-2">
+-                <input
+-                  type="text"
+-                  placeholder="Enter phone number..."
+-                  value={newPhone}
+-                  onChange={(e) => setNewPhone(e.target.value)}
+-                  className="bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+-                />
+-                <button type="submit" className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors flex items-center gap-1">
+-                  <Plus size={16} /> Add
+-                </button>
+-              </form>
+-            </div>
+-            <div className="overflow-x-auto">
+-              <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+-                <thead className="bg-slate-50 dark:bg-white/[0.02] text-xs uppercase font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/5">
+-                  <tr>
+-                    <th className="px-4 py-3">Phone Number</th>
+-                    <th className="px-4 py-3">Source</th>
+-                    <th className="px-4 py-3">Date Added</th>
+-                    <th className="px-4 py-3 text-right">Actions</th>
+-                  </tr>
+-                </thead>
+-                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+-                  {suppressionList.map(entry => (
+-                    <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+-                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{entry.phone}</td>
+-                      <td className="px-4 py-3">
+-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+-                          entry.source === 'In-Call Opt Out' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' :
+-                          entry.source === 'Manual Upload' ? 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-[#888]' :
+-                          'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
+-                        }`}>
+-                          {entry.source}
+-                        </span>
+-                      </td>
+-                      <td className="px-4 py-3">{entry.date}</td>
+-                      <td className="px-4 py-3 text-right">
+-                        <button onClick={() => handleRemoveSuppression(entry.id)} className="text-slate-400 hover:text-rose-500 transition-colors">Remove</button>
+-                      </td>
+-                    </tr>
+-                  ))}
+-                  {suppressionList.length === 0 && (
+-                    <tr>
+-                      <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+-                        No numbers in suppression list.
+-                      </td>
+-                    </tr>
+-                  )}
+-                </tbody>
+-              </table>
+-            </div>
+-          </div>
++  if (loading) {
++    return <div className="p-8 text-slate-400">Loading compliance data...</div>;
++  }
+ 
+-          {/* Audit Logs */}
+-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden flex flex-col">
+-            <div className="p-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+-              <div className="flex items-center gap-2">
+-                <History size={18} className="text-sky-600 dark:text-[#00E5FF]" />
+-                <h3 className="text-slate-900 dark:text-white font-semibold">Immutable Audit Logs</h3>
++  return (
++    <div className="p-8 space-y-8">
++      <div>
++        <h1 className="text-2xl font-bold text-slate-50 flex items-center gap-2">
++          <ShieldCheck className="w-6 h-6 text-cyan-400" /> Compliance
++        </h1>
++        <p className="text-slate-400 mt-1">Suppression lists, disclosures, and audit history — backed by live data.</p>
++      </div>
++
++      {/* Suppression List */}
++      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
++        <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
++          <PhoneOff className="w-5 h-5 text-rose-400" /> Suppression List
++        </h2>
++        <form onSubmit={handleAddSuppression} className="flex gap-2 mb-4">
++          <input
++            type="text"
++            value={newPhone}
++            onChange={(e) => setNewPhone(e.target.value)}
++            placeholder="+1 (555) 000-0000"
++            className="flex-1 rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-sm text-slate-100"
++          />
++          <button
++            type="submit"
++            disabled={isPending}
++            className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 flex items-center gap-1 disabled:opacity-50"
++          >
++            <Plus className="w-4 h-4" /> Add
++          </button>
++        </form>
++        <div className="space-y-2">
++          {suppressionList.length === 0 && (
++            <p className="text-sm text-slate-500">No numbers on the suppression list yet.</p>
++          )}
++          {suppressionList.map((entry) => (
++            <div key={entry.id} className="flex items-center justify-between rounded-md bg-slate-800/50 px-4 py-2">
++              <div>
++                <p className="text-sm text-slate-200">{entry.phone_number}</p>
++                <p className="text-xs text-slate-500">{entry.reason} · {new Date(entry.added_at).toLocaleDateString()}</p>
+               </div>
+-              <button className="text-xs text-sky-600 dark:text-[#00E5FF] hover:underline font-medium">
+-                Export Logs
++              <button
++                onClick={() => handleRemoveSuppression(entry.id, entry.phone_number)}
++                disabled={isPending}
++                className="text-xs text-slate-400 hover:text-red-400"
++              >
++                Remove
+               </button>
+             </div>
+-            <div className="p-5">
+-              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+-                {auditLogs.map((log, i) => {
+-                  const LogIcon = log.icon;
+-                  return (
+-                    <div key={log.id} className={`flex gap-4 items-start ${i < auditLogs.length - 1 ? 'pb-4 border-b border-slate-100 dark:border-white/5' : ''}`}>
+-                      <div className={`w-8 h-8 rounded-full bg-${log.color}-100 text-${log.color}-600 dark:bg-${log.color}-500/10 dark:text-${log.color}-400 flex items-center justify-center shrink-0`}>
+-                        <LogIcon size={14} />
+-                      </div>
+-                      <div>
+-                        <p className="text-sm text-slate-900 dark:text-white font-medium">{log.action}</p>
+-                        <p className="text-xs text-slate-500 dark:text-[#888] mt-0.5">{log.details}</p>
+-                        <span className="text-[10px] text-slate-400 mt-1 block">{log.date} • ID: {log.id}</span>
+-                      </div>
+-                    </div>
+-                  );
+-                })}
+-              </div>
+-            </div>
+-          </div>
++          ))}
+         </div>
++      </div>
+ 
+-        <div className="space-y-6">
+-          {/* Global Defaults */}
+-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-5">
+-            <h3 className="text-slate-900 dark:text-white font-semibold flex items-center gap-2 mb-4">
+-              <Scale size={18} className="text-indigo-500" />
+-              Global Defaults
+-            </h3>
+-            
+-            <div className="space-y-4">
+-              <div className="flex items-center justify-between">
+-                <div>
+-                  <p className="text-sm font-medium text-slate-900 dark:text-white">AI Identification Disclosure</p>
+-                  <p className="text-xs text-slate-500 dark:text-[#888]">Agents must announce they are AI.</p>
+-                </div>
+-                <div className="w-10 h-5 bg-emerald-500 rounded-full relative cursor-not-allowed opacity-80" title="Enforced by System (Always On)">
+-                  <div className="absolute right-1 top-0.5 w-4 h-4 bg-white rounded-full"></div>
+-                </div>
+-              </div>
+-              <div className="flex items-center justify-between">
+-                <div>
+-                  <p className="text-sm font-medium text-slate-900 dark:text-white">Recording Disclosure</p>
+-                  <p className="text-xs text-slate-500 dark:text-[#888]">If recording is enabled.</p>
+-                </div>
+-                <div onClick={toggleRecordingDisclosure} className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${recordingDisclosure ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}>
+-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${recordingDisclosure ? 'right-1' : 'left-1'}`}></div>
+-                </div>
+-              </div>
+-              <div className="flex items-center justify-between">
+-                <div>
+-                  <p className="text-sm font-medium text-slate-900 dark:text-white">Calling Window</p>
+-                  <p className="text-xs text-slate-500 dark:text-[#888]">Default: 8am - 9pm Local</p>
+-                </div>
+-                <div className="w-10 h-5 bg-emerald-500 rounded-full relative cursor-not-allowed opacity-80" title="Enforced by System">
+-                  <div className="absolute right-1 top-0.5 w-4 h-4 bg-white rounded-full"></div>
+-                </div>
++      {/* Disclosure Toggle */}
++      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
++        <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
++          <Lock className="w-5 h-5 text-slate-400" /> Call Recording Disclosure
++        </h2>
++        <label className="flex items-center gap-3 text-sm text-slate-300">
++          <input
++            type="checkbox"
++            checked={recordingDisclosure}
++            disabled={isPending}
++            onChange={(e) => handleToggleDisclosure(e.target.checked)}
++            className="w-4 h-4"
++          />
++          Disclose to call recipients that the call may be recorded
++        </label>
++      </div>
++
++      {/* Audit Log */}
++      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
++        <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
++          <History className="w-5 h-5 text-slate-400" /> Audit Log
++        </h2>
++        <div className="space-y-3">
++          {auditLogs.length === 0 && (
++            <p className="text-sm text-slate-500">No audit events yet.</p>
++          )}
++          {auditLogs.map((log) => (
++            <div key={log.id} className="flex items-start gap-3 text-sm">
++              <FileText className="w-4 h-4 text-slate-500 mt-0.5" />
++              <div>
++                <p className="text-slate-200">{log.action}</p>
++                <p className="text-slate-500 text-xs">{log.metadata?.details} · {new Date(log.created_at).toLocaleString()}</p>
+               </div>
+             </div>
+-          </div>
+-
+-          <div className="bg-amber-50 dark:bg-[#F59E0B]/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-5">
+-            <h3 className="text-amber-800 dark:text-amber-500 font-semibold flex items-center gap-2 mb-2">
+-              <AlertTriangle size={18} />
+-              Acceptable Use Policy
+-            </h3>
+-            <p className="text-sm text-amber-700 dark:text-amber-400/80 mb-4">
+-              Failure to adhere to documented consent requirements or overriding the Do-Not-Call suppression lists may result in outbound calling suspension.
+-            </p>
+-            <a href="https://knoxified.org/acceptable-use" target="_blank" rel="noreferrer" className="text-xs font-medium text-amber-600 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 flex items-center gap-1">
+-              <FileText size={14} /> Read Full AUP
+-            </a>
+-          </div>
++          ))}
+         </div>
+       </div>
+     </div>
+diff --git a/package-lock.json b/package-lock.json
+index 0c1629a..50fa61a 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -10,6 +10,7 @@
+       "dependencies": {
+         "@google/genai": "^2.4.0",
+         "@hookform/resolvers": "^5.2.1",
++        "@supabase/supabase-js": "^2.45.4",
+         "autoprefixer": "^10.4.21",
+         "class-variance-authority": "^0.7.1",
+         "clsx": "^2.1.1",
+@@ -21,6 +22,7 @@
+         "react": "^19.2.1",
+         "react-dom": "^19.2.1",
+         "recharts": "^3.8.1",
++        "server-only": "^0.0.1",
+         "sonner": "^2.0.7",
+         "tailwind-merge": "^3.3.1"
+       },
+@@ -116,7 +118,6 @@
+       "integrity": "sha512-RgHBCvtjbOK2gXSNBNIkNoEc9qoVEtau3hj8gEqKQuL3HZAibKarWFEI3Lfm6EYKkLalOh8eSrj9b+ch9H/VBA==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@babel/code-frame": "^7.29.7",
+         "@babel/generator": "^7.29.7",
+@@ -354,8 +355,7 @@
+       "resolved": "https://registry.npmjs.org/@electric-sql/pglite/-/pglite-0.3.16.tgz",
+       "integrity": "sha512-mZkZfOd9OqTMHsK+1cje8OSzfAQcpD7JmILXTl5ahdempjUDdmg4euf1biDex5/LfQIDJ3gvCu6qDgdnDxfJmA==",
+       "dev": true,
+-      "license": "Apache-2.0",
+-      "peer": true
++      "license": "Apache-2.0"
+     },
+     "node_modules/@electric-sql/pglite-tools": {
+       "version": "0.2.21",
+@@ -367,10 +367,32 @@
+         "@electric-sql/pglite": "0.3.16"
+       }
+     },
++    "node_modules/@emnapi/core": {
++      "version": "1.11.2",
++      "resolved": "https://registry.npmjs.org/@emnapi/core/-/core-1.11.2.tgz",
++      "integrity": "sha512-TC8MkTuZUtcTSiFeuC0ksCh9QIJ5+F21MvZ4Wn4ORfYaFJ/0dsiudv5tVkejgwZlwQ39jL9WWDe2lz8x0WglOA==",
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "@emnapi/wasi-threads": "1.2.2",
++        "tslib": "^2.4.0"
++      }
++    },
++    "node_modules/@emnapi/runtime": {
++      "version": "1.11.2",
++      "resolved": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.2.tgz",
++      "integrity": "sha512-kyOl3X0DuTiT1h2ft8r2fYO8JYtU9a9Xis/zBSiGArNaagCOWx90N1k2wxp18czFDH+OgcWGb5ZP/XMt3dcyPA==",
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "tslib": "^2.4.0"
++      }
++    },
+     "node_modules/@emnapi/wasi-threads": {
+-      "version": "1.2.1",
+-      "resolved": "https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz",
+-      "integrity": "sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==",
++      "version": "1.2.2",
++      "resolved": "https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz",
++      "integrity": "sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==",
+       "dev": true,
+       "license": "MIT",
+       "optional": true,
+@@ -1785,7 +1807,6 @@
+       "integrity": "sha512-zo37mZA9hJWpULgkRpowewez1y6ML5GsXJPY8FI0tBBCd77HEvza4jDqRKOXgHNn867PVGCyTdzqpz0izu5ZjQ==",
+       "devOptional": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@hono/node-server": "^1.19.9",
+         "ajv": "^8.17.1",
+@@ -2341,7 +2362,6 @@
+       "integrity": "sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==",
+       "devOptional": true,
+       "license": "Apache-2.0",
+-      "peer": true,
+       "engines": {
+         "node": ">=8.0.0"
+       }
+@@ -2580,6 +2600,90 @@
+       "integrity": "sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==",
+       "license": "MIT"
+     },
++    "node_modules/@supabase/auth-js": {
++      "version": "2.110.7",
++      "resolved": "https://registry.npmjs.org/@supabase/auth-js/-/auth-js-2.110.7.tgz",
++      "integrity": "sha512-M5Bpl4hCv6kHcOO/xM06Dyfg1mYLHljMkp1plhzG9IRZPc3czvyMsSN1XpL5+GKisOKM3lSN59zhpcm6sMVXfA==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/functions-js": {
++      "version": "2.110.7",
++      "resolved": "https://registry.npmjs.org/@supabase/functions-js/-/functions-js-2.110.7.tgz",
++      "integrity": "sha512-megYmexlYEoR/0qlsr4Snh9wtzAodO7MAri3NMevZrXzNvQRKlvmTcSBoKGLQEPDakgDZMqbMdf9DwoZz6qfoA==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/phoenix": {
++      "version": "0.4.5",
++      "resolved": "https://registry.npmjs.org/@supabase/phoenix/-/phoenix-0.4.5.tgz",
++      "integrity": "sha512-aAn9H9ovVyeApKy11OWOrrOGq8DV68yWeH4ud2lN9fzn4aO8Zb5GLL9m1pUg9nLqIcT+ZDfAcsZe0E/nqdv2lw==",
++      "license": "MIT"
++    },
++    "node_modules/@supabase/postgrest-js": {
++      "version": "2.110.7",
++      "resolved": "https://registry.npmjs.org/@supabase/postgrest-js/-/postgrest-js-2.110.7.tgz",
++      "integrity": "sha512-ban6YV0djhVaqVYezlOARKLIuOBSvLLhyQVZjA2nxPrtswhxHCl1+gI4giFgI9ATQAaMNbUZb4JXiuL5lEA/5g==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/realtime-js": {
++      "version": "2.110.7",
++      "resolved": "https://registry.npmjs.org/@supabase/realtime-js/-/realtime-js-2.110.7.tgz",
++      "integrity": "sha512-AMtZjyFA2gsmjuxopPNS/sRznLQHG0Ht5x+ytTPTOh3vAcOTUlVRLx7gW4/CONNnbb3PKOkE+HmM35HOSbmomQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@supabase/phoenix": "0.4.5",
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/storage-js": {
++      "version": "2.110.7",
++      "resolved": "https://registry.npmjs.org/@supabase/storage-js/-/storage-js-2.110.7.tgz",
++      "integrity": "sha512-2tcDE8cjEDy1uKxKavBpKQod1JdMV1jDXQag48TCa+kycmJOltc0yVabC0BUlhOwAl6WykXU2aOsH3ELMtZrmQ==",
++      "license": "MIT",
++      "dependencies": {
++        "iceberg-js": "^0.8.1",
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/supabase-js": {
++      "version": "2.110.7",
++      "resolved": "https://registry.npmjs.org/@supabase/supabase-js/-/supabase-js-2.110.7.tgz",
++      "integrity": "sha512-AnfO3A230Shy6RMO7cya3Wl1OcXnABJrzH8vP+fY7/RFjhzcchB7DjKkkTIAntlwekD+GkSFzEvt2tC+D4Fp8w==",
++      "license": "MIT",
++      "dependencies": {
++        "@supabase/auth-js": "2.110.7",
++        "@supabase/functions-js": "2.110.7",
++        "@supabase/postgrest-js": "2.110.7",
++        "@supabase/realtime-js": "2.110.7",
++        "@supabase/storage-js": "2.110.7"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
+     "node_modules/@swc/helpers": {
+       "version": "0.5.15",
+       "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.15.tgz",
+@@ -2995,7 +3099,6 @@
+       "integrity": "sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==",
+       "devOptional": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "csstype": "^3.2.2"
+       }
+@@ -3074,7 +3177,6 @@
+       "integrity": "sha512-5B7PfA2e1NQGCnDHd/0lW7W3gvp3d59Ryw54FYO8Uswxo9f6ikw3AZV+Xj/TvpImmpsiYyUqAfhC6kJID1jF6w==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@typescript-eslint/scope-manager": "8.61.0",
+         "@typescript-eslint/types": "8.61.0",
+@@ -3596,6 +3698,18 @@
+         "node": ">=14.0.0"
+       }
+     },
++    "node_modules/@unrs/resolver-binding-wasm32-wasi/node_modules/@emnapi/core": {
++      "version": "1.10.0",
++      "resolved": "https://registry.npmjs.org/@emnapi/core/-/core-1.10.0.tgz",
++      "integrity": "sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==",
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "@emnapi/wasi-threads": "1.2.1",
++        "tslib": "^2.4.0"
++      }
++    },
+     "node_modules/@unrs/resolver-binding-wasm32-wasi/node_modules/@emnapi/runtime": {
+       "version": "1.10.0",
+       "resolved": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.10.0.tgz",
+@@ -3607,6 +3721,17 @@
+         "tslib": "^2.4.0"
+       }
+     },
++    "node_modules/@unrs/resolver-binding-wasm32-wasi/node_modules/@emnapi/wasi-threads": {
++      "version": "1.2.1",
++      "resolved": "https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz",
++      "integrity": "sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==",
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "tslib": "^2.4.0"
++      }
++    },
+     "node_modules/@unrs/resolver-binding-win32-arm64-msvc": {
+       "version": "1.12.2",
+       "resolved": "https://registry.npmjs.org/@unrs/resolver-binding-win32-arm64-msvc/-/resolver-binding-win32-arm64-msvc-1.12.2.tgz",
+@@ -3693,7 +3818,6 @@
+       "integrity": "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "bin": {
+         "acorn": "bin/acorn"
+       },
+@@ -4245,7 +4369,6 @@
+       "integrity": "sha512-Z0oHEHAFDZkffN8Qc39zNZjQlMDkPJRyyyZieU1VH7u8c5S+qHZ2S8ixdKIAxEjfHO7FJxXmJWgteOghVanIsg==",
+       "dev": true,
+       "license": "Apache-2.0",
+-      "peer": true,
+       "peerDependencies": {
+         "bare-abort-controller": "*"
+       },
+@@ -4636,7 +4759,6 @@
+         }
+       ],
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "baseline-browser-mapping": "^2.10.12",
+         "caniuse-lite": "^1.0.30001782",
+@@ -6442,7 +6564,6 @@
+       "integrity": "sha512-BhHmn2yNOFA9H9JmmIVKJmd288g9hrVRDkdoIgRCRuSySRUHH7r/DI6aAXW9T1WwUuY3DFgrcaqB+deURBLR5g==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@eslint-community/eslint-utils": "^4.8.0",
+         "@eslint-community/regexpp": "^4.12.1",
+@@ -6628,7 +6749,6 @@
+       "integrity": "sha512-whOE1HFo/qJDyX4SnXzP4N6zOWn79WhnCUY/iDR0mPfQZO8wcYE4JClzI2oZrhBnnMUCBCHZhO6VQyoBU95mZA==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@rtsao/scc": "^1.1.0",
+         "array-includes": "^3.1.9",
+@@ -7075,7 +7195,6 @@
+       "integrity": "sha512-IuL+Elrou2ZvCFHs18/CIzy2Nzvo25nZ1/D2eIZlz7c+QUayAcYoiM2BthCjs+EBHVpjYjcuLDAiCWgeIX3X1Q==",
+       "devOptional": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "accepts": "~1.3.8",
+         "array-flatten": "1.1.1",
+@@ -8630,7 +8749,6 @@
+       "integrity": "sha512-I36D1s+HgQc55KbhEr4iybfxv/9o1zdpw+XEM6dJa91LqQD0HCoSGdxpRJCZE+aavs87j4V3Ls2OJzq8C/U4iw==",
+       "devOptional": true,
+       "license": "MIT",
+-      "peer": true,
+       "engines": {
+         "node": ">=16.9.0"
+       }
+@@ -8683,6 +8801,15 @@
+         "node": ">= 14"
+       }
+     },
++    "node_modules/iceberg-js": {
++      "version": "0.8.1",
++      "resolved": "https://registry.npmjs.org/iceberg-js/-/iceberg-js-0.8.1.tgz",
++      "integrity": "sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=20.0.0"
++      }
++    },
+     "node_modules/iconv-lite": {
+       "version": "0.7.2",
+       "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.7.2.tgz",
+@@ -10361,7 +10488,6 @@
+       "integrity": "sha512-rqRix3/TWzE9rIoFGIn8JmsVfhiuC8VIQ8IdX5TfzmeBucdY05/0UlzKaw0eVtpcN/OdVFpBk7CjKGo9iHJ/zA==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "bin": {
+         "marked": "bin/marked.js"
+       },
+@@ -11561,7 +11687,6 @@
+       "integrity": "sha512-AUP1EYJuHraQGsVoCQVIcM7TEJVGtDzxWtGFZd8rds9d+CCXlU5Js1rYgfLNvxy9iJrpHjGrRjoi/3BT9fRyiA==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "pg-connection-string": "^2.13.0",
+         "pg-pool": "^3.14.0",
+@@ -11740,7 +11865,6 @@
+         }
+       ],
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "nanoid": "^3.3.12",
+         "picocolors": "^1.1.1",
+@@ -12140,7 +12264,6 @@
+       "resolved": "https://registry.npmjs.org/react/-/react-19.2.7.tgz",
+       "integrity": "sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==",
+       "license": "MIT",
+-      "peer": true,
+       "engines": {
+         "node": ">=0.10.0"
+       }
+@@ -12150,7 +12273,6 @@
+       "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.7.tgz",
+       "integrity": "sha512-t0BRVXvbiE/o20Hfw669rLbMCDWtYZLvmJigy2f0MxsXF+71pxhR3xOkspmsO8h3ZlNzyibAmtCa3l4lYKk6gQ==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "scheduler": "^0.27.0"
+       },
+@@ -12179,15 +12301,13 @@
+       "version": "16.13.1",
+       "resolved": "https://registry.npmjs.org/react-is/-/react-is-16.13.1.tgz",
+       "integrity": "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==",
+-      "license": "MIT",
+-      "peer": true
++      "license": "MIT"
+     },
+     "node_modules/react-redux": {
+       "version": "9.3.0",
+       "resolved": "https://registry.npmjs.org/react-redux/-/react-redux-9.3.0.tgz",
+       "integrity": "sha512-KQopgqFo/p/fgmAs5qz6p5RWaNAzq40WAu7fJIXnQpYxFPbJYtsJPWvGeF2rOBaY/kEuV77AVsX8TsQzKm+A/g==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@types/use-sync-external-store": "^0.0.6",
+         "use-sync-external-store": "^1.4.0"
+@@ -12328,8 +12448,7 @@
+       "version": "5.0.1",
+       "resolved": "https://registry.npmjs.org/redux/-/redux-5.0.1.tgz",
+       "integrity": "sha512-M9/ELqF6fy8FwmkpnF0S3YKOqMyoWJ4+CS5Efg2ct3oY9daQvd/Pc71FpGZsVsbl3Cpb+IIcjBDUnnyBdQbq4w==",
+-      "license": "MIT",
+-      "peer": true
++      "license": "MIT"
+     },
+     "node_modules/redux-thunk": {
+       "version": "3.1.0",
+@@ -12805,6 +12924,12 @@
+         "node": ">= 0.8.0"
+       }
+     },
++    "node_modules/server-only": {
++      "version": "0.0.1",
++      "resolved": "https://registry.npmjs.org/server-only/-/server-only-0.0.1.tgz",
++      "integrity": "sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==",
++      "license": "MIT"
++    },
+     "node_modules/set-function-length": {
+       "version": "1.2.2",
+       "resolved": "https://registry.npmjs.org/set-function-length/-/set-function-length-1.2.2.tgz",
+@@ -13697,8 +13822,7 @@
+       "resolved": "https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.1.11.tgz",
+       "integrity": "sha512-2E9TBm6MDD/xKYe+dvJZAmg3yxIEDNRc0jwlNyDg/4Fil2QcSLjFKGVff0lAf1jjeaArlG/M75Ey/EYr/OJtBA==",
+       "dev": true,
+-      "license": "MIT",
+-      "peer": true
++      "license": "MIT"
+     },
+     "node_modules/tapable": {
+       "version": "2.3.3",
+@@ -13932,7 +14056,6 @@
+       "integrity": "sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "engines": {
+         "node": ">=12"
+       },
+@@ -14199,7 +14322,6 @@
+       "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+       "dev": true,
+       "license": "Apache-2.0",
+-      "peer": true,
+       "bin": {
+         "tsc": "bin/tsc",
+         "tsserver": "bin/tsserver"
+@@ -15057,7 +15179,6 @@
+       "integrity": "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==",
+       "devOptional": true,
+       "license": "MIT",
+-      "peer": true,
+       "funding": {
+         "url": "https://github.com/sponsors/colinhacks"
+       }
+diff --git a/package.json b/package.json
+index 41a978e..5c3dbdb 100644
+--- a/package.json
++++ b/package.json
+@@ -4,13 +4,15 @@
+   "private": true,
+   "scripts": {
+     "dev": "next dev",
+-    "build": "next build",
++    "build": "NODE_ENV=production next build",
+     "start": "next start",
+     "lint": "eslint .",
+     "clean": "next clean"
+   },
+   "dependencies": {
+     "@google/genai": "^2.4.0",
++    "@supabase/supabase-js": "^2.45.4",
++    "server-only": "^0.0.1",
+     "@hookform/resolvers": "^5.2.1",
+     "autoprefixer": "^10.4.21",
+     "class-variance-authority": "^0.7.1",

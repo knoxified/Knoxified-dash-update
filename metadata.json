@@ -1,0 +1,8 @@
+{
+  "name": "Knoxified SaaS Dashboard",
+  "description": "Enterprise AI Automation & Voice Agent OS Dashboard",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
