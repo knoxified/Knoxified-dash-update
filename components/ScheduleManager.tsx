@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Plus, X, Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
-const CURRENT_USER_ID = "ad409f1e-7150-4ed1-a4d1-ab5d523ab265";
 import {
   getAutomationSchedules,
   getCallSchedules,
@@ -23,21 +22,14 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  
-  useEffect(() => {
-        fetchSchedules();
-  }, [type]);
 
   const fetchSchedules = async () => {
     try {
       setLoading(true);
       const data = type === "automation" 
-        ? await getAutomationSchedules(CURRENT_USER_ID)
-        : await getCallSchedules(CURRENT_USER_ID);
+        ? await getAutomationSchedules()
+        : await getCallSchedules();
       
-      // Filter by targetId if needed, but the current backend function gets all for user.
-      // In a real app we'd filter on the server, but for UI sake let's just filter here if it's automation.
-      // Wait, let's just show all for the user if it's campaigns, or filter if automationId is provided.
       const filtered = type === "automation" ? data.filter((s: any) => s.automation_id === targetId) : data;
       setSchedules(filtered);
     } catch (e: any) {
@@ -46,6 +38,11 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
       setLoading(false);
     }
   };
+  
+  useEffect(() => {
+    // eslint-disable-next-line
+    fetchSchedules();
+  }, [type]);
 
   const handleCreate = async () => {
     if (!date || !time || (type === "call" && !phoneNumber)) {
@@ -57,9 +54,9 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
       const scheduledAt = new Date(`${date}T${time}`).toISOString();
       
       if (type === "automation") {
-        await createAutomationSchedule(CURRENT_USER_ID, targetId, scheduledAt);
+        await createAutomationSchedule(targetId, scheduledAt);
       } else {
-        await createCallSchedule(CURRENT_USER_ID, phoneNumber, scheduledAt);
+        await createCallSchedule(phoneNumber, scheduledAt);
       }
       
       toast.success("Schedule created successfully");
@@ -76,9 +73,9 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
   const handleCancel = async (id: string) => {
     try {
       if (type === "automation") {
-        await cancelAutomationSchedule(CURRENT_USER_ID, id);
+        await cancelAutomationSchedule(id);
       } else {
-        await cancelCallSchedule(CURRENT_USER_ID, id);
+        await cancelCallSchedule(id);
       }
       toast.success("Schedule canceled");
       fetchSchedules();
@@ -90,9 +87,9 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
   const handleApprove = async (id: string) => {
     try {
       if (type === "automation") {
-        await approveAutomationSchedule(CURRENT_USER_ID, id);
+        await approveAutomationSchedule(id);
       } else {
-        await approveCallSchedule(CURRENT_USER_ID, id);
+        await approveCallSchedule(id);
       }
       toast.success("Schedule approved");
       fetchSchedules();
@@ -170,7 +167,7 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
                 return (
                   <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="px-5 py-4 whitespace-nowrap text-slate-900 dark:text-white">
-                      {new Date(s.scheduled_for).toLocaleString()}
+                      {new Date(s.scheduled_at).toLocaleString()}
                     </td>
                     {type === "call" && (
                       <td className="px-5 py-4 whitespace-nowrap">

@@ -11,8 +11,6 @@ import {
   toggleRecordingDisclosure,
 } from "@/lib/actions/compliance-actions";
 
-const CURRENT_USER_ID = "ad409f1e-7150-4ed1-a4d1-ab5d523ab265";
-
 export default function CompliancePage() {
   const [suppressionList, setSuppressionList] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -26,9 +24,9 @@ export default function CompliancePage() {
     async function loadData() {
       try {
         const [suppression, logs, disclosure] = await Promise.all([
-          getSuppressionList(CURRENT_USER_ID),
-          getAuditLogs(CURRENT_USER_ID),
-          getDisclosureSettings(CURRENT_USER_ID),
+          getSuppressionList(),
+          getAuditLogs(),
+          getDisclosureSettings(),
         ]);
         setSuppressionList(suppression);
         setAuditLogs(logs);
@@ -49,10 +47,10 @@ export default function CompliancePage() {
     if (!newPhone.trim()) return;
     startTransition(async () => {
       try {
-        await addToSuppressionList(CURRENT_USER_ID, newPhone, "manual_upload");
+        await addToSuppressionList(newPhone, "manual_upload");
         const [suppression, logs] = await Promise.all([
-          getSuppressionList(CURRENT_USER_ID),
-          getAuditLogs(CURRENT_USER_ID),
+          getSuppressionList(),
+          getAuditLogs(),
         ]);
         setSuppressionList(suppression);
         setAuditLogs(logs);
@@ -67,10 +65,10 @@ export default function CompliancePage() {
   const handleRemoveSuppression = (id: string, phone: string) => {
     startTransition(async () => {
       try {
-        await removeFromSuppressionList(CURRENT_USER_ID, id, phone);
+        await removeFromSuppressionList(id, phone);
         const [suppression, logs] = await Promise.all([
-          getSuppressionList(CURRENT_USER_ID),
-          getAuditLogs(CURRENT_USER_ID),
+          getSuppressionList(),
+          getAuditLogs(),
         ]);
         setSuppressionList(suppression);
         setAuditLogs(logs);
@@ -84,9 +82,9 @@ export default function CompliancePage() {
   const handleToggleDisclosure = (enabled: boolean) => {
     startTransition(async () => {
       try {
-        await toggleRecordingDisclosure(CURRENT_USER_ID, enabled);
+        await toggleRecordingDisclosure(enabled);
         setRecordingDisclosure(enabled);
-        const logs = await getAuditLogs(CURRENT_USER_ID);
+        const logs = await getAuditLogs();
         setAuditLogs(logs);
         toast.success(`Recording disclosure ${enabled ? "enabled" : "disabled"}`);
       } catch (err: any) {
@@ -102,13 +100,14 @@ export default function CompliancePage() {
           <p className="font-semibold mb-2">Could not load compliance data</p>
           <p className="text-sm">{loadError}</p>
           <p className="text-sm mt-2 text-slate-400">
-            Check that SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in .env.local,
-            and that CURRENT_USER_ID in this file points at a real row in the users table.
+            Check that SUPABASE_URL and SUPABASE_ANON_KEY are set in .env.local,
+            and that you are properly logged in.
           </p>
         </div>
       </div>
     );
   }
+
 
   if (loading) {
     return <div className="p-8 text-slate-400">Loading compliance data...</div>;

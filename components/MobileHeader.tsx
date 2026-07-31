@@ -1,25 +1,28 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
+import { logout } from "@/lib/actions/auth-actions";
 
 export function MobileHeader() {
   return (
     <header className="h-14 flex md:hidden items-center justify-between px-4 bg-slate-100/60 dark:bg-[#12161B]/60 backdrop-blur-xl border-b border-slate-200/50 dark:border-white/5 sticky top-0 z-50">
       <div className="flex items-center gap-2">
-        <svg width="24" height="24" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19.9999 5.83331L13.3333 19.1666L19.9999 32.5L26.6666 19.1666L19.9999 5.83331Z" fill="#00E5FF"/>
-          <path d="M5.83337 20L19.1667 13.3333L32.5 20L19.1667 26.6667L5.83337 20Z" fill="#00E5FF" opacity="0.8"/>
-          <circle cx="20" cy="20" r="4" fill="#020617"/>
-        </svg>
+        <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
+          <img src="/logo.png" alt="Knoxified" className="w-full h-full object-contain" />
+        </div>
         <span className="text-slate-900 dark:text-white font-medium text-sm tracking-wide">Knoxified</span>
       </div>
       {/* Mobile nav placeholder - full implementation would use a drawer */}
       <div className="flex items-center gap-3 text-slate-500 dark:text-[#888] text-[13px] font-medium">
         <Link href="/" className="hover:text-slate-900 dark:text-white">Overview</Link>
         <Link href="/deployments" className="hover:text-slate-900 dark:text-white">Deploy</Link>
-        <Link href="/automations" className="hover:text-slate-900 dark:text-white">Automations</Link>
         <div className="w-8">
            <ThemeToggle />
         </div>
+        <form action={logout}>
+          <button type="submit" className="text-red-500 font-medium ml-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          </button>
+        </form>
       </div>
     </header>
   );

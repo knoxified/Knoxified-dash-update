@@ -1,55 +1,44 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-// This file is server-only ("server-only" package throws a build error
-// if anything imports this from a "use client" component). The service
-// role key must never reach the browser.
+export async function createClient() {
+  const cookieStore = await cookies();
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Make sure we have env vars, otherwise we'll return a proxy that prevents crashing in dev
+  const supabaseUrl = process.env.SUPABASE_URL || "https://placeholder.supabase.co";
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "placeholder-key";
 
-let supabaseAdmin: any;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  console.warn("[AI Studio] Database not connected — using mock");
-  
-  const mockChain: any = {
-    select: () => mockChain,
-    insert: () => mockChain,
-    update: () => mockChain,
-    delete: () => mockChain,
-    eq: () => mockChain,
-    order: () => mockChain,
-    limit: () => mockChain,
-    single: async () => ({
-      data: {
-        require_ai_disclosure: true,
-        require_recording_disclosure: true,
-        calling_window_start: "09:00:00",
-        calling_window_end: "17:00:00",
-        calling_window_timezone: "UTC"
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-      error: null
-    }),
-    maybeSingle: async () => ({ data: null, error: null }),
-    then: (resolve: any) => resolve({ data: [], error: null }),
-  };
-  
-  supabaseAdmin = new Proxy({}, {
-    get: (_, prop) => {
-      if (prop === 'from') {
-        return () => mockChain;
-      }
-      return mockChain;
-    }
-  });
-} else {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // The `setAll` method was called from a Server Component.
+          // This can be ignored if you have middleware refreshing
+          // user sessions.
+        }
+      },
     },
   });
 }
 
-export { supabaseAdmin };
+// Keep a service role admin client only for trusted backend tasks (bypasses RLS)
+export const supabaseAdmin = (() => {
+  const { createClient: createClientJs } = require("@supabase/supabase-js");
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return createClientJs("https://placeholder.supabase.co", "placeholder-key");
+  }
+  return createClientJs(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+})();
+

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ReactNode } from "react";
 import { ThemeToggle } from "./ThemeToggle";
+import { logout } from "@/lib/actions/auth-actions";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -16,11 +17,8 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 w-60 bg-slate-100/60 dark:bg-[#12161B]/60 backdrop-blur-xl border-r border-slate-200/50 dark:border-white/5 hidden md:flex flex-col h-screen overflow-y-auto z-40">
       <div className="flex items-center px-4 h-16 shrink-0 mt-2 mb-2">
         <button className="flex items-center w-full gap-3 bg-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 p-2 rounded-lg transition-colors group text-left">
-          <div className="w-8 h-8 rounded-md bg-sky-600/10 dark:bg-[#00E5FF]/10 border border-sky-600/20 dark:border-[#00E5FF]/20 flex items-center justify-center shrink-0">
-             <svg width="18" height="18" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19.9999 5.83331L13.3333 19.1666L19.9999 32.5L26.6666 19.1666L19.9999 5.83331Z" fill="#00E5FF"/>
-              <path d="M5.83337 20L19.1667 13.3333L32.5 20L19.1667 26.6667L5.83337 20Z" fill="#00E5FF" opacity="0.8"/>
-            </svg>
+          <div className="w-8 h-8 rounded-md bg-sky-600/10 dark:bg-[#00E5FF]/10 border border-sky-600/20 dark:border-[#00E5FF]/20 flex items-center justify-center shrink-0 overflow-hidden p-1">
+             <img src="/logo.png" alt="Knoxified" className="w-full h-full object-contain drop-shadow-[0_0_5px_rgba(0,229,255,0.3)]" />
           </div>
           <div className="flex-1 overflow-hidden">
              <p className="text-slate-900 dark:text-white font-medium text-sm truncate tracking-wide">Knoxified OS</p>
@@ -92,6 +90,13 @@ export function Sidebar() {
           </div>
           <Settings size={14} className="text-slate-400 dark:text-[#666] group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
         </div>
+        
+        <form action={logout} className="mt-2">
+          <button type="submit" className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-[13px] text-red-500 hover:bg-red-500/10 transition-colors font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Log Out
+          </button>
+        </form>
       </div>
     </aside>
   );
