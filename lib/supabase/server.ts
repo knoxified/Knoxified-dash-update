@@ -1,10 +1,10 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient as createClientJs } from "@supabase/supabase-js";
 
 export async function createClient() {
   const cookieStore = await cookies();
-
   // Make sure we have env vars, otherwise we'll return a proxy that prevents crashing in dev
   const supabaseUrl = process.env.SUPABASE_URL || "https://placeholder.supabase.co";
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "placeholder-key";
@@ -31,14 +31,14 @@ export async function createClient() {
 
 // Keep a service role admin client only for trusted backend tasks (bypasses RLS)
 export const supabaseAdmin = (() => {
-  const { createClient: createClientJs } = require("@supabase/supabase-js");
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     return createClientJs("https://placeholder.supabase.co", "placeholder-key");
   }
+
   return createClientJs(supabaseUrl, supabaseServiceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 })();
-

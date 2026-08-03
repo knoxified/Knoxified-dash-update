@@ -1,4 +1,5 @@
 "use client";
+import { createClient } from "@/lib/supabase/client";
 
 import { useEffect, useState } from "react";
 import { DataService, System, Automation, DashboardMetrics, Plan, SystemLog } from "./data";
@@ -32,6 +33,7 @@ export function useAutomations() {
   return { data, loading, setData };
 }
 
+
 export function useDashboardMetrics(dateRange: string = "7d") {
   const [data, setData] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,10 +45,105 @@ export function useDashboardMetrics(dateRange: string = "7d") {
   }
 
   useEffect(() => {
-    DataService.getDashboardMetrics(dateRange).then((metrics) => {
-      setData(metrics);
-      setLoading(false);
-    });
+    let isMounted = true;
+    const supabase = createClient();
+    let currentUserId: string | null = null;
+
+    const fetchRealtimeMetrics = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const defaultMetrics = await DataService.getDashboardMetrics(dateRange);
+
+        if (!user) {
+          if (isMounted) {
+            setData(defaultMetrics);
+            setLoading(false);
+          }
+          return;
+        }
+
+        currentUserId = user.id;
+
+        // Use public.users to get plan_id and join with public.plans
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('plan_id, plans(limit_voice_minutes, limit_credits)')
+          .eq('id', user.id)
+          .single();
+
+        let limitVoice = 1000;
+        let limitCredits = 5000;
+
+        if (userData?.plans) {
+          // Type cast because Supabase might return it as array or object depending on relation
+          const plans = Array.isArray(userData.plans) ? userData.plans[0] : userData.plans;
+          if (plans) {
+            limitVoice = plans.limit_voice_minutes || limitVoice;
+            limitCredits = plans.limit_credits || limitCredits;
+          }
+        }
+
+        // Calculate current usage by summing minutes_used from public.voice_usage
+        const { data: voiceUsage } = await supabase
+          .from('voice_usage')
+          .select('minutes_used')
+          .eq('user_id', user.id);
+        const totalVoice = voiceUsage?.reduce((acc: number, row: any) => acc + (row.minutes_used || 0), 0) || 0;
+
+        // Calculate current usage by summing run_units from public.automation_runs
+        const { data: autoRuns } = await supabase
+          .from('automation_runs')
+          .select('run_units')
+          .eq('user_id', user.id);
+        const totalAutoRuns = autoRuns?.reduce((acc: number, row: any) => acc + (row.run_units || 0), 0) || 0;
+
+        // active systems
+        const { data: activeSys } = await supabase
+          .from('user_automations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_enabled', true);
+        const totalActiveSys = activeSys?.length || 0;
+
+        if (isMounted) {
+          setData({
+            ...defaultMetrics,
+            totalActiveSystems: totalActiveSys,
+            totalActiveAutomations: totalAutoRuns,
+            voiceUsage: { ...defaultMetrics.voiceUsage, used: totalVoice, total: limitVoice },
+            // credits or other limits could be applied to other metrics here if needed
+          });
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error fetching realtime metrics:", err);
+      }
+    };
+
+    fetchRealtimeMetrics();
+
+    // Ensure the UI updates instantly when a new row is added to voice_usage
+    const channel = supabase.channel('voice_usage_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'voice_usage'
+        },
+        (payload) => {
+          if (payload.new && payload.new.user_id === currentUserId) {
+            fetchRealtimeMetrics();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, [dateRange]);
 
   return { data, loading };

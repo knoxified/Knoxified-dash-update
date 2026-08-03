@@ -1,4 +1,7 @@
-"use client";
+const fs = require('fs');
+const file = 'app/(dashboard)/integrations/page.tsx';
+
+let content = `"use client";
 import { Box, Lock, LayoutGrid, Slack, Github, Calendar, MessageSquare, Plus, Check, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -55,7 +58,6 @@ export default function IntegrationsPage() {
       user_id: user.id,
       provider: appId,
       expires_at: expiresAt.toISOString(),
-      state: crypto.randomUUID(),
       used: false
     });
     
@@ -63,7 +65,7 @@ export default function IntegrationsPage() {
       toast.error("Failed to start OAuth flow.");
       console.error(error);
     } else {
-      toast.success(`Starting OAuth flow for ${appName}...`);
+      toast.success(\`Starting OAuth flow for \${appName}...\`);
     }
   };
 
@@ -129,13 +131,13 @@ export default function IntegrationsPage() {
       <div className="flex bg-slate-100 dark:bg-[#020617] p-1 rounded-lg border border-slate-200 dark:border-white/5 w-max mb-6">
         <button 
           onClick={() => setActiveTab("oauth")}
-          className={`text-xs font-semibold px-4 py-2 rounded-md transition-colors ${activeTab === "oauth" ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
+          className={\`text-xs font-semibold px-4 py-2 rounded-md transition-colors \${activeTab === "oauth" ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}\`}
         >
           App Connections (OAuth)
         </button>
         <button 
           onClick={() => setActiveTab("api")}
-          className={`text-xs font-semibold px-4 py-2 rounded-md transition-colors ${activeTab === "api" ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
+          className={\`text-xs font-semibold px-4 py-2 rounded-md transition-colors \${activeTab === "api" ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}\`}
         >
           Developer APIs & Keys
         </button>
@@ -148,7 +150,7 @@ export default function IntegrationsPage() {
             return (
               <div key={app.id} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-5 flex flex-col hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`w-10 h-10 rounded-lg bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 flex items-center justify-center ${app.brandColor}`}>
+                  <div className={\`w-10 h-10 rounded-lg bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 flex items-center justify-center \${app.brandColor}\`}>
                     <Icon size={20} />
                   </div>
                   {app.status === 'connected' ? (
@@ -170,16 +172,16 @@ export default function IntegrationsPage() {
                 <button
                  onClick={() => {
                   if (app.status === 'connected') {
-                    toast.info(`Managing connection to ${app.name}...`);
+                    toast.info(\`Managing connection to \${app.name}...\`);
                   } else {
                     initiateOAuthFlow(app.id, app.name);
                   }
                 }}
-                className={`w-full py-2 rounded-lg text-sm font-semibold transition-transform active:scale-[0.98] ${
+                className={\`w-full py-2 rounded-lg text-sm font-semibold transition-transform active:scale-[0.98] \${
                   app.status === 'connected' 
                     ? 'bg-slate-100 dark:bg-[#020617] text-slate-700 dark:text-[#EDEDED] hover:bg-slate-200 dark:hover:bg-white/5 border border-slate-200 dark:border-white/5'
                     : 'bg-sky-600 hover:bg-sky-700 dark:bg-[#00E5FF] dark:text-[#020617] dark:hover:bg-[#00E5FF]/90 text-white'
-                }`}>
+                }\`}>
                   {app.status === 'connected' ? 'Manage Connection' : 'Connect Account'}
                 </button>
               </div>
@@ -217,7 +219,7 @@ export default function IntegrationsPage() {
                       {api.status === 'configured' ? 'sk_live_********************' : 'No key provided'}
                     </span>
                   </div>
-                  <button onClick={() => toast.info(`Configuring ${api.name}...`)} className="text-sky-600 dark:text-[#00E5FF] text-sm font-medium hover:underline transition-transform active:scale-95">
+                  <button onClick={() => toast.info(\`Configuring \${api.name}...\`)} className="text-sky-600 dark:text-[#00E5FF] text-sm font-medium hover:underline transition-transform active:scale-95">
                     {api.status === 'configured' ? 'Edit' : 'Configure'}
                   </button>
                 </div>
@@ -229,3 +231,7 @@ export default function IntegrationsPage() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync(file, content);
+console.log("Updated integrations page.");

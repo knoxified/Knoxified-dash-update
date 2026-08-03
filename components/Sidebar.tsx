@@ -51,6 +51,7 @@ export function Sidebar() {
           <div className="flex flex-col gap-[2px]">
             <NavItem href="/systems" icon={<Server size={15} />} label="Systems" pathname={pathname} />
             <NavItem href="/automations" icon={<Zap size={15} />} label="Automations" pathname={pathname} />
+            <NavItem href="/agent-config" icon={<Settings size={15} />} label="Agent Config" pathname={pathname} />
           </div>
         </div>
 

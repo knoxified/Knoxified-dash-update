@@ -15,11 +15,6 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const submitRef = useRef<boolean>(false);
 
-  useEffect(() => {
-    if (urlError) {
-      setError(urlError);
-    }
-  }, [urlError]);
 
   async function handleLogin(formData: FormData) {
     if (submitRef.current) return;
