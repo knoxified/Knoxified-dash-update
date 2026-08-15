@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, X, Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -23,7 +23,7 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
   const [time, setTime] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  const fetchSchedules = async () => {
+  const fetchSchedules = useCallback(async () => {
     try {
       setLoading(true);
       const data = type === "automation" 
@@ -37,12 +37,12 @@ export default function ScheduleManager({ type, targetId }: { type: "automation"
     } finally {
       setLoading(false);
     }
-  };
-  
+  }, [type, targetId]);
+
   useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSchedules();
-  }, [type]);
+  }, [fetchSchedules]);
 
   const handleCreate = async () => {
     if (!date || !time || (type === "call" && !phoneNumber)) {

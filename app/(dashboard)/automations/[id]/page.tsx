@@ -6,7 +6,10 @@ import { Activity } from "lucide-react";
 import LeadReachBoard from "./LeadReachBoard";
 import MailCraftBoard from "./MailCraftBoard";
 import ScheduleManager from "@/components/ScheduleManager";
+import AutomationRunner from "@/components/AutomationRunner";
 
+import AppointMateBoard from "./AppointMateBoard";
+import GenericAutomationBoard from "./GenericAutomationBoard";
 export default function AutomationDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -58,14 +61,10 @@ export default function AutomationDetailsPage() {
         <LeadReachBoard />
       ) : id === "mailcraft" ? (
         <MailCraftBoard />
+      ) : id === "appointmate" ? (
+        <AppointMateBoard automation={automation} />
       ) : (
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-12 flex flex-col items-center justify-center text-center">
-          <Activity size={40} className="text-slate-300 dark:text-slate-700 mb-4" />
-          <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-2">{title} Dashboard</h2>
-          <p className="text-sm text-slate-500 max-w-md">
-            This automation board is currently being provisioned. Custom configuration interfaces will appear here once the system initializes.
-          </p>
-        </div>
+        <GenericAutomationBoard automation={automation} />
       )}
       <ScheduleManager type="automation" targetId={id} />
     </div>

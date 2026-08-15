@@ -21,8 +21,8 @@ export function Sidebar() {
              <img src="/logo.png" alt="Knoxified" className="w-full h-full object-contain drop-shadow-[0_0_5px_rgba(0,229,255,0.3)]" />
           </div>
           <div className="flex-1 overflow-hidden">
-             <p className="text-slate-900 dark:text-white font-medium text-sm truncate tracking-wide">Knoxified OS</p>
-             <p className="text-slate-500 dark:text-[#888] text-[10px] font-medium uppercase tracking-wider truncate">Enterprise</p>
+             <p className="font-bold text-sm truncate tracking-wide text-gradient-ai drop-shadow-sm">Knoxified OS</p>
+             <p className="text-slate-500 dark:text-[#888] text-[10px] font-bold uppercase tracking-wider truncate">Enterprise</p>
           </div>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors shrink-0"><path d="m6 9 6 6 6-6"/></svg>
         </button>
@@ -108,14 +108,15 @@ function NavItem({ href, icon, label, pathname }: { href: string; icon: ReactNod
   return (
     <Link
       href={href}
-      className={`flex items-center group gap-2.5 px-2 py-1.5 rounded-md transition-all duration-200 text-[13px] ${
+      className={`flex items-center group gap-2.5 px-3 py-1.5 rounded-lg transition-all duration-300 text-[13px] ${
         active 
-          ? "bg-white dark:bg-[#0F172A] text-sky-600 dark:text-[#00E5FF] font-medium shadow-sm dark:shadow-none translate-x-1" 
-          : "text-slate-500 dark:text-[#888] hover:text-slate-700 dark:hover:text-[#EDEDED] hover:bg-slate-200 dark:hover:bg-white/5 font-medium hover:translate-x-1"
+          ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-[#00E5FF] font-semibold shadow-sm translate-x-1 relative overflow-hidden border border-sky-100/50 dark:border-[#00E5FF]/20" 
+          : "text-slate-500 dark:text-[#888] hover:text-slate-700 dark:hover:text-[#EDEDED] hover:bg-slate-200/50 dark:hover:bg-white/5 font-medium hover:translate-x-1"
       }`}
     >
-      <span className="transition-transform group-hover:scale-110">{icon}</span>
-      <span>{label}</span>
+      {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-sky-500 dark:bg-[#00E5FF] rounded-r-full shadow-[0_0_8px_rgba(0,229,255,0.8)]" />}
+      <span className={`transition-transform duration-300 z-10 ${active ? "scale-110 drop-shadow-[0_0_5px_rgba(0,229,255,0.4)]" : "group-hover:scale-110"}`}>{icon}</span>
+      <span className="tracking-wide z-10">{label}</span>
     </Link>
   );
 }

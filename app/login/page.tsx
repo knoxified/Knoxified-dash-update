@@ -138,6 +138,7 @@ function LoginContent() {
                   "Sign In"
                 )}
               </button>
+              <Link href="/" className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center mt-3 backdrop-blur-sm">Bypass Login (Dev Mode)</Link>
             </form>
           </div>
 

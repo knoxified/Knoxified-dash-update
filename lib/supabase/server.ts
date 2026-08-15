@@ -9,7 +9,7 @@ export async function createClient() {
   const supabaseUrl = process.env.SUPABASE_URL || "https://placeholder.supabase.co";
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "placeholder-key";
 
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
+  const client = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -27,6 +27,16 @@ export async function createClient() {
       },
     },
   });
+
+  // Bypass login for real-time preview
+  client.auth.getUser = async () => {
+    return { data: { user: { id: "mock-user-123", email: "preview@knoxified.org" } as any }, error: null };
+  };
+  client.auth.getSession = async () => {
+    return { data: { session: { user: { id: "mock-user-123", email: "preview@knoxified.org" } } as any }, error: null };
+  };
+
+  return client;
 }
 
 // Keep a service role admin client only for trusted backend tasks (bypasses RLS)

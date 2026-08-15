@@ -1,7 +1,7 @@
 "use client";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { useState, useEffect } from "react";
-import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, Users, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell } from "lucide-react";
+import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, Users, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell, Mic, PhoneOff, Settings2, Volume2, Radio, Send } from "lucide-react";
 import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, CartesianGrid, Bar } from "recharts";
 import { useDashboardMetrics, useSystemLogs, useSystems } from "@/lib/services/hooks";
@@ -35,6 +35,9 @@ export default function DashboardOverview() {
   const [dateRange, setDateRange] = useState("7d");
   const [logFilter, setLogFilter] = useState("All");
   const [isMounted, setIsMounted] = useState(false);
+  const [takeoverActive, setTakeoverActive] = useState(false);
+  const [whisperMode, setWhisperMode] = useState(false);
+  const [whisperText, setWhisperText] = useState("");
   const { data: metrics, loading: metricsLoading } = useDashboardMetrics(dateRange);
   const { data: logs, loading: logsLoading } = useSystemLogs();
   const { data: systems, loading: systemsLoading } = useSystems();
@@ -180,7 +183,7 @@ export default function DashboardOverview() {
 
       {/* 1) Top hero section: business outcome first */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        <div className="md:col-span-8 lg:col-span-6 bg-white dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-xl p-8 flex flex-col justify-center relative overflow-hidden">
+        <div className="md:col-span-8 lg:col-span-6 bg-white dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-xl p-6 flex flex-col justify-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100 dark:bg-[#10B981]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
           <div className="flex items-center gap-2 mb-4 relative z-10">
             <DollarSign size={18} className="text-emerald-600 dark:text-[#10B981]" />
@@ -202,111 +205,128 @@ export default function DashboardOverview() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
-        {/* 3) Revenue and pipeline panel */}
-        <div className="xl:col-span-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 flex flex-col relative overflow-hidden group hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#00E5FF]/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100"></div>
+        {/* Voice Agent Interface */}
+        <div className="xl:col-span-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 relative overflow-hidden group transition-all duration-300 shadow-sm flex flex-col justify-center h-full">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100"></div>
           <div className="flex items-center justify-between mb-6 relative z-10">
-             <div className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base">
-                <TrendingUp className="text-sky-600 dark:text-[#00E5FF]" size={18} />
-                Financial Impact & Activity Volume
-             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8 relative z-10">
-            <div className="bg-slate-50 dark:bg-[#020617]/50 border border-slate-200 dark:border-white/5 p-4 rounded-lg">
-              <p className="text-slate-500 dark:text-[#888] text-[13px] font-medium mb-1">Pipeline Value</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{formatCurrency(metrics.pipelineValue)}</p>
-            </div>
-            <div className="bg-slate-50 dark:bg-[#020617]/50 border border-slate-200 dark:border-white/5 p-4 rounded-lg">
-              <p className="text-slate-500 dark:text-[#888] text-[13px] font-medium mb-1">Conversion Rate</p>
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{metrics.conversionRate}%</p>
-                <div className="bg-red-100 dark:bg-[#EF4444]/10 text-red-500 dark:text-[#EF4444] px-1.5 py-0.5 rounded text-[10px] font-bold">-1.2%</div>
-              </div>
-            </div>
-            <div className="bg-slate-50 dark:bg-[#020617]/50 border border-slate-200 dark:border-white/5 p-4 rounded-lg col-span-2 md:col-span-1">
-              <p className="text-slate-500 dark:text-[#888] text-[13px] font-medium mb-1">Missed Opp. Reduction</p>
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{metrics.missedOpportunityReduction}%</p>
-                <div className="bg-emerald-100 dark:bg-[#10B981]/10 text-emerald-600 dark:text-[#10B981] px-1.5 py-0.5 rounded text-[10px] font-bold">+5.4%</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-[240px] w-full mt-auto relative z-10">
-            {isMounted && (
-              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                <AreaChart data={metrics.volumeActivity} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorCalls" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorEmails" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00E5FF" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#00E5FF" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="name" stroke="#666" fontSize={11} tickLine={false} axisLine={false} dy={5} />
-                  <YAxis stroke="#666" fontSize={11} tickLine={false} axisLine={false} dx={-5} />
-                  <Tooltip 
-                    cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }}
-                    content={<CustomTooltip />}
-                  />
-                  <Area type="monotone" dataKey="calls" name="Revenue Gen (Calls)" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorCalls)" />
-                  <Area type="monotone" dataKey="emails" name="Revenue Prot (Emails)" stroke="#00E5FF" strokeWidth={2} fillOpacity={1} fill="url(#colorEmails)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* 2) “Today’s Wins” section */}
-        <div className="bg-white dark:bg-[#0F172A]/80 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-xl flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
-          <div className="p-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#0F172A]/50">
             <div className="flex items-center gap-2">
-              <Zap className="text-amber-500 dark:text-[#F59E0B]" size={16} />
-              <h3 className="text-slate-900 dark:text-white font-semibold text-base">Today&apos;s Wins</h3>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex bg-slate-100 dark:bg-[#020617] p-1 rounded-lg border border-slate-200 dark:border-white/5">
-                {['All', 'Calls', 'Emails'].map((filter) => (
-                  <button 
-                    key={filter}
-                    onClick={() => setLogFilter(filter)}
-                    className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-md transition-colors ${logFilter === filter ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
-              <span className="relative flex h-2 w-2 ml-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+              <Radio className="text-sky-600 dark:text-[#00E5FF] animate-pulse" size={18} />
+              <h3 className="text-slate-900 dark:text-white font-semibold text-base">Active Voice Agent</h3>
+              <span className="ml-2 flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-[#10B981] bg-emerald-50 dark:bg-[#10B981]/10 border border-emerald-200 dark:border-[#10B981]/20 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Listening
               </span>
             </div>
+            <Link href="/agent-config" className="text-slate-400 hover:text-slate-600 dark:text-[#888] dark:hover:text-white transition-colors">
+              <Settings2 size={18} />
+            </Link>
           </div>
           
-          <ActivityFeed filter={logFilter} />
-        </div>
-      </div>
+          <div className="relative z-10 flex flex-col lg:flex-row gap-4 items-stretch flex-1">
+            
+            <div className="flex-1 w-full bg-slate-50 dark:bg-[#020617]/50 rounded-lg border border-slate-200 dark:border-white/5 p-4 flex flex-col justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 dark:text-[#888] mb-3 uppercase tracking-wider">Live Transcript</p>
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center shrink-0">
+                      <Users size={12} className="text-slate-600 dark:text-[#EDEDED]" />
+                    </div>
+                    <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-lg rounded-tl-none p-3 text-sm text-slate-700 dark:text-[#EDEDED] shadow-sm">
+                      Yes, I would like to schedule a follow-up for next week.
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-sky-100 dark:bg-[#00E5FF]/20 flex items-center justify-center shrink-0">
+                      <Mic size={12} className="text-sky-600 dark:text-[#00E5FF]" />
+                    </div>
+                    <div className="bg-sky-50 dark:bg-[#00E5FF]/5 border border-sky-100 dark:border-[#00E5FF]/10 rounded-lg rounded-tl-none p-3 text-sm text-slate-700 dark:text-white shadow-sm relative">
+                      Perfect, I have that scheduled for Tuesday at 10 AM. Is there anything else you need help with?
+                      <span className="absolute bottom-1 right-2 flex items-center gap-1">
+                         <span className="w-1 h-1 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                         <span className="w-1 h-1 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                         <span className="w-1 h-1 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      {/* 4) Heatmap */}
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#10B981]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100"></div>
-        <div className="flex items-center gap-2 mb-6 relative z-10">
-          <Activity className="text-sky-600 dark:text-[#00E5FF]" size={18} />
-          <h3 className="text-slate-900 dark:text-white font-semibold text-base">System Interaction Heatmap</h3>
-          <span className="ml-2 text-[11px] font-medium text-slate-500 dark:text-[#888] bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 px-2 py-0.5 rounded-full">Weekly Avg</span>
-        </div>
-        <div className="overflow-x-auto relative z-10 pb-2">
-           <Heatmap dateRange={dateRange} />
-        </div>
-      </div>
+            <div className="w-full lg:w-48 xl:w-56 flex flex-col justify-center items-center gap-6 bg-slate-50 dark:bg-[#020617]/50 rounded-lg border border-slate-200 dark:border-white/5 p-6 shrink-0">
+              <div className="relative">
+                <div className="absolute inset-0 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-ping opacity-20"></div>
+                <div className="w-16 h-16 rounded-full bg-sky-100 dark:bg-[#00E5FF]/10 border-4 border-white dark:border-[#0F172A] shadow-xl flex items-center justify-center relative z-10">
+                  <Mic size={24} className="text-sky-600 dark:text-[#00E5FF]" />
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button className="w-10 h-10 rounded-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center text-slate-600 dark:text-[#EDEDED] transition-colors shadow-sm">
+                  <Volume2 size={16} />
+                </button>
+                <button className="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 border border-transparent flex items-center justify-center text-white transition-colors shadow-sm shadow-red-500/20">
+                  <PhoneOff size={16} />
+                </button>
+              </div>
+              
+              <div className="w-full space-y-2 mt-auto">
+                <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-[#888] uppercase tracking-wider">
+                  <span>Signal</span>
+                  <span className="text-emerald-500">Excellent</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full w-[92%] rounded-full"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Quick Actions Sidebar */}
+            <div className="w-full lg:w-56 shrink-0 bg-slate-50 dark:bg-[#020617]/50 rounded-lg border border-slate-200 dark:border-white/5 p-5 flex flex-col">
+               <h4 className="text-xs font-semibold text-slate-500 dark:text-[#888] uppercase tracking-wider mb-4">Quick Actions</h4>
+               <div className="flex flex-col gap-3 flex-1">
+                  <button onClick={() => setTakeoverActive(!takeoverActive)} className={`group flex items-center justify-between p-3 rounded-lg border shadow-sm transition-colors ${takeoverActive ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20' : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'}`}>
+                    <span className={`text-[13px] font-medium transition-colors ${takeoverActive ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-[#EDEDED] group-hover:text-slate-900 dark:group-hover:text-white'}`}>Live Takeover</span>
+                    <div className={`w-7 h-3.5 rounded-full relative transition-colors ${takeoverActive ? 'bg-red-500' : 'bg-slate-200 dark:bg-white/10'}`}><div className={`w-2.5 h-2.5 bg-white rounded-full absolute top-[2px] shadow-sm transition-transform ${takeoverActive ? 'right-[2px]' : 'left-[2px]'}`}></div></div>
+                  </button>
+                  <button onClick={() => setWhisperMode(!whisperMode)} className={`group flex items-center justify-between p-3 rounded-lg border shadow-sm transition-colors ${whisperMode ? 'bg-sky-50 dark:bg-[#00E5FF]/10 border-sky-200 dark:border-[#00E5FF]/20' : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'}`}>
+                    <span className={`text-[13px] font-medium transition-colors ${whisperMode ? 'text-sky-700 dark:text-[#00E5FF]' : 'text-slate-700 dark:text-[#EDEDED] group-hover:text-slate-900 dark:group-hover:text-white'}`}>Whisper Mode</span>
+                    <div className={`w-7 h-3.5 rounded-full relative transition-colors ${whisperMode ? 'bg-sky-500 dark:bg-[#00E5FF]' : 'bg-slate-200 dark:bg-white/10'}`}><div className={`w-2.5 h-2.5 bg-white rounded-full absolute top-[2px] shadow-sm transition-transform ${whisperMode ? 'right-[2px]' : 'left-[2px]'}`}></div></div>
+                  </button>
+                  {whisperMode && (
+                    <div className="flex items-center gap-2 mt-1 animate-in fade-in slide-in-from-top-2">
+                      <input 
+                        type="text" 
+                        value={whisperText}
+                        onChange={(e) => setWhisperText(e.target.value)}
+                        placeholder="Prompt AI..." 
+                        className="w-full bg-white dark:bg-[#020617] border border-sky-200 dark:border-[#00E5FF]/30 text-slate-900 dark:text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-sky-500 transition-colors"
+                      />
+                      <button className="w-8 h-8 flex items-center justify-center shrink-0 bg-sky-500 dark:bg-[#00E5FF] text-white dark:text-[#020617] rounded-lg hover:opacity-90 transition-opacity">
+                        <Send size={14} />
+                      </button>
+                    </div>
+                  )}
+                  <button className="group flex items-center justify-between p-3 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 shadow-sm hover:border-slate-300 dark:hover:border-white/10 transition-colors mt-auto">
+                    <span className="text-[13px] font-medium text-slate-700 dark:text-[#EDEDED] group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Do Not Disturb</span>
+                    <div className="w-7 h-3.5 bg-slate-200 dark:bg-white/10 rounded-full relative transition-colors"><div className="w-2.5 h-2.5 bg-white rounded-full absolute top-[2px] left-[2px] shadow-sm transition-transform"></div></div>
+                  </button>
+               </div>
+               
+               <div className="mt-6 pt-4 border-t border-slate-200 dark:border-white/5 w-full">
+                 <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-[#888] uppercase tracking-wider mb-2">
+                   <span>Voice Minutes</span>
+                   <span className="text-slate-700 dark:text-[#EDEDED]">120 / 500</span>
+                 </div>
+                 <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                   <div className="bg-sky-500 dark:bg-[#00E5FF] h-full w-[24%] rounded-full"></div>
+                 </div>
+               </div>
+            </div>
 
-      {/* 5) Active systems section */}
+          </div>
+        </div>
+
+        {/* 5) Active systems section */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -375,9 +395,41 @@ export default function DashboardOverview() {
           })}
         </div>
       </div>
+
+      {/* 2) “Today’s Wins” section */}
+        <div className="bg-white dark:bg-[#0F172A]/80 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-xl flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 h-full">
+          <div className="p-6 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#0F172A]/50">
+            <div className="flex items-center gap-2">
+              <Zap className="text-amber-500 dark:text-[#F59E0B]" size={16} />
+              <h3 className="text-slate-900 dark:text-white font-semibold text-base">Today&apos;s Wins</h3>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="flex bg-slate-100 dark:bg-[#020617] p-1 rounded-lg border border-slate-200 dark:border-white/5">
+                {['All', 'Calls', 'Emails'].map((filter) => (
+                  <button 
+                    key={filter}
+                    onClick={() => setLogFilter(filter)}
+                    className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-md transition-colors ${logFilter === filter ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+              <span className="relative flex h-2 w-2 ml-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+              </span>
+            </div>
+          </div>
+          
+          <ActivityFeed filter={logFilter} />
+        </div>
+      </div>
     </div>
   );
 }
+
 
 interface StatCardProps {
   label: string;
@@ -396,7 +448,7 @@ function StatCard({ label, value, icon: Icon, trend, trendColor, subtitle, color
   const strokeColor = trendColor?.includes('red') ? '#EF4444' : '#10B981';
 
   return (
-    <div className={`border rounded-xl p-5 relative overflow-hidden transition-all duration-300 group hover:border-sky-300 dark:hover:border-sky-500/30 hover:shadow-lg hover:-translate-y-1 ${warningClasses}`}>
+    <div className={`border rounded-xl p-6 relative overflow-hidden transition-all duration-300 group hover:border-sky-300 dark:hover:border-sky-500/30 hover:shadow-lg hover:-translate-y-1 flex flex-col justify-center h-full ${warningClasses}`}>
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-2">
           <Icon size={16} className={isWarning ? 'text-red-500 dark:text-[#EF4444]' : color} />
@@ -404,6 +456,7 @@ function StatCard({ label, value, icon: Icon, trend, trendColor, subtitle, color
         </div>
         {isWarning && <AlertTriangle size={16} className="text-red-500 dark:text-[#EF4444] animate-pulse" />}
       </div>
+
       <div className="flex items-end gap-2 relative z-10">
         <p className="text-[28px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">{value}</p>
         {trend && (
@@ -412,6 +465,7 @@ function StatCard({ label, value, icon: Icon, trend, trendColor, subtitle, color
           </span>
         )}
       </div>
+
       {subtitle && (
         <p className={`text-[12px] mt-2 font-medium relative z-10 ${isWarning ? 'text-red-500 dark:text-[#EF4444]' : 'text-slate-500 dark:text-[#888]'}`}>{subtitle}</p>
       )}
@@ -434,81 +488,4 @@ function StatCard({ label, value, icon: Icon, trend, trendColor, subtitle, color
       )}
     </div>
   );
-}
-
-function Heatmap({ dateRange }: { dateRange?: string }) {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const hours = Array.from({length: 24}, (_, i) => i);
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const getIntensity = (day: string, hour: number) => {
-    if (!mounted) return 0;
-    const rangeMod = dateRange === '24h' ? 1 : dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-    const seed = day.charCodeAt(0) + hour * 13 + rangeMod * 42;
-    const pseudoRandom = (Math.sin(seed) + 1) / 2;
-    if (day === 'Sat' || day === 'Sun') return pseudoRandom > 0.8 ? 1 : 0;
-    if (hour >= 8 && hour <= 18) {
-       return Math.floor(pseudoRandom * 4) + 1;
-    }
-    return pseudoRandom > 0.7 ? 1 : 0;
-  }
-
-  const getColor = (intensity: number) => {
-    switch(intensity) {
-      case 0: return 'bg-slate-50 dark:bg-[#020617] border-slate-200 dark:border-white/5';
-      case 1: return 'bg-emerald-200 dark:bg-[#10B981]/20 border-[#10B981]/10';
-      case 2: return 'bg-[#10B981]/40 border-[#10B981]/20';
-      case 3: return 'bg-[#10B981]/70 border-[#10B981]/30';
-      case 4: return 'bg-[#10B981] border-[#10B981] shadow-[0_0_10px_rgba(16,185,129,0.3)]';
-      default: return 'bg-slate-50 dark:bg-[#020617] border-slate-200 dark:border-white/5';
-    }
-  }
-
-  return (
-    <div className="min-w-[700px] select-none">
-      <div className="flex mb-2">
-        <div className="w-12"></div>
-        {hours.map(h => (
-          <div key={h} className="flex-1 text-[10px] text-slate-400 dark:text-[#666] text-center flex justify-center">
-            {h % 2 === 0 ? (h === 0 ? '12A' : h < 12 ? `${h}A` : h === 12 ? '12P' : `${h-12}P`) : ''}
-          </div>
-        ))}
-      </div>
-      <div className="space-y-1.5">
-        {days.map(day => (
-          <div key={day} className="flex items-center">
-            <div className="w-12 text-[11px] text-slate-500 dark:text-[#888] font-medium">{day}</div>
-            <div className="flex-1 flex gap-1">
-              {hours.map(hour => {
-                const intensity = getIntensity(day, hour);
-                return (
-                  <div 
-                    key={`${day}-${hour}`}
-                    className={`flex-1 aspect-[2/1] rounded-[2px] border transition-colors hover:border-white/40 ${getColor(intensity)}`}
-                    title={`${day} @ ${hour}:00 - Activity level: ${intensity}`}
-                  ></div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-end gap-2 mt-4 text-[11px] text-slate-500 dark:text-[#888]">
-        <span>Less</span>
-        <div className="flex gap-1">
-           <div className="w-4 h-2 rounded-[2px] bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5"></div>
-           <div className="w-4 h-2 rounded-[2px] bg-emerald-200 dark:bg-[#10B981]/20"></div>
-           <div className="w-4 h-2 rounded-[2px] bg-[#10B981]/40"></div>
-           <div className="w-4 h-2 rounded-[2px] bg-[#10B981]/70"></div>
-           <div className="w-4 h-2 rounded-[2px] bg-[#10B981]"></div>
-        </div>
-        <span>More</span>
-      </div>
-    </div>
-  )
 }

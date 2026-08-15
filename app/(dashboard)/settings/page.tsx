@@ -1,10 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { ShieldAlert, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, CheckCircle2, Palette, Moon, Sun, Monitor } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 export default function SettingsPage() {
   const [acknowledged, setAcknowledged] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleAcknowledge = () => {
     setAcknowledged(true);
@@ -48,6 +50,57 @@ export default function SettingsPage() {
           <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
             Save Profile
           </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 md:p-8 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+          <Palette size={20} className="text-sky-500" />
+          Appearance & Theme
+        </h2>
+        <div className="space-y-6 max-w-md">
+          <div>
+            <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888] mb-3">Color Scheme</label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => setTheme('light')}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'light' ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+              >
+                <Sun size={24} className={`mb-2 ${theme === 'light' ? 'text-sky-600' : 'text-slate-400'}`} />
+                <span className={`text-sm font-medium ${theme === 'light' ? 'text-sky-900' : 'text-slate-600'}`}>Light</span>
+              </button>
+              
+              <button
+                onClick={() => setTheme('dark')}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-sky-500 bg-sky-900/20' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-900'}`}
+              >
+                <Moon size={24} className={`mb-2 ${theme === 'dark' ? 'text-sky-400' : 'text-slate-400'}`} />
+                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-sky-100' : 'text-slate-300'}`}>Dark</span>
+              </button>
+
+              <button
+                onClick={() => setTheme('system')}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'system' ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/20' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-100 dark:bg-slate-800'}`}
+              >
+                <Monitor size={24} className={`mb-2 ${theme === 'system' ? 'text-sky-500' : 'text-slate-500'}`} />
+                <span className={`text-sm font-medium ${theme === 'system' ? 'text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'}`}>System</span>
+              </button>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888] mb-2">Primary Accent Color</label>
+            <div className="flex gap-3">
+              {['#00E5FF', '#3B82F6', '#8B5CF6', '#10B981', '#F43F5E'].map((color) => (
+                <button
+                  key={color}
+                  className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-900 shadow-sm transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Book, Database, Plus, Search, FileText, Globe, X } from "lucide-react";
+import { Book, Database, Plus, Search, FileText, Globe, X, MessageSquareQuote } from "lucide-react";
 import { toast } from "sonner";
 import { Select } from "@/components/ui/Select";
 
@@ -20,6 +20,8 @@ export default function KnowledgeBasePage() {
     title: "",
     type: "pdf",
     url: "",
+    qa_question: "",
+    qa_answer: "",
   });
 
   const handleAddSource = () => {
@@ -32,10 +34,10 @@ export default function KnowledgeBasePage() {
       id: sources.length + 1,
       title: newSource.title,
       type: newSource.type,
-      size: newSource.type === 'pdf' ? '120KB' : newSource.url || 'website.com',
+      size: newSource.type === 'pdf' ? '120KB' : newSource.type === 'qa' ? '1 Pair' : newSource.url || 'website.com',
       updated: 'Just now',
       systems: 0,
-      icon: newSource.type === 'pdf' ? FileText : newSource.type === 'web' ? Globe : Database,
+      icon: newSource.type === 'pdf' ? FileText : newSource.type === 'web' ? Globe : newSource.type === 'qa' ? MessageSquareQuote : Database,
     };
 
     setSources([newSrc, ...sources]);
@@ -45,6 +47,8 @@ export default function KnowledgeBasePage() {
       title: "",
       type: "pdf",
       url: "",
+      qa_question: "",
+      qa_answer: "",
     });
   };
 
@@ -108,6 +112,18 @@ export default function KnowledgeBasePage() {
                   </div>
                 </div>
               )}
+              {newSource.type === 'qa' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Question / Prompt <span className="text-rose-500">*</span></label>
+                    <input type="text" value={newSource.qa_question} onChange={(e) => setNewSource({ ...newSource, qa_question: e.target.value })} placeholder="e.g. What are the store hours?" className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00E5FF]" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Answer / Response <span className="text-rose-500">*</span></label>
+                    <textarea rows={3} value={newSource.qa_answer} onChange={(e) => setNewSource({ ...newSource, qa_answer: e.target.value })} placeholder="e.g. We are open Monday to Friday from 9 AM to 5 PM." className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00E5FF] resize-none" />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="p-5 border-t border-slate-200 dark:border-white/5 flex justify-end gap-3">
               <button onClick={() => setShowAddSource(false)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-[#888] hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
@@ -130,7 +146,7 @@ export default function KnowledgeBasePage() {
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1.5">{source.title}</h3>
               <p className="text-[13px] text-slate-500 dark:text-[#888] mb-6">
-                {source.type === 'pdf' ? 'PDF' : source.type === 'web' ? 'Web' : 'Database'} &bull; {source.size} &bull; {source.type === 'pdf' ? 'Uploaded' : 'Synced'} {source.updated}
+                {source.type === 'pdf' ? 'PDF' : source.type === 'web' ? 'Web' : source.type === 'qa' ? 'Q&A' : 'Database'} &bull; {source.size} &bull; {source.type === 'pdf' ? 'Uploaded' : 'Synced'} {source.updated}
               </p>
             </div>
             <div className="text-[12px] text-slate-400 dark:text-[#666] font-medium flex items-center justify-between border-t border-slate-200 dark:border-white/5 pt-4">

@@ -11,11 +11,28 @@ export async function getAgentConfig() {
     return { error: "Not authenticated" };
   }
 
-  const { data: agentConfig, error: agentError } = await supabase
+  // Try to select with new columns. If it fails (columns don't exist yet), fallback.
+  let agentConfig = null;
+  let agentError = null;
+  
+  const res = await supabase
     .from("agent_configs")
-    .select("id, organization_name, business_hours, temperature")
+    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email")
     .eq("user_id", user.id)
     .single();
+    
+  if (res.error && res.error.message.includes("does not exist")) {
+    const fallbackRes = await supabase
+      .from("agent_configs")
+      .select("id, organization_name, business_hours, temperature")
+      .eq("user_id", user.id)
+      .single();
+    agentConfig = fallbackRes.data;
+    agentError = fallbackRes.error;
+  } else {
+    agentConfig = res.data;
+    agentError = res.error;
+  }
 
   const { data: voiceSettings, error: voiceError } = await supabase
     .from("user_voice_settings")
@@ -44,6 +61,9 @@ export async function updateAgentConfig(formData: FormData) {
   const business_hours = formData.get("business_hours") as string;
   const temperatureStr = formData.get("temperature") as string;
   
+  const voice_minute_limit_alert = formData.get("voice_minute_limit_alert") === "on" || formData.get("voice_minute_limit_alert") === "true";
+  const alert_email = formData.get("alert_email") as string;
+  
   let temperature = 0.7; // default
   if (temperatureStr) {
     temperature = parseFloat(temperatureStr);
@@ -59,27 +79,42 @@ export async function updateAgentConfig(formData: FormData) {
     .eq("user_id", user.id)
     .single();
 
+  let updatePayload: any = {
+    organization_name,
+    business_hours,
+    temperature,
+    updated_at: new Date().toISOString(),
+  };
+
   if (existingAgentConfig) {
-    const { error } = await supabase
+    const res = await supabase
       .from("agent_configs")
-      .update({
-        organization_name,
-        business_hours,
-        temperature,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ ...updatePayload, voice_minute_limit_alert, alert_email })
       .eq("id", existingAgentConfig.id);
-    if (error) return { error: error.message };
+      
+    if (res.error && res.error.message.includes("does not exist")) {
+      const fallbackRes = await supabase
+        .from("agent_configs")
+        .update(updatePayload)
+        .eq("id", existingAgentConfig.id);
+      if (fallbackRes.error) return { error: fallbackRes.error.message };
+    } else if (res.error) {
+      return { error: res.error.message };
+    }
   } else {
-    const { error } = await supabase
+    updatePayload.user_id = user.id;
+    const res = await supabase
       .from("agent_configs")
-      .insert({
-        user_id: user.id,
-        organization_name,
-        business_hours,
-        temperature,
-      });
-    if (error) return { error: error.message };
+      .insert({ ...updatePayload, voice_minute_limit_alert, alert_email });
+      
+    if (res.error && res.error.message.includes("does not exist")) {
+      const fallbackRes = await supabase
+        .from("agent_configs")
+        .insert(updatePayload);
+      if (fallbackRes.error) return { error: fallbackRes.error.message };
+    } else if (res.error) {
+      return { error: res.error.message };
+    }
   }
 
   // Try to update user_voice_settings

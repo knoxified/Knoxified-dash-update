@@ -1,307 +1,550 @@
 "use client";
 
-import { useState } from "react";
-import { Select } from "@/components/ui/Select";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Play, Settings, Database, Search, ArrowRight } from "lucide-react";
-import { MOCK_LEADS_DATA } from "./mockData";
-import { useRouter } from "next/navigation";
+import { Play, Search, ChevronDown, ChevronRight } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+const MOCK_RESPONSE = [
+  {
+    "leads": [
+      {
+        "fullName": "Chester Hurtado",
+        "firstName": "Chester",
+        "lastName": "Hurtado",
+        "jobTitle": "CFO",
+        "companyName": "Tradeworks",
+        "companyWebsite": "https://tradeworksny.com, tradeworks.agency, tradeworksllc.com",
+        "companyIndustry": "Business services, Trade exchange",
+        "companySize": "51-200",
+        "companyFounded": "2000",
+        "companyLinkedin": "https://linkedin.com/in/tradeworksinc, linkedin.com/company/tradetechnologies",
+        "companyTwitter": "",
+        "companyFacebook": "",
+        "linkedinPersonal": "https://www.linkedin.com/in/chesterhurtado",
+        "twitterUrl": "",
+        "twitterHandle": "",
+        "facebookUrl": "",
+        "personLocality": "San Francisco Bay Area",
+        "personRegion": "",
+        "personCountry": "US",
+        "sourceUrl": "https://www.linkedin.com/in/chesterhurtado",
+        "department": "Finance",
+        "seniority": "CFO",
+        "seniorityLevels": [
+          "cfo"
+        ],
+        "skills": [
+          "leadership",
+          "financial management"
+        ],
+        "interests": [
+          "swimming",
+          "open-water races"
+        ],
+        "jobTenureStart": "",
+        "headquarters": "Kings Park, NY",
+        "revenue": "",
+        "specialties": "Business-to-business barter exchange, automation for trades",
+        "technologies": "",
+        "companyDescription": "TradeWorks is a business-to-business network where members trade their product and services for other product and services using trade dollars rather than cash. TradeWorks is a membership based barter exchange that helps businesses increase sales and conserve cash.",
+        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
+        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
+        "emailAvailable": false,
+        "phoneAvailable": false
+      },
+      {
+        "fullName": "Sumeet Gagneja",
+        "firstName": "Sumeet",
+        "lastName": "Gagneja",
+        "jobTitle": "CFO",
+        "companyName": "Rambus",
+        "companyWebsite": "https://rambus.com",
+        "companyIndustry": "semiconductor manufacturing",
+        "companySize": "",
+        "companyFounded": "",
+        "companyLinkedin": "https://linkedin.com",
+        "companyTwitter": "",
+        "companyFacebook": "",
+        "linkedinPersonal": "https://www.linkedin.com/in/gagneja",
+        "twitterUrl": "",
+        "twitterHandle": "",
+        "facebookUrl": "",
+        "personLocality": "San Jose",
+        "personRegion": "California",
+        "personCountry": "United States",
+        "sourceUrl": "https://www.linkedin.com/in/gagneja",
+        "department": "",
+        "seniority": "CFO",
+        "seniorityLevels": [
+          "cfo"
+        ],
+        "skills": [
+          "strategic",
+          "business partner",
+          "finance"
+        ],
+        "interests": [
+          "sports"
+        ],
+        "jobTenureStart": "",
+        "headquarters": "San Jose, California",
+        "revenue": "$708M",
+        "specialties": "semiconductor manufacturing, memory, interfaces, security, emerging technologies",
+        "technologies": "architecture licenses, IP cores, chips, software, services",
+        "companyDescription": "Rambus creates innovative hardware, software, and services that drive technology advancements from the data center to the mobile edge.",
+        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
+        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
+        "emailAvailable": false,
+        "phoneAvailable": false
+      },
+      {
+        "fullName": "Shawn Livermore",
+        "firstName": "Shawn",
+        "lastName": "Livermore",
+        "jobTitle": "Fractional CTO, Software Architect, AI Strategist, and Startup Founder",
+        "companyName": "Carvana",
+        "companyWebsite": "https://carvana.com",
+        "companyIndustry": "E-commerce",
+        "companySize": "10,001+ employees",
+        "companyFounded": "2012",
+        "companyLinkedin": "https://www.linkedin.com/company/carvana",
+        "companyTwitter": "https://@Carvana",
+        "companyFacebook": "",
+        "linkedinPersonal": "https://www.linkedin.com/in/shawnlivermore",
+        "twitterUrl": "",
+        "twitterHandle": "",
+        "facebookUrl": "",
+        "personLocality": "Orange County",
+        "personRegion": "California",
+        "personCountry": "United States",
+        "sourceUrl": "https://www.linkedin.com/in/shawnlivermore",
+        "department": "",
+        "seniority": "",
+        "seniorityLevels": [],
+        "skills": [
+          "software architecture",
+          "AI strategy"
+        ],
+        "interests": [],
+        "jobTenureStart": "",
+        "headquarters": "Tempe, Arizona, U.S.",
+        "revenue": "US$20.3 billion (2025)",
+        "specialties": "Buying and selling used vehicles online",
+        "technologies": "Technology-enabled marketplace",
+        "companyDescription": "Carvana is an American online car retailer based in Tempe, Arizona. It allows customers to browse a nationwide inventory and purchase a vehicle from the comfort of their home entirely online.",
+        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
+        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
+        "emailAvailable": false,
+        "phoneAvailable": false
+      },
+      {
+        "fullName": "Karan D.",
+        "firstName": "Karan",
+        "lastName": "D.",
+        "jobTitle": "",
+        "companyName": "SecureAuth Corporation",
+        "companyWebsite": "https://www.secureauth.com/",
+        "companyIndustry": "Security Software; Software",
+        "companySize": "201-500",
+        "companyFounded": "2005",
+        "companyLinkedin": "https://www.linkedin.com/company/secureauth",
+        "companyTwitter": "",
+        "companyFacebook": "",
+        "linkedinPersonal": "https://www.linkedin.com/in/karandua1",
+        "twitterUrl": "",
+        "twitterHandle": "",
+        "facebookUrl": "",
+        "personLocality": "Orange County",
+        "personRegion": "California",
+        "personCountry": "United States",
+        "sourceUrl": "https://www.linkedin.com/in/karandua1",
+        "department": "",
+        "seniority": "",
+        "seniorityLevels": [],
+        "skills": [],
+        "interests": [],
+        "jobTenureStart": "",
+        "headquarters": "Irvine, California, United States",
+        "revenue": "$40.3 Million",
+        "specialties": [
+          "Single Sign On",
+          "Adaptive Access Controls",
+          "Identity Management",
+          "Cloud Security",
+          "Access Management",
+          "Mobile App Security",
+          "Security Token Service",
+          "SAML",
+          "enterprise openid",
+          "web authentication",
+          "federated id",
+          "saas authentication",
+          "Adaptive Authentication",
+          "identity governance and administration"
+        ],
+        "technologies": [
+          "AI-driven Private Authority Platform"
+        ],
+        "companyDescription": "SecureAuth offers the leading next-gen access management & authentication that enables the most secure and passwordless, continuous authentication experience for employees, partners, and customers.",
+        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
+        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
+        "emailAvailable": false,
+        "phoneAvailable": false
+      },
+      {
+        "fullName": "Bruce Felt",
+        "firstName": "Bruce",
+        "lastName": "Felt",
+        "jobTitle": "Chief Financial Officer",
+        "companyName": "Chainalysis",
+        "companyWebsite": "https://chainalysis.com",
+        "companyIndustry": "Software Development",
+        "companySize": "501-1000",
+        "companyFounded": "",
+        "companyLinkedin": "https://www.linkedin.com/company/chainalysis",
+        "companyTwitter": "",
+        "companyFacebook": "",
+        "linkedinPersonal": "https://www.linkedin.com/in/bruce-felt-383b869",
+        "twitterUrl": "",
+        "twitterHandle": "",
+        "facebookUrl": "",
+        "personLocality": "Menlo Park",
+        "personRegion": "California",
+        "personCountry": "United States",
+        "sourceUrl": "https://www.linkedin.com/in/bruce-felt-383b869",
+        "department": "Finance",
+        "seniority": "CFO",
+        "seniorityLevels": [
+          "cfo"
+        ],
+        "skills": [
+          "finance",
+          "strategy",
+          "leadership"
+        ],
+        "interests": [
+          "sports",
+          "education"
+        ],
+        "jobTenureStart": "",
+        "headquarters": "New York, New York",
+        "revenue": "$537M",
+        "specialties": "Software Development, Cryptocurrency Investigation and Compliance",
+        "technologies": "Software solutions for cryptocurrency investigations and compliance",
+        "companyDescription": "Chainalysis offers cryptocurrency investigation and compliance solutions to global law enforcement agencies, regulators, and businesses as they work together to fight illicit cryptocurrency activity.",
+        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
+        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
+        "emailAvailable": false,
+        "phoneAvailable": false
+      }
+    ],
+    "leadsCount": 5,
+    "planTier": "trial",
+    "creditsCharged": 10
+  }
+];
 
 export default function LeadReachBoard() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     country: "united states",
     state: "california",
-    seniority: "cxo",
+    seniority: "CFO",
     industry: "software development",
-    size: "10"
+    leadCount: "5"
   });
-
-  const [results, setResults] = useState<any[] | null>(null);
+  
+  const [userId, setUserId] = useState<string | null>(null);
+  const [results, setResults] = useState<any | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedLead, setExpandedLead] = useState<number | null>(null);
+  
+  const supabase = createClient();
 
-  const handleRun = () => {
-    setIsSearching(true);
-    toast.info("Running LeadReach search...");
-    setTimeout(() => {
-      const sizeToFetch = parseInt(formData.size);
-      const outputData = MOCK_LEADS_DATA.slice(0, sizeToFetch);
-      
-      setResults(outputData);
-      setIsSearching(false);
-      toast.success(`Found ${outputData.length} leads!`);
-    }, 1500);
-  };
-
-  const handlePushToMailCraft = () => {
-    if (results) {
-      sessionStorage.setItem('mailcraft_leads', JSON.stringify(results));
-      toast.success("Leads exported! Redirecting to MailCraft...");
-      router.push('/automations/mailcraft');
+  useEffect(() => {
+    async function fetchUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
     }
-  };
+    fetchUser();
+  }, [supabase.auth]);
 
-  const filteredResults = results ? results.filter(lead => 
-    lead.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    lead.companyName?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) : null;
+  const handleRun = async () => {
+    setIsSearching(true);
+    setResults(null);
+    
+    // The structured payload including userId from session
+    const payload = {
+      country: formData.country,
+      state: formData.state,
+      seniority: formData.seniority,
+      industry: formData.industry,
+      userId: userId || "ad409f1e-7150-4ed1-a4d1-ab5d523ab265",
+      leadCount: parseInt(formData.leadCount)
+    };
+
+    console.log("Sending Webhook Payload:", payload);
+    
+    toast.info("Sending payload to LeadReach webhook...");
+    
+    // Simulate API webhook delay
+    setTimeout(() => {
+      setResults(MOCK_RESPONSE[0]);
+      setIsSearching(false);
+      toast.success(`Successfully enriched ${MOCK_RESPONSE[0].leadsCount} leads!`);
+    }, 2000);
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6">
-             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-slate-900 dark:text-white font-semibold text-base flex items-center gap-2">
-                  <Settings size={18} className="text-sky-600 dark:text-[#00E5FF]" /> Query Parameters
-                </h3>
-             </div>
-             
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1">Country</label>
-                  <select 
-                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                    value={formData.country}
-                    onChange={(e) => setFormData({...formData, country: e.target.value})}
-                    className="appearance-none pr-8 cursor-pointer w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white rounded-lg px-3 py-2 outline-none focus:border-sky-500"
-                  >
-                    <option value="united states">United States</option>
-                    <option value="united kingdom">United Kingdom</option>
-                    <option value="canada">Canada</option>
-                    <option value="australia">Australia</option>
-                  </select>
+      <div className="lg:col-span-1 space-y-6">
+        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-6 text-lg">
+            <Search className="w-5 h-5 text-sky-500" />
+            LeadReach Configuration
+          </h3>
+          
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Country</label>
+              <div className="relative group">
+                <select 
+                  value={formData.country}
+                  onChange={(e) => setFormData({...formData, country: e.target.value})}
+                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                >
+                  <option value="united states">United States</option>
+                  <option value="united kingdom">United Kingdom</option>
+                  <option value="canada">Canada</option>
+                  <option value="australia">Australia</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
+                  <ChevronDown className="w-4 h-4" />
                 </div>
-                <div>
-                  <label className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1">State</label>
-                  <select 
-                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                    value={formData.state}
-                    onChange={(e) => setFormData({...formData, state: e.target.value})}
-                    className="appearance-none pr-8 cursor-pointer w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white rounded-lg px-3 py-2 outline-none focus:border-sky-500"
-                  >
-                    <option value="california">California</option>
-                    <option value="new york">New York</option>
-                    <option value="texas">Texas</option>
-                    <option value="florida">Florida</option>
-                  </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">State / Region</label>
+              <div className="relative group">
+                <select 
+                  value={formData.state}
+                  onChange={(e) => setFormData({...formData, state: e.target.value})}
+                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                >
+                  <option value="california">California</option>
+                  <option value="new york">New York</option>
+                  <option value="texas">Texas</option>
+                  <option value="florida">Florida</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
+                  <ChevronDown className="w-4 h-4" />
                 </div>
-                <div>
-                  <label className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1">Seniority</label>
-                  <select 
-                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                    value={formData.seniority}
-                    onChange={(e) => setFormData({...formData, seniority: e.target.value})}
-                    className="appearance-none pr-8 cursor-pointer w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white rounded-lg px-3 py-2 outline-none focus:border-sky-500"
-                  >
-                    <option value="cxo">CXO / C-Level</option>
-                    <option value="vp">Vice President</option>
-                    <option value="director">Director</option>
-                    <option value="manager">Manager</option>
-                  </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Target Seniority</label>
+              <div className="relative group">
+                <select 
+                  value={formData.seniority}
+                  onChange={(e) => setFormData({...formData, seniority: e.target.value})}
+                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                >
+                  <option value="CEO">CEO</option>
+                  <option value="CFO">CFO</option>
+                  <option value="CTO">CTO</option>
+                  <option value="VP">VP Level</option>
+                  <option value="Director">Director Level</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
+                  <ChevronDown className="w-4 h-4" />
                 </div>
-                <div>
-                  <label className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1">Industry</label>
-                  <select 
-                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                    value={formData.industry}
-                    onChange={(e) => setFormData({...formData, industry: e.target.value})}
-                    className="appearance-none pr-8 cursor-pointer w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white rounded-lg px-3 py-2 outline-none focus:border-sky-500"
-                  >
-                    <option value="software development">Software Development</option>
-                    <option value="retail">Retail</option>
-                    <option value="financial services">Financial Services</option>
-                    <option value="healthcare">Healthcare</option>
-                  </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Industry</label>
+              <div className="relative group">
+                <select 
+                  value={formData.industry}
+                  onChange={(e) => setFormData({...formData, industry: e.target.value})}
+                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                >
+                  <option value="software development">Software Development</option>
+                  <option value="financial services">Financial Services</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="ecommerce">E-commerce</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
+                  <ChevronDown className="w-4 h-4" />
                 </div>
-                <div>
-                  <label className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1">Result Size</label>
-                  <select 
-                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                    value={formData.size}
-                    onChange={(e) => setFormData({...formData, size: e.target.value})}
-                    className="appearance-none pr-8 cursor-pointer w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white rounded-lg px-3 py-2 outline-none focus:border-sky-500"
-                  >
-                    <option value="5">5 Leads</option>
-                    <option value="10">10 Leads</option>
-                    <option value="15">15 Leads</option>
-                    <option value="20">20 Leads</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1">Consent Source <span className="text-rose-500">*</span></label>
-                  <Select 
-                    value=""
-                    onChange={() => {}}
-                    required
-                    options={[
-                      { value: "b2b", label: "B2B Legitimate Interest" },
-                      { value: "purchased", label: "Purchased/Opt-In List" }
-                    ]}
-                  />
-                  <p className="text-[10px] text-slate-500 mt-1">Required for compliance tracking.</p>
-                </div>
-             </div>
-             
-             <button 
-               onClick={handleRun}
-               disabled={isSearching}
-               className="mt-6 w-full bg-sky-600 hover:bg-sky-700 dark:bg-[#00E5FF] dark:text-[#020617] dark:hover:bg-[#00E5FF]/90 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
-             >
-                {isSearching ? (
-                  <div className="w-4 h-4 border-2 border-slate-900/20 dark:border-white/20 border-t-slate-900 dark:border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <Play size={16} />
-                )}
-                {isSearching ? 'Running...' : 'Execute Workflow'}
-             </button>
-          </div>
-        </div>
-        
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 h-full min-h-[500px] flex flex-col">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <h3 className="text-slate-900 dark:text-white font-semibold text-base flex items-center gap-2">
-                <Database size={18} className="text-emerald-600 dark:text-[#10B981]" /> Execution Results
-              </h3>
-              
-              <div className="flex items-center gap-4">
-                {results && (
-                  <>
-                    <button 
-                      onClick={handlePushToMailCraft}
-                      className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                    >
-                      Push to MailCraft <ArrowRight size={14} />
-                    </button>
-                    <div className="relative">
-                      <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input 
-                        type="text" 
-                        placeholder="Filter leads..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-8 pr-3 py-1.5 text-sm bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 rounded-lg outline-none focus:border-sky-500 w-full sm:w-48 text-slate-900 dark:text-white"
-                      />
-                    </div>
-                  </>
-                )}
-                {filteredResults && (
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-[#10B981] bg-emerald-50 dark:bg-[#10B981]/10 px-2 py-1 rounded-md whitespace-nowrap">
-                    {filteredResults.length} found
-                  </span>
-                )}
               </div>
             </div>
             
-            <div className="flex-1 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 rounded-lg p-4 overflow-auto">
-              {!results && !isSearching && (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-[#666]">
-                  <Database size={32} className="mb-3 opacity-50" />
-                  <p className="text-sm">Run the workflow to see enriched lead data here.</p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lead Count Limit</label>
+              <div className="relative group">
+                <select 
+                  value={formData.leadCount}
+                  onChange={(e) => setFormData({...formData, leadCount: e.target.value})}
+                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                >
+                  <option value="1">1 Lead</option>
+                  <option value="5">5 Leads</option>
+                  <option value="10">10 Leads</option>
+                  <option value="25">25 Leads</option>
+                  <option value="50">50 Leads</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
+                  <ChevronDown className="w-4 h-4" />
                 </div>
-              )}
-              
-              {isSearching && (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-[#666] space-y-4">
-                  <div className="w-8 h-8 border-2 border-sky-600/20 dark:border-[#00E5FF]/20 border-t-sky-600 dark:border-t-[#00E5FF] rounded-full animate-spin"></div>
-                  <p className="text-sm animate-pulse">Querying external databases...</p>
-                </div>
-              )}
-              
-              {filteredResults && !isSearching && (
-                <div className="space-y-4">
-                  {filteredResults.map((lead, idx) => (
-                    <div key={idx} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-lg p-4 hover:border-slate-300 dark:hover:border-white/10 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-semibold text-slate-900 dark:text-white capitalize text-lg">{lead.fullName}</h4>
-                          <p className="text-sm text-sky-600 dark:text-[#00E5FF] font-medium mb-3">{lead.jobTitle} @ {lead.companyName}</p>
-                        </div>
-                        <span className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded whitespace-nowrap">
-                          {lead.companySize} employees
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-xs mb-4">
-                        <div>
-                          <span className="text-slate-400 dark:text-[#666] block mb-0.5">Industry</span>
-                          <span className="text-slate-700 dark:text-slate-300 capitalize">{lead.companyIndustry}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-[#666] block mb-0.5">Location</span>
-                          <span className="text-slate-700 dark:text-slate-300 capitalize truncate block" title={lead.companyLocation}>{lead.companyLocation}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-[#666] block mb-0.5">Website</span>
-                          <span className="text-slate-700 dark:text-slate-300">{lead.companyWebsite || 'N/A'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-[#666] block mb-0.5">Founded</span>
-                          <span className="text-slate-700 dark:text-slate-300">{lead.companyFounded || 'N/A'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-[#666] block mb-0.5">Seniority</span>
-                          <span className="text-slate-700 dark:text-slate-300 uppercase">{lead.seniorityLabel || 'N/A'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-[#666] block mb-0.5">Tenure Start</span>
-                          <span className="text-slate-700 dark:text-slate-300">{lead.jobTenureStart || 'N/A'}</span>
-                        </div>
-                      </div>
-
-                      <details className="text-xs group/details border-t border-slate-200 dark:border-white/5 pt-3">
-                        <summary className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer font-medium outline-none transition-colors">
-                          View All Data Points
-                        </summary>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 mt-4">
-                           <div>
-                             <span className="text-slate-400 dark:text-[#666] block mb-1.5 font-medium">Social Links</span>
-                             <div className="flex flex-wrap gap-2">
-                               {lead.linkedinPersonal && <a href={`https://${lead.linkedinPersonal}`} target="_blank" className="text-sky-600 dark:text-sky-400 hover:underline">LinkedIn</a>}
-                               {lead.twitterUrl && <a href={`https://${lead.twitterUrl}`} target="_blank" className="text-sky-600 dark:text-sky-400 hover:underline">Twitter</a>}
-                               {lead.facebookUrl && <a href={`https://${lead.facebookUrl}`} target="_blank" className="text-sky-600 dark:text-sky-400 hover:underline">Facebook</a>}
-                               {lead.githubUrl && <a href={`https://${lead.githubUrl}`} target="_blank" className="text-sky-600 dark:text-sky-400 hover:underline">GitHub</a>}
-                               {!lead.linkedinPersonal && !lead.twitterUrl && !lead.facebookUrl && !lead.githubUrl && <span className="text-slate-500">None</span>}
-                             </div>
-                           </div>
-                           <div>
-                             <span className="text-slate-400 dark:text-[#666] block mb-1.5 font-medium">Contact Availability</span>
-                             <div className="flex flex-wrap gap-2">
-                               <span className={lead.workEmailAvailable ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-slate-400 dark:text-slate-500"}>Work Email</span>
-                               <span className={lead.personalEmailAvailable ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-slate-400 dark:text-slate-500"}>Personal Email</span>
-                               <span className={lead.mobilePhoneAvailable ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-slate-400 dark:text-slate-500"}>Mobile Phone</span>
-                             </div>
-                           </div>
-                           <div className="md:col-span-2">
-                             <span className="text-slate-400 dark:text-[#666] block mb-1.5 font-medium">Skills</span>
-                             <div className="flex flex-wrap gap-1.5">
-                               {lead.skills?.slice(0, 15).map((s: string) => (
-                                 <span key={s} className="bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-white/5">{s}</span>
-                               ))}
-                               {lead.skills?.length > 15 && <span className="text-slate-500 dark:text-slate-400 px-1 py-0.5">+{lead.skills.length - 15} more</span>}
-                               {(!lead.skills || lead.skills.length === 0) && <span className="text-slate-500">No skills listed</span>}
-                             </div>
-                           </div>
-                           <div className="md:col-span-2">
-                             <span className="text-slate-400 dark:text-[#666] block mb-1.5 font-medium">Interests</span>
-                             <div className="flex flex-wrap gap-1.5">
-                               {lead.interests?.slice(0, 15).map((i: string) => (
-                                 <span key={i} className="bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-white/5">{i}</span>
-                               ))}
-                               {lead.interests?.length > 15 && <span className="text-slate-500 dark:text-slate-400 px-1 py-0.5">+{lead.interests.length - 15} more</span>}
-                               {(!lead.interests || lead.interests.length === 0) && <span className="text-slate-500">No interests listed</span>}
-                             </div>
-                           </div>
-                        </div>
-                      </details>
-                    </div>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
           </div>
+
+          <button
+            onClick={handleRun}
+            disabled={isSearching}
+            className="w-full mt-8 flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-medium px-4 py-3.5 rounded-xl transition-all shadow-[0_4px_14px_0_rgba(14,165,233,0.39)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.23)] disabled:opacity-50 disabled:shadow-none hover:-translate-y-0.5"
+          >
+            {isSearching ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Play size={18} fill="currentColor" />
+            )}
+            {isSearching ? "Running Workflow..." : "Trigger LeadReach"}
+          </button>
         </div>
+      </div>
+
+      <div className="lg:col-span-2 flex flex-col h-[700px] bg-slate-50 dark:bg-[#0B1121] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm relative">
+        <div className="px-6 py-5 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-[#0F172A] flex justify-between items-center z-10">
+          <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            JSON Output Console
+          </h3>
+          {results && (
+            <div className="flex gap-4">
+              <span className="text-xs font-mono bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400 px-3 py-1 rounded-full border border-sky-200 dark:border-sky-500/20">
+                Plan: {results.planTier}
+              </span>
+              <span className="text-xs font-mono bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-500/20">
+                Credits Used: {results.creditsCharged}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-auto bg-[#FAFAFA] dark:bg-[#090D1A] p-6 custom-scrollbar">
+          {!isSearching && !results && (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-[#555] max-w-sm mx-auto text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4">
+                <Search size={28} className="text-slate-300 dark:text-[#444]" />
+              </div>
+              <p className="text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Ready to Enrich</p>
+              <p className="text-xs">Configure the parameters on the left and trigger the webhook to view the generated JSON payload.</p>
+            </div>
+          )}
+          
+          {isSearching && (
+            <div className="h-full flex flex-col items-center justify-center space-y-4">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-slate-200 dark:border-white/10 rounded-full"></div>
+                <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin absolute inset-0"></div>
+              </div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">Awaiting Webhook Response...</p>
+            </div>
+          )}
+
+          {results && !isSearching && (
+            <div className="space-y-4 font-mono text-xs">
+              <div className="text-slate-500 dark:text-slate-400">
+                <span className="text-slate-800 dark:text-slate-200">{"["}</span>
+                <div className="pl-4 border-l border-slate-200 dark:border-white/10 ml-2 py-1">
+                  <span className="text-slate-800 dark:text-slate-200">{"{"}</span>
+                  <div className="pl-4 border-l border-slate-200 dark:border-white/10 ml-2 py-1">
+                    <div className="text-pink-600 dark:text-pink-400 mb-1">
+                      &quot;leads&quot;<span className="text-slate-800 dark:text-slate-200">: [</span>
+                    </div>
+                    <div className="pl-4 space-y-4">
+                      {results.leads.map((lead: any, idx: number) => (
+                        <div key={idx} className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/5 p-4 rounded-xl shadow-sm hover:border-sky-300 dark:hover:border-sky-500/30 transition-colors">
+                          <button 
+                            onClick={() => setExpandedLead(expandedLead === idx ? null : idx)}
+                            className="w-full flex items-center justify-between text-left group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 rounded bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-xs">
+                                {idx + 1}
+                              </div>
+                              <span className="text-slate-800 dark:text-slate-200 font-semibold group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                                {"{"}
+                                <span className="text-emerald-600 dark:text-emerald-400 font-normal mx-2">&quot;{lead.fullName}&quot;</span>
+                                {"}"}
+                              </span>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${expandedLead === idx ? 'rotate-90' : ''}`} />
+                          </button>
+                          
+                          {expandedLead === idx && (
+                            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 space-y-1.5 overflow-x-auto custom-scrollbar">
+                              {Object.entries(lead).map(([key, value]) => (
+                                <div key={key} className="flex flex-wrap gap-2">
+                                  <span className="text-sky-700 dark:text-sky-300">&quot;{key}&quot;</span>
+                                  <span className="text-slate-800 dark:text-slate-200">:</span>
+                                  <span className={
+                                    typeof value === 'boolean' ? "text-purple-600 dark:text-purple-400" :
+                                    typeof value === 'number' ? "text-orange-600 dark:text-orange-400" :
+                                    value === "" ? "text-slate-400" :
+                                    Array.isArray(value) ? "text-slate-800 dark:text-slate-200" :
+                                    String(value).includes('🔒') ? "text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-500/10 px-1 rounded" :
+                                    "text-emerald-700 dark:text-emerald-300 break-words"
+                                  }>
+                                    {Array.isArray(value) 
+                                      ? `[${value.map(v => `"${v}"`).join(', ')}]`
+                                      : typeof value === 'string' && value !== "" ? `"${value}"`
+                                      : value === "" ? '""' 
+                                      : String(value)
+                                    }
+                                    {key !== Object.keys(lead).pop() && <span className="text-slate-800 dark:text-slate-200">,</span>}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-slate-800 dark:text-slate-200 mt-1">],</div>
+                    
+                    <div className="mt-2">
+                      <span className="text-pink-600 dark:text-pink-400">&quot;leadsCount&quot;</span>
+                      <span className="text-slate-800 dark:text-slate-200">: </span>
+                      <span className="text-orange-600 dark:text-orange-400">{results.leadsCount}</span>
+                      <span className="text-slate-800 dark:text-slate-200">,</span>
+                    </div>
+                    <div>
+                      <span className="text-pink-600 dark:text-pink-400">&quot;planTier&quot;</span>
+                      <span className="text-slate-800 dark:text-slate-200">: </span>
+                      <span className="text-emerald-700 dark:text-emerald-300">&quot;{results.planTier}&quot;</span>
+                      <span className="text-slate-800 dark:text-slate-200">,</span>
+                    </div>
+                    <div>
+                      <span className="text-pink-600 dark:text-pink-400">&quot;creditsCharged&quot;</span>
+                      <span className="text-slate-800 dark:text-slate-200">: </span>
+                      <span className="text-orange-600 dark:text-orange-400">{results.creditsCharged}</span>
+                    </div>
+                  </div>
+                  <span className="text-slate-800 dark:text-slate-200">{"}"}</span>
+                </div>
+                <span className="text-slate-800 dark:text-slate-200">{"]"}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
