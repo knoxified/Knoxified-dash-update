@@ -1,3 +1,4 @@
+import { getRealSystems, getDashboardStats, getRealWorkspace, getRealPlans, getRecentActivityLogs } from '../actions/dashboard-actions';
 import { System } from "@/data/systems";
 import { Automation } from "@/data/automations";
 
@@ -73,8 +74,7 @@ export interface Workspace {
 export class DataService {
   static async getSystems(): Promise<System[]> {
     try {
-      const { getRealSystems } = await import('../actions/dashboard-actions');
-      const realSys = await getRealSystems();
+            const realSys = await getRealSystems();
       if (realSys && realSys.length > 0) {
         return realSys.map((s: any) => ({
           id: s.id,
@@ -122,8 +122,7 @@ export class DataService {
     };
 
     try {
-      const { getDashboardStats } = await import('../actions/dashboard-actions');
-      const realStats = await getDashboardStats(dateRange);
+            const realStats = await getDashboardStats(dateRange);
       if (realStats) {
         defaultData.voiceUsage.used = realStats.voiceMinutes;
         defaultData.totalActiveSystems = realStats.activeSystemsCount;
@@ -138,8 +137,7 @@ export class DataService {
 
   static async getWorkspace(): Promise<{ workspace: Workspace | null, plan: Plan | undefined }> {
     try {
-      const { getRealWorkspace } = await import('../actions/dashboard-actions');
-      const realWs = await getRealWorkspace();
+            const realWs = await getRealWorkspace();
       if (realWs) {
         return {
            workspace: {
@@ -174,8 +172,7 @@ export class DataService {
 
   static async getPlans(): Promise<Plan[]> {
     try {
-      const { getRealPlans } = await import('../actions/dashboard-actions');
-      const realPlans = await getRealPlans();
+            const realPlans = await getRealPlans();
       if (realPlans && realPlans.length > 0) {
         return realPlans.map((p: any) => ({
              id: p.id,
@@ -201,8 +198,7 @@ export class DataService {
 
   static async getSystemLogs(): Promise<SystemLog[]> {
     try {
-      const { getRecentActivityLogs } = await import('../actions/dashboard-actions');
-      const realLogs = await getRecentActivityLogs();
+            const realLogs = await getRecentActivityLogs();
       if (realLogs && realLogs.length > 0) {
         return realLogs.map((log: any) => ({
           id: log.id,

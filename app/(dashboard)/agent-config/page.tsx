@@ -24,7 +24,7 @@ export default function AgentConfigPage() {
     if (typeof window !== 'undefined') {
       const hasAccepted = localStorage.getItem('acceptedRecordingLaws');
       if (!hasAccepted) {
-        setShowLegalDisclaimer(true);
+        setTimeout(() => setShowLegalDisclaimer(true), 0);
       }
     }
   }, []);

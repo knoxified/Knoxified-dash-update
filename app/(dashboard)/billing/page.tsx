@@ -40,7 +40,7 @@ export default function BillingPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {displayPlans.map(plan => {
-          const isCurrent = plan.id === workspace.planId;
+          const isCurrent = plan.id === workspace?.planId;
           return (
             <div key={plan.id} className={`bg-white dark:bg-[#0F172A] rounded-2xl p-6 flex flex-col relative border hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ${isCurrent ? 'border-sky-600 dark:border-[#00E5FF] shadow-lg shadow-[#00E5FF]/5' : 'border-slate-200 dark:border-white/5 hover:border-slate-300 dark:border-white/10'}`}>
               {isCurrent && (
@@ -97,12 +97,12 @@ export default function BillingPage() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-700 dark:text-[#EDEDED] font-semibold">Active Automations</span>
-              <span className="text-slate-500 dark:text-[#888]">{workspace.usage.activeAutomations} / {currentPlan?.limit_active_automations ?? '∞'}</span>
+              <span className="text-slate-500 dark:text-[#888]">{(workspace?.usage?.activeAutomations || 0)} / {currentPlan?.limit_active_automations ?? '∞'}</span>
             </div>
             <div className="h-2.5 w-full bg-slate-100 dark:bg-[#020617] rounded-full overflow-hidden border border-slate-200 dark:border-white/5 relative">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-rose-400 rounded-full transition-all duration-1000 ease-out" style={{ width: `${currentPlan?.limit_active_automations ? Math.min((workspace.usage.activeAutomations / currentPlan.limit_active_automations) * 100, 100) : 0}%` }}></div>
+              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-rose-400 rounded-full transition-all duration-1000 ease-out" style={{ width: `${currentPlan?.limit_active_automations ? Math.min(((workspace?.usage?.activeAutomations || 0) / currentPlan.limit_active_automations) * 100, 100) : 0}%` }}></div>
             </div>
-            {currentPlan?.limit_active_automations && workspace.usage.activeAutomations >= currentPlan.limit_active_automations ? (
+            {currentPlan?.limit_active_automations && (workspace?.usage?.activeAutomations || 0) >= currentPlan.limit_active_automations ? (
               <p className="text-xs text-red-600 dark:text-[#EF4444] font-medium flex items-center gap-1.5"><AlertTriangle size={12} /> Limit reached.</p>
             ) : <p className="text-xs text-slate-500 dark:text-[#888]">Agent slots used.</p>}
           </div>
@@ -110,10 +110,10 @@ export default function BillingPage() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-700 dark:text-[#EDEDED] font-semibold">Voice Minutes</span>
-              <span className="text-slate-500 dark:text-[#888]">{workspace.usage.voiceMinutes} / {currentPlan?.limit_voice_minutes?.toLocaleString() ?? '∞'}</span>
+              <span className="text-slate-500 dark:text-[#888]">{(workspace?.usage?.voiceMinutes || 0)} / {currentPlan?.limit_voice_minutes?.toLocaleString() ?? '∞'}</span>
             </div>
             <div className="h-2.5 w-full bg-slate-100 dark:bg-[#020617] rounded-full overflow-hidden border border-slate-200 dark:border-white/5 relative">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-sky-500 to-[#00E5FF] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,229,255,0.4)]" style={{ width: `${currentPlan?.limit_voice_minutes ? Math.min((workspace.usage.voiceMinutes / currentPlan.limit_voice_minutes) * 100, 100) : 0}%` }}></div>
+              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-sky-500 to-[#00E5FF] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,229,255,0.4)]" style={{ width: `${currentPlan?.limit_voice_minutes ? Math.min(((workspace?.usage?.voiceMinutes || 0) / currentPlan.limit_voice_minutes) * 100, 100) : 0}%` }}></div>
             </div>
             <p className="text-xs text-slate-500 dark:text-[#888]">Outbound and inbound limits.</p>
           </div>
@@ -121,10 +121,10 @@ export default function BillingPage() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-700 dark:text-[#EDEDED] font-semibold">Email Limits</span>
-              <span className="text-slate-500 dark:text-[#888]">{workspace.usage.emailSent.toLocaleString()} / {currentPlan?.limit_email_sent?.toLocaleString() ?? '∞'}</span>
+              <span className="text-slate-500 dark:text-[#888]">{(workspace?.usage?.emailSent || 0).toLocaleString()} / {currentPlan?.limit_email_sent?.toLocaleString() ?? '∞'}</span>
             </div>
             <div className="h-2.5 w-full bg-slate-100 dark:bg-[#020617] rounded-full overflow-hidden border border-slate-200 dark:border-white/5 relative">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-[#10B981] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]" style={{ width: `${currentPlan?.limit_email_sent ? Math.min((workspace.usage.emailSent / currentPlan.limit_email_sent) * 100, 100) : 5}%` }}></div>
+              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-[#10B981] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]" style={{ width: `${currentPlan?.limit_email_sent ? Math.min(((workspace?.usage?.emailSent || 0) / currentPlan.limit_email_sent) * 100, 100) : 5}%` }}></div>
             </div>
             <p className="text-xs text-slate-500 dark:text-[#888]">Sequences and transactional.</p>
           </div>
@@ -132,10 +132,10 @@ export default function BillingPage() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-700 dark:text-[#EDEDED] font-semibold">AI Credits</span>
-              <span className="text-slate-500 dark:text-[#888]">{workspace.usage.credits.toLocaleString()} / {currentPlan?.limit_credits?.toLocaleString() ?? '∞'}</span>
+              <span className="text-slate-500 dark:text-[#888]">{(workspace?.usage?.credits || 0).toLocaleString()} / {currentPlan?.limit_credits?.toLocaleString() ?? '∞'}</span>
             </div>
             <div className="h-2.5 w-full bg-slate-100 dark:bg-[#020617] rounded-full overflow-hidden border border-slate-200 dark:border-white/5 relative">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(168,85,247,0.3)]" style={{ width: `${currentPlan?.limit_credits ? Math.min((workspace.usage.credits / currentPlan.limit_credits) * 100, 100) : 0}%` }}></div>
+              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(168,85,247,0.3)]" style={{ width: `${currentPlan?.limit_credits ? Math.min(((workspace?.usage?.credits || 0) / currentPlan.limit_credits) * 100, 100) : 0}%` }}></div>
             </div>
             <p className="text-xs text-slate-500 dark:text-[#888]">Used for heavy generative tasks.</p>
           </div>

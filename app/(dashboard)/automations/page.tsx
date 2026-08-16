@@ -1,4 +1,5 @@
 "use client";
+import { getUuidForId } from "@/lib/utils";
 
 import { Select } from "@/components/ui/Select";
 import { Search, Settings, X, Plus, Workflow, ArrowRight } from "lucide-react";
@@ -49,7 +50,7 @@ export default function AutomationsPage() {
         
         // Merge hardcoded automations with user state
         const merged = AUTOMATIONS.map(aut => {
-          const ua = userAutomationsMap.get(aut.id);
+          const ua = userAutomationsMap.get(getUuidForId(aut.id));
           return {
             ...aut,
             user_automation_id: ua?.id || null,
@@ -102,7 +103,7 @@ export default function AutomationsPage() {
           .from('user_automations')
           .insert({
             user_id: currentUser.id,
-            automation_id: aut.id,
+            automation_id: getUuidForId(aut.id),
             is_enabled: newEnabled,
             settings: aut.settings || {}
           })
@@ -163,7 +164,7 @@ export default function AutomationsPage() {
           .from('user_automations')
           .insert({
             user_id: currentUser.id,
-            automation_id: activeAutomation.id,
+            automation_id: getUuidForId(activeAutomation.id),
             is_enabled: false,
             settings: parsedSettings
           })
