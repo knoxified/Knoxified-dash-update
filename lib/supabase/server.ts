@@ -28,14 +28,6 @@ export async function createClient() {
     },
   });
 
-  // Bypass login for real-time preview
-  client.auth.getUser = async () => {
-    return { data: { user: { id: "mock-user-123", email: "preview@knoxified.org" } as any }, error: null };
-  };
-  client.auth.getSession = async () => {
-    return { data: { session: { user: { id: "mock-user-123", email: "preview@knoxified.org" } } as any }, error: null };
-  };
-
   return client;
 }
 
