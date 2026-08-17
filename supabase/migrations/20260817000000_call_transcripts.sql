@@ -17,3 +17,17 @@ CREATE TABLE public.call_transcripts (
 
 CREATE INDEX idx_call_transcripts_user_id ON public.call_transcripts (user_id);
 CREATE INDEX idx_call_transcripts_created_at ON public.call_transcripts (created_at DESC);
+
+-- This project's rls_auto_enable event trigger enables RLS on every new table
+-- automatically, with zero policies by default (== deny all to non-bypassing
+-- roles). voice-agent-beta writes with the service role key, which bypasses
+-- RLS regardless — but the dashboard reads as the logged-in user via the anon
+-- key, which does not. Without this policy, every read would silently return
+-- zero rows instead of a user's actual transcripts.
+ALTER TABLE public.call_transcripts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read their own call transcripts"
+  ON public.call_transcripts
+  FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
