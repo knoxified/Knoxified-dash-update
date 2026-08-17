@@ -19,14 +19,14 @@ export async function getAgentConfig() {
     .from("agent_configs")
     .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
     
   if (res.error && res.error.message.includes("does not exist")) {
     const fallbackRes = await supabase
       .from("agent_configs")
       .select("id, organization_name, business_hours, temperature")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
     agentConfig = fallbackRes.data;
     agentError = fallbackRes.error;
   } else {
@@ -38,7 +38,7 @@ export async function getAgentConfig() {
     .from("user_voice_settings")
     .select("id, agent_persona, agent_greeting")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   return {
     agentConfig: agentConfig || null,

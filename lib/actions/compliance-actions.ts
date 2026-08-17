@@ -116,10 +116,19 @@ export async function getDisclosureSettings() {
     .from("agent_configs")
     .select("require_ai_disclosure, require_recording_disclosure, calling_window_start, calling_window_end, calling_window_timezone")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (error) throw new Error(`Failed to load disclosure settings: ${error.message}`);
-  return data;
+
+  // No agent_configs row yet (e.g. brand-new user who hasn't saved settings) — fall back
+  // to the same defaults the database column defaults use.
+  return data || {
+    require_ai_disclosure: true,
+    require_recording_disclosure: true,
+    calling_window_start: "08:00:00",
+    calling_window_end: "21:00:00",
+    calling_window_timezone: "recipient_local",
+  };
 }
 
 export async function toggleRecordingDisclosure(enabled: boolean) {
@@ -152,12 +161,16 @@ export async function isWithinCallingWindow(checkTime: Date = new Date()): Promi
     .from("agent_configs")
     .select("calling_window_start, calling_window_end")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (error) throw new Error(`Failed to load calling window: ${error.message}`);
 
+  // No agent_configs row yet — fall back to the same defaults the database column defaults use.
+  const windowStart = data?.calling_window_start || "08:00:00";
+  const windowEnd = data?.calling_window_end || "21:00:00";
+
   const currentTime = checkTime.toTimeString().slice(0, 8);
-  return currentTime >= data.calling_window_start && currentTime <= data.calling_window_end;
+  return currentTime >= windowStart && currentTime <= windowEnd;
 }
 
 // ---------- Compliance Acknowledgment ----------
