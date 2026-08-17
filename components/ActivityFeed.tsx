@@ -32,7 +32,6 @@ export function ActivityFeed({ filter = "All" }: { filter?: string }) {
   useEffect(() => {
     const supabase = createClient();
     
-    // Subscribe to automation_runs updates
     const automationSub = supabase
       .channel('automation_runs_feed')
       .on('postgres_changes', { 
@@ -42,8 +41,6 @@ export function ActivityFeed({ filter = "All" }: { filter?: string }) {
       }, (payload: any) => {
         const newRecord = payload.new;
         const oldRecord = payload.old;
-        
-        // If status changes to completed
         if (newRecord.status === 'completed' && oldRecord.status !== 'completed') {
           const newItem: FeedItem = {
             id: `auto-${newRecord.id}-${Date.now()}`,
@@ -57,7 +54,6 @@ export function ActivityFeed({ filter = "All" }: { filter?: string }) {
       })
       .subscribe();
 
-    // Subscribe to audit_logs inserts
     const auditSub = supabase
       .channel('audit_logs_feed')
       .on('postgres_changes', { 
@@ -79,7 +75,6 @@ export function ActivityFeed({ filter = "All" }: { filter?: string }) {
       })
       .subscribe();
 
-    // Load initial data
     const fetchInitial = async () => {
        const { data: runs } = await supabase
          .from('automation_runs')
@@ -131,7 +126,6 @@ export function ActivityFeed({ filter = "All" }: { filter?: string }) {
     };
   }, []);
 
-  // Update time ago strings every minute
   const [, setTick] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => setTick(t => t + 1), 60000);
@@ -145,29 +139,56 @@ export function ActivityFeed({ filter = "All" }: { filter?: string }) {
   );
 
   return (
-    <div className="p-2 overflow-y-auto max-h-[400px]">
+    <div className="p-2 overflow-y-auto max-h-[380px]">
       {filteredFeed.length === 0 ? (
-        <div className="p-4 text-center text-[13px] text-slate-500">No recent activity</div>
+        <div className="flex flex-col items-center justify-center py-10 gap-3">
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-center">
+            <span className="text-slate-300 dark:text-white/20 text-lg">◎</span>
+          </div>
+          <p className="text-[13px] text-slate-400 dark:text-white/25 font-medium">No recent activity</p>
+        </div>
       ) : (
         filteredFeed.map((item, i) => (
           <div 
             key={item.id} 
-            className="flex gap-3 p-3 rounded-md hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group border-b border-slate-200 dark:border-white/5 last:border-0 relative animate-in slide-in-from-right-4 fade-in duration-500"
-            style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
+            className="flex gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-all group border-b border-slate-100/80 dark:border-white/[0.04] last:border-0 animate-in slide-in-from-right-3 fade-in duration-400"
+            style={{ animationDelay: `${i * 40}ms`, animationFillMode: 'both' }}
           >
-            <div className="mt-0.5 opacity-80">
+            {/* Icon */}
+            <div className="mt-0.5 shrink-0">
               {item.type === 'win' ? (
-                <span className="text-emerald-600 dark:text-[#10B981] text-sm font-bold">✓</span>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.12)', boxShadow: '0 0 8px rgba(16,185,129,0.2)' }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 5l2 2 4-4" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
               ) : (
-                <span className="text-amber-500 dark:text-amber-400 text-sm font-bold">!</span>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.12)', boxShadow: '0 0 8px rgba(245,158,11,0.2)' }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M5 3v3M5 7.5v.5" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
               )}
             </div>
-            <div className="flex-1">
-              <p className="text-[14px] text-slate-700 dark:text-[#EDEDED] leading-snug">
-                <span className="font-semibold text-slate-900 dark:text-white">{item.system}</span> {item.message}
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-slate-600 dark:text-white/60 leading-snug">
+                <span className="font-semibold text-slate-800 dark:text-white/80">{item.system}</span>
+                {' '}{item.message}
               </p>
-              <p className="text-slate-500 dark:text-[#888] text-[12px] mt-1.5 font-medium">{formatTimeAgo(item.timestamp)}</p>
+              <p className="text-[11px] text-slate-400 dark:text-white/25 mt-1 font-medium">{formatTimeAgo(item.timestamp)}</p>
             </div>
+
+            {/* Live dot on newest items */}
+            {i === 0 && (
+              <div className="mt-1.5 shrink-0">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--accent)' }} />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: 'var(--accent)' }} />
+                </span>
+              </div>
+            )}
           </div>
         ))
       )}

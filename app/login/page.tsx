@@ -2,9 +2,15 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { login } from "@/lib/actions/auth-actions";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Zap, Shield, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+
+const FEATURES = [
+  { icon: Zap, title: "Autonomous Workflows", desc: "Deploy AI agents that handle complex pipelines 24/7" },
+  { icon: BarChart3, title: "Revenue Intelligence", desc: "Real-time insight into what your AI has generated" },
+  { icon: Shield, title: "Compliance-First", desc: "Built-in DNC, consent, and audit trail management" },
+];
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -13,8 +19,14 @@ function LoginContent() {
   const [error, setError] = useState<string | null>(urlError);
   const [isPending, setIsPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
   const submitRef = useRef<boolean>(false);
 
+  // Cycle through features
+  useEffect(() => {
+    const t = setInterval(() => setActiveFeature(p => (p + 1) % FEATURES.length), 3000);
+    return () => clearInterval(t);
+  }, []);
 
   async function handleLogin(formData: FormData) {
     if (submitRef.current) return;
@@ -30,126 +42,207 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row font-sans text-slate-200 relative overflow-hidden bg-[#060A11]">
-      {/* Global Animated Background Effects */}
-      <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[80%] rounded-full bg-[#5CE1E6]/10 blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full bg-[#00A3FF]/10 blur-[150px] pointer-events-none" />
+    <div className="min-h-screen flex flex-col md:flex-row relative overflow-hidden" style={{ background: '#060A11', fontFamily: 'var(--font-sans, Inter, sans-serif)' }}>
+      
+      {/* Ambient blobs */}
+      <div className="absolute top-[-15%] right-[-5%] w-[60%] h-[60%] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+      <div className="absolute bottom-[-15%] left-[-5%] w-[60%] h-[60%] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.03) 0%, transparent 70%)', filter: 'blur(60px)' }} />
 
-      {/* Left Branding Panel (Darker Glass) */}
-      <div className="hidden md:flex flex-col w-1/2 bg-[#0A0D14]/80 backdrop-blur-3xl p-12 justify-between relative border-r border-white/5 z-10 shadow-[20px_0_40px_-10px_rgba(0,0,0,0.5)]">
+      {/* Left Branding Panel */}
+      <div className="hidden md:flex flex-col w-[45%] p-12 justify-between relative z-10 border-r"
+        style={{ background: 'rgba(10,14,20,0.95)', borderColor: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(40px)' }}
+      >
+        {/* Top dot grid decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+          <div style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '28px 28px', width: '100%', height: '100%' }} />
+        </div>
+
         <div className="relative z-10">
-          <div className="mb-12">
-            <img src="/logo.png" alt="Knoxified Logo" className="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(92,225,230,0.2)]" />
+          {/* Logo */}
+          <div className="mb-12 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl p-2 border"
+              style={{ background: 'rgba(0,229,255,0.08)', borderColor: 'rgba(0,229,255,0.2)', boxShadow: '0 0 20px rgba(0,229,255,0.15)' }}
+            >
+              <img src="/logo.png" alt="Knoxified" className="w-full h-full object-contain" style={{ filter: 'drop-shadow(0 0 6px rgba(0,229,255,0.4))' }} />
+            </div>
+            <div>
+              <p className="font-extrabold text-lg text-white tracking-wide">Knoxified OS</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#00E5FF', opacity: 0.7 }}>Enterprise</p>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-6 max-w-lg">
-            Manage your Enterprise AI Systems with Precision.
+
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-[1.1] mb-5 tracking-tight max-w-md">
+            Manage your Enterprise AI Systems{' '}
+            <span style={{ background: 'linear-gradient(135deg, #00E5FF, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              with Precision.
+            </span>
           </h1>
-          <p className="text-slate-400 text-lg max-w-md mb-4">
+          <p className="text-white/40 text-base max-w-md mb-3 leading-relaxed">
             The unified platform for orchestrating autonomous workflows, scaling voice agents, and driving compliance-first automation.
           </p>
-          <p className="text-[#5CE1E6] text-sm tracking-widest uppercase font-semibold">&quot;Think. Automate. Elevate&quot;</p>
+          <p className="text-sm tracking-widest uppercase font-bold" style={{ color: '#00E5FF', opacity: 0.6 }}>&quot;Think. Automate. Elevate&quot;</p>
+
+          {/* Animated feature cards */}
+          <div className="mt-12 space-y-2">
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
+              const isActive = activeFeature === i;
+              return (
+                <div 
+                  key={i}
+                  className="flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all duration-500"
+                  style={{
+                    background: isActive ? 'rgba(0,229,255,0.05)' : 'rgba(255,255,255,0.02)',
+                    borderColor: isActive ? 'rgba(0,229,255,0.2)' : 'rgba(255,255,255,0.04)',
+                    boxShadow: isActive ? '0 0 20px rgba(0,229,255,0.08)' : 'none',
+                    transform: isActive ? 'translateX(4px)' : 'none'
+                  }}
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all"
+                    style={{ background: isActive ? 'rgba(0,229,255,0.12)' : 'rgba(255,255,255,0.04)' }}
+                  >
+                    <Icon size={16} style={{ color: isActive ? '#00E5FF' : 'rgba(255,255,255,0.3)', filter: isActive ? 'drop-shadow(0 0 5px rgba(0,229,255,0.6))' : 'none' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold transition-colors" style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.4)' }}>{f.title}</p>
+                    <p className="text-[12px] transition-colors" style={{ color: isActive ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)' }}>{f.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
         
-        <div className="relative z-10 text-sm text-slate-500 font-medium">
+        <div className="relative z-10 text-[12px] text-white/20 font-medium">
           &copy; {new Date().getFullYear()} Knoxified. All rights reserved.
         </div>
       </div>
 
-      {/* Right Login Panel (Lighter Glass) */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative bg-[#162032]/40 backdrop-blur-2xl z-10">
-        <div className="w-full max-w-md space-y-8 relative z-10">
-          
-          {/* Mobile Branding (hidden on desktop) */}
-          <div className="md:hidden flex flex-col items-center mb-8">
-            <img src="/logo.png" alt="Knoxified Logo" className="h-24 w-auto object-contain mb-4 drop-shadow-[0_0_15px_rgba(92,225,230,0.2)]" />
-            <p className="text-[#5CE1E6] text-[11px] tracking-widest uppercase font-semibold">&quot;Think. Automate. Elevate&quot;</p>
+      {/* Right Login Panel */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative z-10">
+        
+        {/* Mobile branding */}
+        <div className="md:hidden flex flex-col items-center mb-8">
+          <div className="w-14 h-14 rounded-2xl p-2.5 border mb-4" style={{ background: 'rgba(0,229,255,0.08)', borderColor: 'rgba(0,229,255,0.2)' }}>
+            <img src="/logo.png" alt="Knoxified" className="w-full h-full object-contain" style={{ filter: 'drop-shadow(0 0 6px rgba(0,229,255,0.4))' }} />
           </div>
+          <p className="font-extrabold text-white text-xl">Knoxified OS</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest mt-1" style={{ color: '#00E5FF', opacity: 0.7 }}>Enterprise</p>
+        </div>
 
-          <div className="bg-[#1C283F]/60 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00A3FF] to-[#5CE1E6]" />
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#5CE1E6]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="w-full max-w-sm">
+          <div className="relative rounded-3xl border overflow-hidden"
+            style={{ 
+              background: 'rgba(15, 22, 36, 0.8)', 
+              borderColor: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(40px)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)'
+            }}
+          >
+            {/* Top accent bar */}
+            <div className="h-[2px] w-full" style={{ background: 'linear-gradient(90deg, transparent, #00E5FF, #8b5cf6, transparent)' }} />
+            {/* Subtle corner glow */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%)', filter: 'blur(20px)' }} />
             
-            <div className="mb-8 text-center md:text-left relative z-10">
-              <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-              <p className="text-slate-400 font-medium">Please enter your details to sign in.</p>
-            </div>
+            <div className="p-8 relative z-10">
+              <div className="mb-8">
+                <h2 className="text-2xl font-extrabold text-white mb-1.5 tracking-tight">Welcome back</h2>
+                <p className="text-white/40 text-sm font-medium">Sign in to your enterprise dashboard.</p>
+              </div>
 
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm flex items-start gap-3 mb-6 relative z-10 backdrop-blur-sm">
-                <div className="mt-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+              {error && (
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 text-sm flex items-start gap-3 mb-6 backdrop-blur-sm">
+                  <svg className="mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                  <p>{error}</p>
                 </div>
-                <p>{error}</p>
-              </div>
-            )}
+              )}
 
-            <form action={handleLogin} className="space-y-5 relative z-10">
-              <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-slate-300" htmlFor="email">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  className="w-full bg-[#0B1120]/50 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-[#00D4FF]/50 focus:border-[#00D4FF] transition-all placeholder:text-slate-500 backdrop-blur-sm"
-                  placeholder="name@company.com"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-semibold text-slate-300" htmlFor="password">
-                    Password
+              <form action={handleLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[12px] font-bold text-white/40 uppercase tracking-wider" htmlFor="email">
+                    Email Address
                   </label>
-                  <Link href="/forgot-password" className="text-sm text-[#00D4FF] hover:text-[#5CE1E6] font-semibold transition-colors drop-shadow-sm">
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
                   <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
+                    type="email"
+                    id="email"
+                    name="email"
                     required
-                    className="w-full bg-[#0B1120]/50 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-[#00D4FF]/50 focus:border-[#00D4FF] transition-all placeholder:text-slate-500 backdrop-blur-sm"
-                    placeholder="••••••••"
+                    className="w-full border rounded-2xl px-4 py-3 text-white text-sm placeholder:text-white/20 transition-all"
+                    style={{ 
+                      background: 'rgba(255,255,255,0.04)', 
+                      borderColor: 'rgba(255,255,255,0.08)',
+                    }}
+                    placeholder="name@company.com"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={isPending}
-                className="w-full bg-gradient-to-r from-[#00A3FF] to-[#00D4FF] hover:from-[#0090E0] hover:to-[#00C0E0] text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed mt-6 shadow-[0_0_20px_rgba(0,163,255,0.3)] hover:shadow-[0_0_25px_rgba(0,163,255,0.4)]"
-              >
-                {isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  "Sign In"
-                )}
-              </button>
-              <button type="button" onClick={() => { document.cookie = "bypass_login=true; path=/"; window.location.href = "/"; }} className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center mt-3 backdrop-blur-sm">Bypass Login (Dev Mode)</button>
-            </form>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[12px] font-bold text-white/40 uppercase tracking-wider" htmlFor="password">
+                      Password
+                    </label>
+                    <Link href="/forgot-password" className="text-[12px] font-semibold hover:opacity-70 transition-opacity" style={{ color: '#00E5FF' }}>
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      required
+                      className="w-full border rounded-2xl pl-4 pr-12 py-3 text-white text-sm placeholder:text-white/20 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-white/30 hover:text-white/60 transition-colors rounded-lg"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full text-slate-900 font-bold py-3 rounded-2xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #00E5FF 0%, #3b82f6 100%)',
+                    boxShadow: '0 0 24px rgba(0,229,255,0.3), 0 4px 12px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  {isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Sign In"
+                  )}
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={() => { document.cookie = "bypass_login=true; path=/"; window.location.href = "/"; }} 
+                  className="w-full text-white/50 hover:text-white/80 border font-semibold py-3 rounded-2xl transition-all flex items-center justify-center text-sm"
+                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
+                >
+                  Bypass Login (Dev Mode)
+                </button>
+              </form>
+            </div>
           </div>
 
-          <div className="pt-4 text-center md:text-left pl-2">
-            <p className="text-slate-400 text-sm font-medium">
+          <div className="pt-5 text-center">
+            <p className="text-white/30 text-sm font-medium">
               Don&apos;t have an account?{" "}
               <a
                 href="https://knoxified.org/get-started"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#00D4FF] hover:text-[#5CE1E6] font-bold transition-colors drop-shadow-sm"
+                className="font-bold hover:opacity-70 transition-opacity"
+                style={{ color: '#00E5FF' }}
               >
                 Get Started
               </a>
@@ -163,7 +256,16 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#060A11] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#00D4FF]" /></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#060A11' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl p-2 border" style={{ background: 'rgba(0,229,255,0.08)', borderColor: 'rgba(0,229,255,0.2)' }}>
+            <img src="/logo.png" alt="" className="w-full h-full object-contain" />
+          </div>
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#00E5FF' }} />
+        </div>
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

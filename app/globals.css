@@ -1,10 +1,52 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============================================================
+   DESIGN TOKENS — CSS Custom Properties
+   Accent color is injectable from JS (settings color picker)
+   ============================================================ */
+:root {
+  --accent: #00E5FF;
+  --accent-dim: rgba(0, 229, 255, 0.15);
+  --accent-glow: rgba(0, 229, 255, 0.4);
+  --accent-muted: rgba(0, 229, 255, 0.08);
+
+  /* Light mode surfaces */
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.14);
+
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+}
+
+.dark {
+  --surface-1: #0d1117;
+  --surface-2: #0f172a;
+  --surface-3: #12161b;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --text-primary: #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
 @theme {
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-aurora: aurora 60s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-scan: scan 4s linear infinite;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+  --animate-data-flow: data-flow 2s linear infinite;
+  --animate-spin-slow: spin 8s linear infinite;
 }
 
 @keyframes pulse {
@@ -23,87 +65,300 @@
   50% { transform: translateY(-8px); }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--accent-glow); }
+  50% { box-shadow: 0 0 20px var(--accent-glow), 0 0 40px var(--accent-dim); }
+}
+
+@keyframes data-flow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 200%; }
+}
+
+@keyframes border-glow {
+  0%, 100% { border-color: var(--accent-dim); box-shadow: 0 0 0 0 transparent; }
+  50% { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-dim); }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes waveform {
+  0%, 100% { height: 4px; }
+  50% { height: 20px; }
+}
+
+@keyframes ping-slow {
+  0% { transform: scale(1); opacity: 0.8; }
+  70%, 100% { transform: scale(2); opacity: 0; }
+}
+
+/* ============================================================
+   BODY — LIGHT AND DARK BACKGROUNDS
+   ============================================================ */
 body {
   background-color: #f8fafc;
   color: #0f172a;
   position: relative;
   z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
+  font-feature-settings: "cv11", "ss01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Light mode: very subtle dot grid */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .dark body {
-  background-color: #020617;
-  color: #f8fafc;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  background-color: #060d19;
+  color: #e2e8f0;
 }
 
+/* Dark mode: dot grid */
+.dark body::after {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Aurora glow layer */
 body::before {
   content: '';
   position: fixed;
-  top: -50%;
-  left: -50%;
+  inset: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at 40% 40%, rgba(14, 165, 233, 0.05), transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(99, 102, 241, 0.03), transparent 50%);
+  background: radial-gradient(circle at 30% 20%, rgba(14, 165, 233, 0.06), transparent 45%),
+              radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.04), transparent 45%),
+              radial-gradient(circle at 55% 50%, rgba(16, 185, 129, 0.025), transparent 40%);
   pointer-events: none;
   z-index: -1;
-  animation: aurora 40s ease-in-out infinite alternate;
+  animation: aurora 45s ease-in-out infinite alternate;
   background-size: 200% 200%;
 }
 
 .dark body::before {
-  background: radial-gradient(circle at 40% 40%, rgba(0, 229, 255, 0.03), transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.03), transparent 50%),
-              radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.02), transparent 50%);
+  background: radial-gradient(circle at 30% 20%, rgba(0, 229, 255, 0.04), transparent 45%),
+              radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.04), transparent 45%),
+              radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.025), transparent 40%),
+              radial-gradient(circle at 60% 10%, rgba(16, 185, 129, 0.02), transparent 35%);
 }
 
-/* AI SaaS Text Gradient Utility */
+/* ============================================================
+   GRADIENT TEXT UTILITIES
+   ============================================================ */
 .text-gradient-ai {
-  background: linear-gradient(to right, #00E5FF, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 50%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Universal Card Hover Glow */
-.dark .rounded-xl {
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-}
-.dark .rounded-xl:hover {
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.05), inset 0 0 10px rgba(255, 255, 255, 0.02);
-  border-color: rgba(0, 229, 255, 0.2);
+.text-gradient-green {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Form element enhancements */
+/* ============================================================
+   GLASS / CARD UTILITIES
+   ============================================================ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.dark .glass-card {
+  background: rgba(13, 17, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================================
+   NEON / GLOW UTILITIES
+   ============================================================ */
+.neon-border {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent-dim), 0 0 15px var(--accent-dim), inset 0 0 15px var(--accent-muted);
+}
+
+.neon-glow {
+  box-shadow: 0 0 15px var(--accent-glow), 0 0 30px var(--accent-dim);
+}
+
+.neon-text {
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Accent-colored elements react to the CSS var */
+.accent-bg { background-color: var(--accent) !important; }
+.accent-text { color: var(--accent) !important; }
+.accent-border { border-color: var(--accent) !important; }
+.accent-glow-shadow { box-shadow: 0 0 20px var(--accent-glow) !important; }
+
+/* ============================================================
+   SHIMMER SKELETON LOADING
+   ============================================================ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 6px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+  animation: shimmer 2s linear infinite;
+}
+
+.dark .skeleton { background: rgba(255, 255, 255, 0.06); }
+.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+}
+
+/* ============================================================
+   CARD HOVER EFFECTS
+   ============================================================ */
+.card-hover {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.16) !important;
+}
+
+.dark .card-hover:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-dim), 0 0 25px var(--accent-muted);
+  border-color: var(--accent-dim) !important;
+}
+
+/* ============================================================
+   ACTIVE / LIVE STATUS INDICATOR
+   ============================================================ */
+.status-live {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ============================================================
+   DATA FLOW LINE (decorative sidebar element)
+   ============================================================ */
+.data-line {
+  background: linear-gradient(180deg, transparent, var(--accent), transparent);
+  background-size: 100% 200%;
+  animation: data-flow 3s linear infinite;
+}
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
 input, textarea, select {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-input:focus, textarea:focus {
-  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.15);
-}
-.dark input:focus, .dark textarea:focus {
-  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-/* Custom premium scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-dim) !important;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.25);
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+.dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection {
+  background: var(--accent-dim);
+  color: var(--text-primary);
 }
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+
+/* ============================================================
+   WAVEFORM ANIMATION BARS
+   ============================================================ */
+.waveform-bar {
+  width: 3px;
+  border-radius: 9999px;
+  background: var(--accent);
+  animation: waveform 0.8s ease-in-out infinite alternate;
 }
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+
+.waveform-bar:nth-child(1) { animation-delay: 0ms; }
+.waveform-bar:nth-child(2) { animation-delay: 100ms; }
+.waveform-bar:nth-child(3) { animation-delay: 200ms; }
+.waveform-bar:nth-child(4) { animation-delay: 300ms; }
+.waveform-bar:nth-child(5) { animation-delay: 200ms; }
+.waveform-bar:nth-child(6) { animation-delay: 100ms; }
+.waveform-bar:nth-child(7) { animation-delay: 50ms; }
+
+/* ============================================================
+   ACCENT INJECT SCRIPT SUPPORT
+   Changes from the color picker write to :root via JS:
+   document.documentElement.style.setProperty('--accent', color)
+   ============================================================ */
