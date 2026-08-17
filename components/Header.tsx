@@ -1,10 +1,20 @@
 "use client";
 
 import { Bell, Search, Plus } from "lucide-react";
+import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { toast } from "sonner";
+import { useWorkspace } from "@/lib/services/hooks";
 
 export function Header() {
+  const { data: workspace, loading: workspaceLoading } = useWorkspace();
+
+  const planName = workspace?.plan?.name || "—";
+  const creditsUsed = workspace?.workspace?.usage?.credits ?? 0;
+  const creditsLimit = workspace?.plan?.limit_credits;
+  const isUnlimited = creditsLimit === 0;
+  const creditsRemaining = creditsLimit && creditsLimit > 0 ? Math.max(creditsLimit - creditsUsed, 0) : null;
+
   return (
     <header className="hidden md:flex h-16 items-center px-8 border-b border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-[#020617]/40 backdrop-blur-xl sticky top-0 z-30">
       <div className="flex-1"></div>
@@ -15,6 +25,22 @@ export function Header() {
           <kbd className="hidden lg:inline-block font-mono text-[10px] font-semibold bg-white dark:bg-[#020617] px-1.5 py-0.5 rounded shadow-sm border border-slate-200 dark:border-white/10 text-slate-400">⌘K</kbd>
         </button>
         <div className="h-4 w-[1px] bg-slate-200 dark:bg-white/10 mx-1"></div>
+        {!workspaceLoading && (
+          <Link
+            href="/billing"
+            className="flex items-center gap-2 text-xs font-medium bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 px-3 py-1.5 rounded-full border border-slate-200/50 dark:border-white/5 transition-colors"
+          >
+            <span className="text-sky-600 dark:text-[#00E5FF] font-semibold">{planName}</span>
+            <span className="text-slate-300 dark:text-white/20">•</span>
+            <span className="text-slate-500 dark:text-[#888]">
+              {isUnlimited
+                ? "Unlimited"
+                : creditsRemaining !== null
+                ? `${creditsRemaining.toLocaleString()} credits left`
+                : `${creditsUsed.toLocaleString()} used`}
+            </span>
+          </Link>
+        )}
         <button className="relative p-2 text-slate-500 dark:text-[#888] hover:text-slate-900 dark:hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 group hover:bg-slate-100 dark:hover:bg-white/5 rounded-full">
           <Bell size={18} className="group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.3)] transition-all" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 dark:bg-[#FF2E93] border-2 border-white dark:border-[#020617] shadow-[0_0_8px_rgba(255,46,147,0.6)]"></span>
