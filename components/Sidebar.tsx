@@ -9,9 +9,22 @@ import {
 import { ReactNode } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { logout } from "@/lib/actions/auth-actions";
+import { useWorkspace } from "@/lib/services/hooks";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: workspace, loading: workspaceLoading } = useWorkspace();
+
+  const planName = workspace?.plan?.name || "—";
+  const creditsUsed = workspace?.workspace?.usage?.credits ?? 0;
+  const creditsLimit = workspace?.plan?.limit_credits;
+  // Convention used elsewhere in this app (e.g. voice minute quota checks): 0 = unlimited.
+  const isUnlimited = creditsLimit === 0;
+  const creditsRemaining = creditsLimit && creditsLimit > 0 ? Math.max(creditsLimit - creditsUsed, 0) : null;
+  const creditsPct = creditsLimit && creditsLimit > 0 ? Math.min((creditsUsed / creditsLimit) * 100, 100) : 0;
+
+  const userEmail = workspace?.workspace?.name || "";
+  const userInitials = userEmail ? userEmail.slice(0, 2).toUpperCase() : "—";
 
   return (
     <aside className="fixed inset-y-0 left-0 w-60 bg-slate-100/60 dark:bg-[#12161B]/60 backdrop-blur-xl border-r border-slate-200/50 dark:border-white/5 hidden md:flex flex-col h-screen overflow-y-auto z-40">
@@ -80,14 +93,49 @@ export function Sidebar() {
         <ThemeToggle />
       </div>
 
+      <div className="px-3 pb-2">
+        {workspaceLoading ? (
+          <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3 animate-pulse">
+            <div className="h-3 w-16 bg-slate-200 dark:bg-white/10 rounded mb-2"></div>
+            <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full"></div>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#888] uppercase tracking-wider">Plan</span>
+              <Link href="/billing" className="text-[11px] font-semibold text-sky-600 dark:text-[#00E5FF] hover:underline">
+                {planName}
+              </Link>
+            </div>
+            {isUnlimited ? (
+              <p className="text-[11px] text-slate-500 dark:text-[#888]">{creditsUsed} credits used (unlimited plan)</p>
+            ) : creditsRemaining !== null ? (
+              <>
+                <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden mb-1">
+                  <div
+                    className="bg-sky-500 dark:bg-[#00E5FF] h-full rounded-full transition-all"
+                    style={{ width: `${creditsPct}%` }}
+                  ></div>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-[#888]">
+                  {creditsRemaining.toLocaleString()} / {creditsLimit?.toLocaleString()} credits left
+                </p>
+              </>
+            ) : (
+              <p className="text-[11px] text-slate-500 dark:text-[#888]">{creditsUsed} credits used</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="p-3 border-t border-slate-200 dark:border-white/5">
         <div className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200 dark:hover:bg-white/5 transition-colors cursor-pointer text-left w-full group">
           <div className="w-8 h-8 rounded-full bg-[#00E5FF] flex items-center justify-center text-slate-900 dark:text-slate-900 text-[11px] font-bold shrink-0 shadow-[0_0_10px_rgba(79,140,255,0.3)]">
-            KF
+            {userInitials}
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="text-[13px] font-medium text-slate-900 dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-[#00E5FF] transition-colors">Knox Favour</p>
-            <p className="text-[11px] text-slate-500 dark:text-[#888] truncate">Enterprise OS</p>
+            <p className="text-[13px] font-medium text-slate-900 dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-[#00E5FF] transition-colors">{userEmail || "Loading..."}</p>
+            <p className="text-[11px] text-slate-500 dark:text-[#888] truncate">{planName}</p>
           </div>
           <Settings size={14} className="text-slate-400 dark:text-[#666] group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
         </div>

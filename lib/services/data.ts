@@ -142,7 +142,7 @@ export class DataService {
         return {
            workspace: {
              id: realWs.workspace.id,
-             name: "My Workspace",
+             name: realWs.workspace.name,
              planId: realWs.workspace.planId,
              usage: realWs.workspace.usage
            },
