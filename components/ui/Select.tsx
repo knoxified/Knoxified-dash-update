@@ -55,8 +55,7 @@ export function Select({ value, onChange, options, placeholder = "Select...", cl
           borderColor: 'var(--accent)',
           boxShadow: '0 0 0 2px var(--accent-dim)',
         } : {
-          borderColor: 'rgba(15,23,42,0.1)',
-          borderColor_dark: 'rgba(255,255,255,0.06)',
+          borderColor: 'var(--border)',
         }}
       >
         <span className={`block truncate text-[13px] font-medium ${!selectedOption ? 'text-slate-400 dark:text-white/25' : 'text-slate-800 dark:text-white/80'}`}>
