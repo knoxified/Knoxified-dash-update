@@ -16,12 +16,12 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md border border-slate-200 dark:border-white/10 p-3 rounded-xl shadow-xl">
-        <p className="text-slate-500 dark:text-[#888] text-xs font-medium mb-2">{label}</p>
+      <div className="backdrop-blur-xl border p-3 rounded-2xl shadow-2xl" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
+        <p className="text-slate-400 dark:text-white/40 text-[11px] font-semibold mb-2 uppercase tracking-wider">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-3 mb-1.5 last:mb-0">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></span>
-            <span className="text-slate-700 dark:text-[#EDEDED] text-xs font-medium capitalize">{entry.name}</span>
+            <span className="text-slate-600 dark:text-white/60 text-xs font-medium capitalize">{entry.name}</span>
             <span className="text-slate-900 dark:text-white text-sm font-bold ml-auto">{entry.value}</span>
           </div>
         ))}
@@ -51,73 +51,33 @@ export default function DashboardOverview() {
 
   if ((metricsLoading && !metrics) || (logsLoading && !logs) || (systemsLoading && !systems) || (automationsLoading && !automations)) {
     return (
-      <div className="space-y-6 w-full opacity-80 pointer-events-none">
+      <div className="space-y-6 w-full">
         {/* Header Skeleton */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="h-8 w-32 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse mb-2"></div>
-            <div className="h-4 w-64 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
+            <div className="skeleton h-7 w-48 rounded-xl mb-2" />
+            <div className="skeleton h-4 w-72 rounded-lg" />
           </div>
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="h-9 w-full sm:w-48 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-            <div className="h-9 w-32 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse hidden sm:block"></div>
-            <div className="h-9 w-24 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
+          <div className="flex items-center gap-3">
+            <div className="skeleton h-9 w-44 rounded-xl" />
+            <div className="skeleton h-9 w-8 rounded-xl hidden sm:block" />
+            <div className="skeleton h-9 w-36 rounded-xl" />
+            <div className="skeleton h-9 w-28 rounded-xl" />
           </div>
         </div>
 
-        {/* Hero Area Skeleton */}
+        {/* Hero Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-8 lg:col-span-6 border border-slate-200 dark:border-white/5 rounded-xl p-8 flex flex-col justify-center">
-            <div className="flex justify-between items-center mb-4">
-              <div className="h-6 w-40 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-              <div className="h-6 w-24 bg-slate-200 dark:bg-white/10 rounded-full animate-pulse"></div>
-            </div>
-            <div className="h-16 w-3/4 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse mt-2"></div>
-          </div>
-          <div className="md:col-span-4 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="border border-slate-200 dark:border-white/5 rounded-xl p-5 relative">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-5 w-5 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-                  <div className="h-4 w-24 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-                </div>
-                <div className="h-8 w-16 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-              </div>
-            ))}
+          <div className="skeleton md:col-span-8 lg:col-span-6 rounded-2xl h-44" />
+          <div className="md:col-span-4 lg:col-span-6 grid grid-cols-2 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="skeleton rounded-2xl h-[88px]" />)}
           </div>
         </div>
 
-        {/* Bottom Area Skeleton */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 border border-slate-200 dark:border-white/5 rounded-xl p-6">
-            <div className="h-6 w-56 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse mb-6"></div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-slate-200 dark:border-white/5 p-4 rounded-lg">
-                  <div className="h-4 w-24 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse mb-3"></div>
-                  <div className="h-7 w-16 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-            <div className="h-[200px] w-full bg-slate-100 dark:bg-white/5 rounded-md animate-pulse"></div>
-          </div>
-          <div className="border border-slate-200 dark:border-white/5 rounded-xl p-6">
-            <div className="h-6 w-32 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse mb-6"></div>
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="border border-slate-200 dark:border-white/5 p-4 rounded-lg flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-                    <div>
-                      <div className="h-4 w-24 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse mb-2"></div>
-                      <div className="h-3 w-16 bg-slate-200 dark:bg-white/10 rounded-md animate-pulse"></div>
-                    </div>
-                  </div>
-                  <div className="h-6 w-12 bg-slate-200 dark:bg-white/10 rounded-full animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Bottom Skeleton */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+          <div className="xl:col-span-2 skeleton rounded-2xl h-72" />
+          <div className="skeleton rounded-2xl h-72" />
         </div>
       </div>
     );
@@ -134,34 +94,36 @@ export default function DashboardOverview() {
   };
 
   return (
-    <div className={`space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ${metricsLoading ? 'opacity-80 transition-opacity' : 'opacity-100 transition-opacity'}`}>
+    <div className={`space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ${metricsLoading ? 'opacity-70 transition-opacity' : 'opacity-100 transition-opacity'}`}>
       
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
             {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, Knox.
           </h1>
-          <p className="text-slate-500 dark:text-[#888] text-sm">
-            Your agents are running {activeOperations.length} active pipelines. They&apos;ve secured <span className="font-medium text-slate-700 dark:text-slate-300">{formatCurrency(metrics.revenueProtected)}</span> in the {dateRange === '24h' ? 'last 24 hours' : `last ${dateRange.replace('d', ' days')}`}.
+          <p className="text-slate-500 dark:text-white/40 text-sm">
+            Your agents are running <span className="font-semibold text-slate-700 dark:text-white/70">{activeOperations.length}</span> active pipelines. They&apos;ve secured{' '}
+            <span className="font-semibold text-slate-700 dark:text-white/70">{formatCurrency(metrics.revenueProtected)}</span>{' '}
+            in the {dateRange === '24h' ? 'last 24 hours' : `last ${dateRange.replace('d', ' days')}`}.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center gap-2.5">
           <button 
             type="button"
             onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'k', 'metaKey': true}))}
-            className="flex flex-1 sm:max-w-[200px] items-center bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-md px-3 py-2 shadow-sm hover:border-sky-300 dark:hover:border-sky-500/50 transition-colors w-full tracking-wide group"
+            className="flex flex-1 sm:max-w-[200px] items-center bg-white dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] rounded-xl px-3 py-2 hover:border-slate-300 dark:hover:border-white/10 transition-all w-full tracking-wide group shadow-sm"
           >
-            <Search className="text-slate-400 dark:text-[#666] w-3.5 h-3.5 mr-2 group-hover:text-sky-500 dark:group-hover:text-[#00E5FF] transition-colors" />
-            <span className="text-xs text-slate-400 dark:text-[#666] group-hover:text-slate-600 dark:group-hover:text-[#EDEDED] transition-colors">Search command...</span>
-            <div className="ml-auto flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-              <kbd className="font-mono text-[9px] font-semibold bg-slate-100 dark:bg-white/5 px-1 py-0.5 rounded text-slate-500 border border-slate-200 dark:border-white/10">⌘</kbd>
-              <kbd className="font-mono text-[9px] font-semibold bg-slate-100 dark:bg-white/5 px-1 py-0.5 rounded text-slate-500 border border-slate-200 dark:border-white/10">K</kbd>
+            <Search className="text-slate-300 dark:text-white/20 w-3.5 h-3.5 mr-2 group-hover:text-slate-500 dark:group-hover:text-white/50 transition-colors" style={{ color: 'var(--accent)' }} />
+            <span className="text-xs text-slate-400 dark:text-white/30 group-hover:text-slate-600 dark:group-hover:text-white/60 transition-colors">Search command...</span>
+            <div className="ml-auto flex items-center gap-1">
+              <kbd className="font-mono text-[9px] font-bold bg-slate-100 dark:bg-white/[0.06] px-1 py-0.5 rounded text-slate-400 dark:text-white/25 border border-slate-200/80 dark:border-white/[0.06]">⌘</kbd>
+              <kbd className="font-mono text-[9px] font-bold bg-slate-100 dark:bg-white/[0.06] px-1 py-0.5 rounded text-slate-400 dark:text-white/25 border border-slate-200/80 dark:border-white/[0.06]">K</kbd>
             </div>
           </button>
-          <button className="hidden sm:flex relative p-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-md hover:border-slate-300 dark:hover:border-white/10 transition-all text-slate-500 dark:text-[#888] hover:text-slate-900 dark:hover:text-white">
-            <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-[#EF4444] border border-white dark:border-[#0F172A]"></div>
-            <Bell size={16} />
+          <button className="hidden sm:flex relative p-2 bg-white dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] rounded-xl hover:border-slate-300 dark:hover:border-white/10 transition-all text-slate-400 dark:text-white/30 hover:text-slate-700 dark:hover:text-white shadow-sm">
+            <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full" style={{ background: '#f43f5e', boxShadow: '0 0 6px rgba(244,63,94,0.7)' }}></div>
+            <Bell size={15} />
           </button>
           
           <div className="w-40 z-20">
@@ -177,77 +139,97 @@ export default function DashboardOverview() {
               className="text-xs"
             />
           </div>
-          <div className="flex items-center gap-1.5 bg-sky-100 dark:bg-[#00E5FF]/10 border border-sky-300 dark:border-[#00E5FF]/20 px-3 py-2 rounded-md text-sky-600 dark:text-[#00E5FF] text-xs font-medium w-full sm:w-auto">
-            <ShieldCheck size={14} />
+          <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold w-full sm:w-auto border"
+            style={{ 
+              background: 'var(--accent-muted)', 
+              borderColor: 'var(--accent-dim)', 
+              color: 'var(--accent)' 
+            }}
+          >
+            <ShieldCheck size={13} />
             {metrics.planStatus}
           </div>
         </div>
       </div>
 
-      {/* 1) Top hero section: business outcome first */}
+      {/* 1) Hero section */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        <div className="md:col-span-8 lg:col-span-6 bg-white dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-xl p-6 flex flex-col justify-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100 dark:bg-[#10B981]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-          <div className="flex items-center gap-2 mb-4 relative z-10">
-            <DollarSign size={18} className="text-emerald-600 dark:text-[#10B981]" />
-            <span className="text-slate-500 dark:text-[#888] font-semibold text-base">Revenue Influenced</span>
-            <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-[#10B981] bg-emerald-100 dark:bg-[#10B981]/10 px-2 py-0.5 rounded-full">+12.4% this period</span>
+        {/* Revenue Influenced — big hero card */}
+        <div className="md:col-span-8 lg:col-span-6 bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl p-7 flex flex-col justify-center relative overflow-hidden card-hover shadow-sm">
+          {/* Ambient glow */}
+          <div className="absolute top-0 right-0 w-72 h-72 rounded-full -mr-24 -mt-24 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)' }} />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full -ml-16 -mb-16 pointer-events-none" style={{ background: 'radial-gradient(circle, var(--accent-muted) 0%, transparent 70%)' }} />
+          
+          <div className="flex items-center gap-2.5 mb-5 relative z-10">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.12)' }}>
+              <DollarSign size={16} className="text-emerald-500" />
+            </div>
+            <span className="text-slate-500 dark:text-white/50 font-semibold text-sm">Revenue Influenced</span>
+            <span className="ml-auto text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 px-2.5 py-1 rounded-full">
+              +12.4% this period
+            </span>
           </div>
-          <div className="text-[56px] md:text-[72px] font-bold text-slate-900 dark:text-white tracking-tighter leading-none relative z-10">
+          <div className="text-[52px] md:text-[68px] font-extrabold text-slate-900 dark:text-white tracking-[-3px] leading-none relative z-10" style={{ fontFeatureSettings: '"tnum"' }}>
             {formatCurrency(metrics.revenueInfluenced)}
           </div>
+          <p className="text-[13px] text-slate-400 dark:text-white/30 mt-3 relative z-10">Across all active systems and automations</p>
         </div>
         
         <div className="md:col-span-4 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} trend="+5.2%" trendColor="text-emerald-600 dark:text-[#10B981]" color="text-sky-600 dark:text-[#00E5FF]" sparklineData={[{val:30},{val:40},{val:35},{val:55},{val:45},{val:60},{val:70}]} />
-          <StatCard label="Appointments Booked" value={metrics.appointmentsBooked.toString()} icon={CalendarCheck} trend="+18%" trendColor="text-emerald-600 dark:text-[#10B981]" color="text-slate-900 dark:text-white" sparklineData={[{val:10},{val:15},{val:12},{val:22},{val:18},{val:30},{val:40}]} />
-          <StatCard label="Qualified Leads" value={metrics.qualifiedLeads.toString()} icon={Target} trend="-2.4%" trendColor="text-red-500 dark:text-[#EF4444]" color="text-slate-900 dark:text-white" sparklineData={[{val:80},{val:85},{val:75},{val:82},{val:70},{val:65},{val:60}]} />
+          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} trend="+5.2%" trendUp={true} sparklineData={[{val:30},{val:40},{val:35},{val:55},{val:45},{val:60},{val:70}]} />
+          <StatCard label="Appointments" value={metrics.appointmentsBooked.toString()} icon={CalendarCheck} trend="+18%" trendUp={true} sparklineData={[{val:10},{val:15},{val:12},{val:22},{val:18},{val:30},{val:40}]} />
+          <StatCard label="Qualified Leads" value={metrics.qualifiedLeads.toString()} icon={Target} trend="-2.4%" trendUp={false} sparklineData={[{val:80},{val:85},{val:75},{val:82},{val:70},{val:65},{val:60}]} />
           <StatCard label="Failed Follow-ups" value={metrics.failedFollowups.toString()} icon={AlertTriangle} subtitle="Requires attention" isWarning={true} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
         
         {/* Voice Agent Interface */}
-        <div className="xl:col-span-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 relative overflow-hidden group transition-all duration-300 shadow-sm flex flex-col justify-center h-full">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100"></div>
+        <div className="xl:col-span-2 bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl p-6 relative overflow-hidden group card-hover shadow-sm flex flex-col">
+          {/* Ambient glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full -mr-20 -mt-20 pointer-events-none transition-opacity duration-700 opacity-30 group-hover:opacity-60" style={{ background: 'radial-gradient(circle, var(--accent-dim) 0%, transparent 70%)' }} />
+          
           <div className="flex items-center justify-between mb-6 relative z-10">
-            <div className="flex items-center gap-2">
-              <Radio className="text-sky-600 dark:text-[#00E5FF] animate-pulse" size={18} />
-              <h3 className="text-slate-900 dark:text-white font-semibold text-base">Active Voice Agent</h3>
-              <span className="ml-2 flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-[#10B981] bg-emerald-50 dark:bg-[#10B981]/10 border border-emerald-200 dark:border-[#10B981]/20 px-2 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Listening
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-muted)' }}>
+                <Radio size={15} style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 4px var(--accent-glow))' }} className="animate-pulse" />
+              </div>
+              <h3 className="text-slate-900 dark:text-white font-semibold text-[15px]">Active Voice Agent</h3>
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Listening
               </span>
             </div>
-            <Link href="/agent-config" className="text-slate-400 hover:text-slate-600 dark:text-[#888] dark:hover:text-white transition-colors">
-              <Settings2 size={18} />
+            <Link href="/agent-config" className="p-2 rounded-xl text-slate-400 dark:text-white/25 hover:text-slate-600 dark:hover:text-white/60 hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-all">
+              <Settings2 size={15} />
             </Link>
           </div>
           
           <div className="relative z-10 flex flex-col lg:flex-row gap-4 items-stretch flex-1">
             
-            <div className="flex-1 w-full bg-slate-50 dark:bg-[#020617]/50 rounded-lg border border-slate-200 dark:border-white/5 p-4 flex flex-col justify-between">
+            {/* Transcript */}
+            <div className="flex-1 w-full bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-4 flex flex-col justify-between">
               <div>
-                <p className="text-xs font-semibold text-slate-500 dark:text-[#888] mb-3 uppercase tracking-wider">Live Transcript</p>
-                <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center shrink-0">
-                      <Users size={12} className="text-slate-600 dark:text-[#EDEDED]" />
+                <p className="text-[10px] font-bold text-slate-400 dark:text-white/25 mb-3 uppercase tracking-widest">Live Transcript</p>
+                <div className="space-y-3">
+                  <div className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-white/[0.08] flex items-center justify-center shrink-0">
+                      <Users size={11} className="text-slate-500 dark:text-white/50" />
                     </div>
-                    <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-lg rounded-tl-none p-3 text-sm text-slate-700 dark:text-[#EDEDED] shadow-sm">
+                    <div className="bg-white dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl rounded-tl-none px-3 py-2 text-[13px] text-slate-700 dark:text-white/70 shadow-sm max-w-[85%]">
                       Yes, I would like to schedule a follow-up for next week.
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-sky-100 dark:bg-[#00E5FF]/20 flex items-center justify-center shrink-0">
-                      <Mic size={12} className="text-sky-600 dark:text-[#00E5FF]" />
+                  <div className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)' }}>
+                      <Mic size={11} style={{ color: 'var(--accent)' }} />
                     </div>
-                    <div className="bg-sky-50 dark:bg-[#00E5FF]/5 border border-sky-100 dark:border-[#00E5FF]/10 rounded-lg rounded-tl-none p-3 text-sm text-slate-700 dark:text-white shadow-sm relative">
+                    <div className="rounded-2xl rounded-tl-none px-3 py-2 text-[13px] text-slate-700 dark:text-white/80 shadow-sm max-w-[85%] relative" style={{ background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)' }}>
                       Perfect, I have that scheduled for Tuesday at 10 AM. Is there anything else you need help with?
-                      <span className="absolute bottom-1 right-2 flex items-center gap-1">
-                         <span className="w-1 h-1 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                         <span className="w-1 h-1 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                         <span className="w-1 h-1 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      <span className="absolute bottom-2 right-3 flex items-center gap-0.5">
+                         <span className="waveform-bar h-[4px]" style={{ animationDelay: '0ms' }}></span>
+                         <span className="waveform-bar h-[8px]" style={{ animationDelay: '100ms' }}></span>
+                         <span className="waveform-bar h-[4px]" style={{ animationDelay: '200ms' }}></span>
                       </span>
                     </div>
                   </div>
@@ -255,73 +237,93 @@ export default function DashboardOverview() {
               </div>
             </div>
 
-            <div className="w-full lg:w-48 xl:w-56 flex flex-col justify-center items-center gap-6 bg-slate-50 dark:bg-[#020617]/50 rounded-lg border border-slate-200 dark:border-white/5 p-6 shrink-0">
+            {/* Mic / Controls */}
+            <div className="w-full lg:w-44 flex flex-col justify-center items-center gap-5 bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-5 shrink-0">
               <div className="relative">
-                <div className="absolute inset-0 bg-sky-400 dark:bg-[#00E5FF] rounded-full animate-ping opacity-20"></div>
-                <div className="w-16 h-16 rounded-full bg-sky-100 dark:bg-[#00E5FF]/10 border-4 border-white dark:border-[#0F172A] shadow-xl flex items-center justify-center relative z-10">
-                  <Mic size={24} className="text-sky-600 dark:text-[#00E5FF]" />
+                <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: 'var(--accent)' }} />
+                <div className="w-16 h-16 rounded-full flex items-center justify-center relative z-10 shadow-xl border-4 border-white dark:border-[#0d1117]"
+                  style={{ background: 'var(--accent-muted)', boxShadow: '0 0 20px var(--accent-glow)' }}
+                >
+                  <Mic size={22} style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 6px var(--accent-glow))' }} />
                 </div>
               </div>
               
-              <div className="flex gap-3">
-                <button className="w-10 h-10 rounded-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center text-slate-600 dark:text-[#EDEDED] transition-colors shadow-sm">
-                  <Volume2 size={16} />
+              {/* Waveform visualization */}
+              <div className="flex items-center gap-[3px] h-6">
+                {[4,8,14,20,14,8,4].map((h, i) => (
+                  <div key={i} className="waveform-bar" style={{ height: `${h}px`, animationDelay: `${i * 80}ms` }} />
+                ))}
+              </div>
+              
+              <div className="flex gap-2.5">
+                <button className="w-9 h-9 rounded-full bg-white dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 transition-all shadow-sm">
+                  <Volume2 size={14} />
                 </button>
-                <button className="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 border border-transparent flex items-center justify-center text-white transition-colors shadow-sm shadow-red-500/20">
-                  <PhoneOff size={16} />
+                <button className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white transition-all shadow-sm" style={{ boxShadow: '0 0 12px rgba(239,68,68,0.4)' }}>
+                  <PhoneOff size={14} />
                 </button>
               </div>
               
-              <div className="w-full space-y-2 mt-auto">
-                <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-[#888] uppercase tracking-wider">
+              <div className="w-full space-y-1.5 mt-auto">
+                <div className="flex justify-between text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-wider">
                   <span>Signal</span>
                   <span className="text-emerald-500">Excellent</span>
                 </div>
-                <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full w-[92%] rounded-full"></div>
+                <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                  <div className="h-full w-[92%] rounded-full bg-emerald-500" style={{ boxShadow: '0 0 6px rgba(16,185,129,0.6)' }} />
                 </div>
               </div>
             </div>
             
-            {/* Quick Actions Sidebar */}
-            <div className="w-full lg:w-56 shrink-0 bg-slate-50 dark:bg-[#020617]/50 rounded-lg border border-slate-200 dark:border-white/5 p-5 flex flex-col">
-               <h4 className="text-xs font-semibold text-slate-500 dark:text-[#888] uppercase tracking-wider mb-4">Quick Actions</h4>
-               <div className="flex flex-col gap-3 flex-1">
-                  <button onClick={() => setTakeoverActive(!takeoverActive)} className={`group flex items-center justify-between p-3 rounded-lg border shadow-sm transition-colors ${takeoverActive ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20' : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'}`}>
-                    <span className={`text-[13px] font-medium transition-colors ${takeoverActive ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-[#EDEDED] group-hover:text-slate-900 dark:group-hover:text-white'}`}>Live Takeover</span>
-                    <div className={`w-7 h-3.5 rounded-full relative transition-colors ${takeoverActive ? 'bg-red-500' : 'bg-slate-200 dark:bg-white/10'}`}><div className={`w-2.5 h-2.5 bg-white rounded-full absolute top-[2px] shadow-sm transition-transform ${takeoverActive ? 'right-[2px]' : 'left-[2px]'}`}></div></div>
-                  </button>
-                  <button onClick={() => setWhisperMode(!whisperMode)} className={`group flex items-center justify-between p-3 rounded-lg border shadow-sm transition-colors ${whisperMode ? 'bg-sky-50 dark:bg-[#00E5FF]/10 border-sky-200 dark:border-[#00E5FF]/20' : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'}`}>
-                    <span className={`text-[13px] font-medium transition-colors ${whisperMode ? 'text-sky-700 dark:text-[#00E5FF]' : 'text-slate-700 dark:text-[#EDEDED] group-hover:text-slate-900 dark:group-hover:text-white'}`}>Whisper Mode</span>
-                    <div className={`w-7 h-3.5 rounded-full relative transition-colors ${whisperMode ? 'bg-sky-500 dark:bg-[#00E5FF]' : 'bg-slate-200 dark:bg-white/10'}`}><div className={`w-2.5 h-2.5 bg-white rounded-full absolute top-[2px] shadow-sm transition-transform ${whisperMode ? 'right-[2px]' : 'left-[2px]'}`}></div></div>
-                  </button>
+            {/* Quick Actions */}
+            <div className="w-full lg:w-52 shrink-0 bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-4 flex flex-col">
+               <h4 className="text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-widest mb-3">Quick Actions</h4>
+               <div className="flex flex-col gap-2 flex-1">
+                  <ToggleButton 
+                    label="Live Takeover" 
+                    active={takeoverActive} 
+                    onToggle={() => setTakeoverActive(!takeoverActive)}
+                    activeColor="bg-red-500"
+                    activeStyle="bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20"
+                    activeTextStyle="text-red-600 dark:text-red-400"
+                  />
+                  <ToggleButton 
+                    label="Whisper Mode" 
+                    active={whisperMode} 
+                    onToggle={() => setWhisperMode(!whisperMode)}
+                    activeStyle="dark:border-white/10"
+                    useAccent
+                  />
                   {whisperMode && (
-                    <div className="flex items-center gap-2 mt-1 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-top-2">
                       <input 
                         type="text" 
                         value={whisperText}
                         onChange={(e) => setWhisperText(e.target.value)}
                         placeholder="Prompt AI..." 
-                        className="w-full bg-white dark:bg-[#020617] border border-sky-200 dark:border-[#00E5FF]/30 text-slate-900 dark:text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-sky-500 transition-colors"
+                        className="w-full bg-white dark:bg-white/[0.04] text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 outline-none transition-all border"
+                        style={{ borderColor: 'var(--accent-dim)' }}
                       />
-                      <button className="w-8 h-8 flex items-center justify-center shrink-0 bg-sky-500 dark:bg-[#00E5FF] text-white dark:text-[#020617] rounded-lg hover:opacity-90 transition-opacity">
-                        <Send size={14} />
+                      <button className="w-7 h-7 flex items-center justify-center shrink-0 rounded-xl text-slate-900 dark:text-[#0d1117] hover:opacity-90 transition-opacity" style={{ background: 'var(--accent)', boxShadow: '0 0 10px var(--accent-glow)' }}>
+                        <Send size={12} />
                       </button>
                     </div>
                   )}
-                  <button className="group flex items-center justify-between p-3 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 shadow-sm hover:border-slate-300 dark:hover:border-white/10 transition-colors mt-auto">
-                    <span className="text-[13px] font-medium text-slate-700 dark:text-[#EDEDED] group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Do Not Disturb</span>
-                    <div className="w-7 h-3.5 bg-slate-200 dark:bg-white/10 rounded-full relative transition-colors"><div className="w-2.5 h-2.5 bg-white rounded-full absolute top-[2px] left-[2px] shadow-sm transition-transform"></div></div>
-                  </button>
+                  <ToggleButton 
+                    label="Do Not Disturb" 
+                    active={false} 
+                    onToggle={() => {}}
+                    activeStyle=""
+                  />
                </div>
                
-               <div className="mt-6 pt-4 border-t border-slate-200 dark:border-white/5 w-full">
-                 <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-[#888] uppercase tracking-wider mb-2">
+               <div className="mt-4 pt-4 border-t border-slate-200/80 dark:border-white/[0.05] w-full">
+                 <div className="flex justify-between text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-wider mb-1.5">
                    <span>Voice Minutes</span>
-                   <span className="text-slate-700 dark:text-[#EDEDED]">120 / 500</span>
+                   <span className="text-slate-600 dark:text-white/50">120/500</span>
                  </div>
-                 <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
-                   <div className="bg-sky-500 dark:bg-[#00E5FF] h-full w-[24%] rounded-full"></div>
+                 <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                   <div className="h-full w-[24%] rounded-full" style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent-glow)' }} />
                  </div>
                </div>
             </div>
@@ -329,18 +331,48 @@ export default function DashboardOverview() {
           </div>
         </div>
 
-        {/* 5) Active systems section */}
+        {/* Active Systems section — col-span-1 on the right */}
+        <div className="bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl overflow-hidden card-hover shadow-sm flex flex-col">
+          <div className="p-5 border-b border-slate-100/80 dark:border-white/[0.04] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap size={14} className="text-amber-500" style={{ filter: 'drop-shadow(0 0 4px rgba(245,158,11,0.6))' }} />
+              <h3 className="text-slate-900 dark:text-white font-semibold text-[15px]">Today&apos;s Wins</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex bg-slate-100/80 dark:bg-white/[0.04] p-0.5 rounded-xl border border-slate-200/80 dark:border-white/[0.05] gap-0.5">
+                {['All', 'Calls', 'Emails'].map((f) => (
+                  <button 
+                    key={f}
+                    onClick={() => setLogFilter(f)}
+                    className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg transition-all ${logFilter === f ? 'text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 dark:text-white/25 hover:text-slate-600 dark:hover:text-white/50'}`}
+                    style={logFilter === f ? { background: 'var(--surface-1)' } : {}}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+              </span>
+            </div>
+          </div>
+          <ActivityFeed filter={logFilter} />
+        </div>
+      </div>
+
+      {/* 5) Active Operations */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Cpu className="text-slate-500 dark:text-[#888]" size={20} />
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+            <Cpu className="text-slate-400 dark:text-white/25" size={18} />
             Active Operations
           </h2>
-          <Link href="/systems" className="text-sm font-medium text-sky-600 dark:text-[#00E5FF] hover:text-sky-700 dark:hover:text-[#00E5FF]/80 flex items-center gap-1 transition-colors">
-            View All Portfolio <ArrowRight size={14} />
+          <Link href="/systems" className="flex items-center gap-1 text-[13px] font-semibold hover:opacity-70 transition-opacity" style={{ color: 'var(--accent)' }}>
+            View All <ArrowRight size={13} />
           </Link>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {activeOperations.slice(0, 3).map(op => {
             let Icon = Building;
             if (op.opType === 'system') {
@@ -351,68 +383,73 @@ export default function DashboardOverview() {
             }
 
             return (
-              <div key={op.opType + '-' + op.id} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between shadow-[0_0_15px_rgba(16,185,129,0.05)] dark:shadow-[0_0_15px_rgba(16,185,129,0.02)]">
+              <div key={op.opType + '-' + op.id} className="bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl p-6 card-hover cursor-pointer relative overflow-hidden flex flex-col justify-between shadow-sm group">
                 {op.status === 'Active' && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent dark:from-emerald-500/10 dark:to-transparent animate-pulse pointer-events-none"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.03] to-transparent pointer-events-none" />
                 )}
+                
+                {/* Hover glow */}
+                <div className="absolute top-0 right-0 w-40 h-40 -mr-16 -mt-16 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'radial-gradient(circle, var(--accent-muted) 0%, transparent 70%)' }} />
+                
                 <div>
-                  <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500">
-                    <Icon size={140} className="text-sky-600 dark:text-[#00E5FF]" />
-                  </div>
-                  
+                  {/* Header */}
                   <div className="flex items-start justify-between mb-5 relative z-10">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-[#020617] border border-slate-300 dark:border-white/10 flex items-center justify-center text-sky-600 dark:text-[#00E5FF]">
-                        <Icon size={20} />
+                      <div className="w-10 h-10 rounded-xl border flex items-center justify-center transition-all" style={{ background: 'var(--accent-muted)', borderColor: 'var(--accent-dim)' }}>
+                        <Icon size={18} style={{ color: 'var(--accent)' }} />
                       </div>
                       <div>
-                        <h3 className="text-slate-900 dark:text-white font-semibold text-base">{op.name}</h3>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <div className="relative flex h-2 w-2">
-                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${op.status === 'Active' ? 'bg-[#10B981]' : 'bg-[#00E5FF]'}`}></span>
-                            <span className={`relative inline-flex rounded-full h-2 w-2 ${op.status === 'Active' ? 'bg-[#10B981]' : 'bg-[#00E5FF]'}`}></span>
+                        <h3 className="text-slate-900 dark:text-white font-semibold text-[15px]">{op.name}</h3>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="relative flex h-1.5 w-1.5">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${op.status === 'Active' ? 'bg-emerald-400' : 'bg-sky-400'}`} />
+                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${op.status === 'Active' ? 'bg-emerald-500' : 'bg-sky-400'}`} />
                           </div>
-                          <span className="text-[12px] text-slate-500 dark:text-[#888] font-medium">{op.status} ({op.opType === 'system' ? 'System' : 'Automation'})</span>
+                          <span className="text-[11px] text-slate-400 dark:text-white/30 font-medium">{op.status} · {op.opType === 'system' ? 'System' : 'Automation'}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mb-6 relative z-10">
+                  {/* Primary metric */}
+                  <div className="mb-5 relative z-10">
                     {op.opType === 'system' ? (
                       <>
-                        <p className="text-[12px] text-emerald-600 dark:text-[#10B981] font-medium mb-1">Revenue Impact</p>
-                        <p className="text-[28px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format((op as any).revenueImpact || 0)}</p>
+                        <p className="text-[11px] text-emerald-500 font-bold mb-1 uppercase tracking-wider">Revenue Impact</p>
+                        <p className="text-[30px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-none" style={{ fontFeatureSettings: '"tnum"' }}>
+                          {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format((op as any).revenueImpact || 0)}
+                        </p>
                       </>
                     ) : (
                       <>
-                        <p className="text-[12px] text-sky-600 dark:text-sky-400 font-medium mb-1">Category</p>
-                        <p className="text-[28px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">{(op as any).category || 'Automation'}</p>
+                        <p className="text-[11px] font-bold mb-1 uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Category</p>
+                        <p className="text-[26px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">{(op as any).category || 'Automation'}</p>
                       </>
                     )}
                   </div>
 
-                  <div className={`grid ${op.opType === 'system' ? 'grid-cols-3' : 'grid-cols-2'} gap-2 mb-5 relative z-10 border-t border-slate-200 dark:border-white/5 pt-5`}>
+                  {/* Metrics grid */}
+                  <div className={`grid ${op.opType === 'system' ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mb-4 relative z-10 border-t border-slate-100/80 dark:border-white/[0.04] pt-4`}>
                      <div>
-                       <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium mb-0.5">{op.metrics?.label1}</p>
-                       <p className="text-sm text-slate-900 dark:text-white font-medium">{op.metrics?.value1}</p>
+                       <p className="text-[11px] text-slate-400 dark:text-white/25 font-medium mb-0.5">{op.metrics?.label1}</p>
+                       <p className="text-sm text-slate-800 dark:text-white/80 font-semibold">{op.metrics?.value1}</p>
                      </div>
                      <div>
-                       <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium mb-0.5">{op.metrics?.label2}</p>
-                       <p className="text-sm text-slate-900 dark:text-white font-medium">{op.metrics?.value2}</p>
+                       <p className="text-[11px] text-slate-400 dark:text-white/25 font-medium mb-0.5">{op.metrics?.label2}</p>
+                       <p className="text-sm text-slate-800 dark:text-white/80 font-semibold">{op.metrics?.value2}</p>
                      </div>
                      {op.opType === 'system' && (
                        <div>
-                         <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium mb-0.5">{(op as any).metrics?.label3}</p>
-                         <p className="text-sm text-slate-900 dark:text-white font-medium">{(op as any).metrics?.value3}</p>
+                         <p className="text-[11px] text-slate-400 dark:text-white/25 font-medium mb-0.5">{(op as any).metrics?.label3}</p>
+                         <p className="text-sm text-slate-800 dark:text-white/80 font-semibold">{(op as any).metrics?.value3}</p>
                        </div>
                      )}
                   </div>
                 </div>
 
                 {(op as any).currentActivity && (
-                  <div className="mt-auto bg-white dark:bg-[#0F172A]/80 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-lg p-3 text-[13px] text-slate-700 dark:text-[#EDEDED] flex items-center gap-2.5 relative z-10 shadow-lg">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00E5FF] animate-pulse"></span>
+                  <div className="mt-auto rounded-xl px-3 py-2.5 text-[12px] text-slate-600 dark:text-white/60 flex items-center gap-2 relative z-10 border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent-glow)' }} />
                     <span className="truncate">{(op as any).currentActivity}</span>
                   </div>
                 )}
@@ -422,83 +459,62 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* 2) “Today’s Wins” section */}
-        <div className="bg-white dark:bg-[#0F172A]/80 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-xl flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 h-full">
-          <div className="p-6 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#0F172A]/50">
-            <div className="flex items-center gap-2">
-              <Zap className="text-amber-500 dark:text-[#F59E0B]" size={16} />
-              <h3 className="text-slate-900 dark:text-white font-semibold text-base">Today&apos;s Wins</h3>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex bg-slate-100 dark:bg-[#020617] p-1 rounded-lg border border-slate-200 dark:border-white/5">
-                {['All', 'Calls', 'Emails'].map((filter) => (
-                  <button 
-                    key={filter}
-                    onClick={() => setLogFilter(filter)}
-                    className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-md transition-colors ${logFilter === filter ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
-              <span className="relative flex h-2 w-2 ml-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
-              </span>
-            </div>
-          </div>
-          
-          <ActivityFeed filter={logFilter} />
-        </div>
-      </div>
     </div>
   );
 }
 
 
+// ── StatCard ─────────────────────────────────────────────────────────────────
 interface StatCardProps {
   label: string;
   value: string | number;
   icon: React.ElementType;
   trend?: string;
-  trendColor?: string;
+  trendUp?: boolean;
   subtitle?: string;
-  color?: string;
   isWarning?: boolean;
   sparklineData?: Array<{val: number}>;
 }
 
-function StatCard({ label, value, icon: Icon, trend, trendColor, subtitle, color, isWarning, sparklineData }: StatCardProps) {
-  const warningClasses = isWarning ? 'border-red-200 dark:border-[#EF4444]/30 bg-red-50 dark:bg-[#EF4444]/5' : 'border-slate-200 dark:border-white/5 bg-white dark:bg-[#0F172A]';
-  const strokeColor = trendColor?.includes('red') ? '#EF4444' : '#10B981';
+function StatCard({ label, value, icon: Icon, trend, trendUp, subtitle, isWarning, sparklineData }: StatCardProps) {
+  const strokeColor = trendUp ? '#10b981' : '#f43f5e';
 
   return (
-    <div className={`border rounded-xl p-6 relative overflow-hidden transition-all duration-300 group hover:border-sky-300 dark:hover:border-sky-500/30 hover:shadow-lg hover:-translate-y-1 flex flex-col justify-center h-full ${warningClasses}`}>
-      <div className="flex items-center justify-between mb-4 relative z-10">
+    <div className={`border rounded-2xl p-5 relative overflow-hidden transition-all duration-300 group card-hover flex flex-col h-full shadow-sm ${
+      isWarning 
+        ? 'border-red-200/80 dark:border-red-500/20 bg-red-50/80 dark:bg-red-500/[0.04]' 
+        : 'border-slate-200/60 dark:border-white/[0.05] bg-white dark:bg-[#0d1117]'
+    }`}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3 relative z-10">
         <div className="flex items-center gap-2">
-          <Icon size={16} className={isWarning ? 'text-red-500 dark:text-[#EF4444]' : color} />
-          <p className="text-slate-500 dark:text-[#888] font-medium text-sm">{label}</p>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isWarning ? 'bg-red-100 dark:bg-red-500/10' : ''}`}
+            style={!isWarning ? { background: 'var(--accent-muted)' } : {}}
+          >
+            <Icon size={13} className={isWarning ? 'text-red-500 dark:text-red-400' : ''} style={!isWarning ? { color: 'var(--accent)' } : {}} />
+          </div>
+          <p className="text-slate-500 dark:text-white/40 font-medium text-[12px]">{label}</p>
         </div>
-        {isWarning && <AlertTriangle size={16} className="text-red-500 dark:text-[#EF4444] animate-pulse" />}
+        {isWarning && <AlertTriangle size={13} className="text-red-500 dark:text-red-400 animate-pulse" />}
       </div>
 
-      <div className="flex items-end gap-2 relative z-10">
-        <p className="text-[28px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">{value}</p>
+      {/* Value */}
+      <div className="flex items-end gap-2 relative z-10 mt-auto">
+        <p className="text-[26px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-none" style={{ fontFeatureSettings: '"tnum"' }}>{value}</p>
         {trend && (
-          <span className={`text-[13px] font-medium mb-1 ${trendColor ? trendColor : 'text-slate-500 dark:text-[#888]'}`}>
+          <span className={`text-[12px] font-bold mb-0.5 ${trendUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
             {trend}
           </span>
         )}
       </div>
 
       {subtitle && (
-        <p className={`text-[12px] mt-2 font-medium relative z-10 ${isWarning ? 'text-red-500 dark:text-[#EF4444]' : 'text-slate-500 dark:text-[#888]'}`}>{subtitle}</p>
+        <p className={`text-[11px] mt-1.5 font-semibold relative z-10 ${isWarning ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-white/30'}`}>{subtitle}</p>
       )}
 
-      {/* Sparkline chart in the background */}
+      {/* Sparkline background */}
       {sparklineData && !isWarning && (
-        <div className="absolute bottom-0 left-0 right-0 h-16 opacity-30 group-hover:opacity-70 transition-opacity duration-300 pointer-events-none">
+        <div className="absolute bottom-0 left-0 right-0 h-14 opacity-20 group-hover:opacity-50 transition-opacity duration-300 pointer-events-none">
           <ResponsiveContainer width="100%" height="100%">
              <AreaChart data={sparklineData}>
                 <defs>
@@ -513,5 +529,44 @@ function StatCard({ label, value, icon: Icon, trend, trendColor, subtitle, color
         </div>
       )}
     </div>
+  );
+}
+
+// ── ToggleButton ─────────────────────────────────────────────────────────────
+interface ToggleButtonProps {
+  label: string;
+  active: boolean;
+  onToggle: () => void;
+  activeStyle?: string;
+  activeTextStyle?: string;
+  activeColor?: string;
+  useAccent?: boolean;
+}
+
+function ToggleButton({ label, active, onToggle, activeStyle, activeTextStyle, activeColor, useAccent }: ToggleButtonProps) {
+  return (
+    <button 
+      onClick={onToggle} 
+      className={`group flex items-center justify-between p-2.5 rounded-xl border shadow-sm transition-all ${
+        active 
+          ? (activeStyle || 'bg-white/[0.04] border-white/10')
+          : 'bg-white dark:bg-white/[0.04] border-slate-200/80 dark:border-white/[0.06] hover:border-slate-300 dark:hover:border-white/10'
+      }`}
+    >
+      <span className={`text-[12px] font-semibold transition-colors ${
+        active 
+          ? (activeTextStyle || (useAccent ? '' : 'text-slate-700 dark:text-white/80'))
+          : 'text-slate-500 dark:text-white/40 group-hover:text-slate-700 dark:group-hover:text-white/70'
+      }`}
+        style={active && useAccent ? { color: 'var(--accent)' } : {}}
+      >
+        {label}
+      </span>
+      <div className={`w-8 h-4 rounded-full relative transition-all ${active ? (activeColor || '') : 'bg-slate-200 dark:bg-white/10'}`}
+        style={active && useAccent ? { background: 'var(--accent)', boxShadow: '0 0 8px var(--accent-glow)' } : {}}
+      >
+        <div className={`w-3 h-3 bg-white rounded-full absolute top-[2px] shadow-sm transition-transform duration-200 ${active ? 'right-[2px]' : 'left-[2px]'}`} />
+      </div>
+    </button>
   );
 }

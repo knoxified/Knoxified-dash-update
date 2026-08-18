@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 
 interface Option {
   value: string;
@@ -35,7 +35,6 @@ export function Select({ value, onChange, options, placeholder = "Select...", cl
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
-      {/* Hidden native select for form serialization if needed */}
       <select 
         value={value} 
         onChange={(e) => onChange(e.target.value)}
@@ -51,39 +50,58 @@ export function Select({ value, onChange, options, placeholder = "Select...", cl
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between bg-white dark:bg-[#0F172A] border ${isOpen ? 'border-[#00E5FF] ring-1 ring-[#00E5FF]/50 shadow-[0_0_15px_rgba(0,229,255,0.15)]' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'} rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white transition-all outline-none`}
+        className={`w-full flex items-center justify-between bg-white dark:bg-white/[0.04] border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white transition-all outline-none shadow-sm`}
+        style={isOpen ? {
+          borderColor: 'var(--accent)',
+          boxShadow: '0 0 0 2px var(--accent-dim)',
+        } : {
+          borderColor: 'rgba(15,23,42,0.1)',
+          borderColor_dark: 'rgba(255,255,255,0.06)',
+        }}
       >
-        <span className={`block truncate ${!selectedOption ? 'text-slate-500 dark:text-[#888]' : ''}`}>
+        <span className={`block truncate text-[13px] font-medium ${!selectedOption ? 'text-slate-400 dark:text-white/25' : 'text-slate-800 dark:text-white/80'}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown 
-          size={16} 
-          className={`text-slate-400 dark:text-[#888] transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#00E5FF]' : ''}`} 
+          size={14} 
+          className={`text-slate-400 dark:text-white/25 transition-all duration-200 ml-2 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+          style={isOpen ? { color: 'var(--accent)' } : {}}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl overflow-hidden backdrop-blur-xl origin-top animate-in fade-in slide-in-from-top-2 duration-200">
-          <ul className="max-h-60 overflow-y-auto py-1 custom-scrollbar">
+        <div className="absolute z-50 w-full mt-1.5 rounded-2xl shadow-2xl overflow-hidden origin-top animate-in fade-in slide-in-from-top-2 duration-150 border"
+          style={{ 
+            background: 'var(--surface-2)',
+            borderColor: 'var(--border)',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.15), 0 0 0 1px var(--border)'
+          }}
+        >
+          <ul className="max-h-60 overflow-y-auto p-1.5 space-y-0.5">
             {options.length === 0 ? (
-              <li className="px-4 py-2 text-sm text-slate-500 dark:text-[#888]">No options available</li>
+              <li className="px-3 py-2 text-[13px] text-slate-400 dark:text-white/25">No options</li>
             ) : (
-              options.map((opt) => (
-                <li
-                  key={opt.value}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={`px-4 py-2 text-sm cursor-pointer transition-colors ${
-                    value === opt.value 
-                      ? 'bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-700 dark:text-[#00E5FF] font-medium' 
-                      : 'text-slate-700 dark:text-[#EDEDED] hover:bg-slate-50 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {opt.label}
-                </li>
-              ))
+              options.map((opt) => {
+                const selected = value === opt.value;
+                return (
+                  <li
+                    key={opt.value}
+                    onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                    className={`flex items-center justify-between px-3 py-2 text-[13px] rounded-xl cursor-pointer transition-all font-medium ${
+                      selected 
+                        ? '' 
+                        : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                    }`}
+                    style={selected ? { 
+                      background: 'var(--accent-muted)', 
+                      color: 'var(--accent)'
+                    } : {}}
+                  >
+                    <span>{opt.label}</span>
+                    {selected && <Check size={13} style={{ color: 'var(--accent)' }} strokeWidth={2.5} />}
+                  </li>
+                );
+              })
             )}
           </ul>
         </div>

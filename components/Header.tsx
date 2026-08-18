@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, Plus } from "lucide-react";
+import { Bell, Search, Plus, Wifi } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { toast } from "sonner";
@@ -16,38 +16,74 @@ export function Header() {
   const creditsRemaining = creditsLimit && creditsLimit > 0 ? Math.max(creditsLimit - creditsUsed, 0) : null;
 
   return (
-    <header className="hidden md:flex h-16 items-center px-8 border-b border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-[#020617]/40 backdrop-blur-xl sticky top-0 z-30">
-      <div className="flex-1"></div>
-      <div className="flex items-center gap-4">
-        <button onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'k', 'metaKey': true}))} className="flex items-center gap-2 text-sm text-slate-500 dark:text-[#888] hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 px-3 py-1.5 rounded-full border border-slate-200/50 dark:border-white/5 group">
-          <Search size={14} className="text-slate-400 group-hover:text-sky-500 transition-colors" />
-          <span className="pr-2">Quick Search...</span>
-          <kbd className="hidden lg:inline-block font-mono text-[10px] font-semibold bg-white dark:bg-[#020617] px-1.5 py-0.5 rounded shadow-sm border border-slate-200 dark:border-white/10 text-slate-400">⌘K</kbd>
+    <header className="hidden md:flex h-[60px] items-center px-6 border-b border-slate-200/60 dark:border-white/[0.04] sticky top-0 z-30 transition-all"
+      style={{ background: 'light-dark(rgba(255,255,255,0.85), rgba(6,13,25,0.85))', backdropFilter: 'blur(24px) saturate(180%)' }}
+    >
+      {/* Left: Systems online indicator */}
+      <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" style={{ boxShadow: '0 0 6px rgba(16,185,129,0.8)' }}></span>
+          </span>
+          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tracking-wide">All Systems Online</span>
+        </div>
+      </div>
+
+      <div className="flex-1" />
+
+      <div className="flex items-center gap-2">
+        {/* Search */}
+        <button 
+          onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'k', 'metaKey': true}))} 
+          className="flex items-center gap-2.5 text-xs text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/60 transition-all bg-slate-100/80 dark:bg-white/[0.04] hover:bg-slate-200/60 dark:hover:bg-white/[0.07] px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/[0.06] hover:border-slate-300/80 dark:hover:border-white/10 group"
+        >
+          <Search size={13} className="group-hover:text-slate-500 dark:group-hover:text-white/50 transition-colors" style={{ color: 'var(--accent)' }} />
+          <span className="font-medium hidden lg:inline-block pr-2">Quick search...</span>
+          <kbd className="hidden lg:inline-block font-mono text-[9px] font-bold bg-white dark:bg-black/40 px-1.5 py-0.5 rounded-md text-slate-400 dark:text-white/20 border border-slate-200 dark:border-white/10">⌘K</kbd>
         </button>
-        <div className="h-4 w-[1px] bg-slate-200 dark:bg-white/10 mx-1"></div>
+
+        {/* Divider */}
+        <div className="h-4 w-[1px] bg-slate-200/80 dark:bg-white/[0.06] mx-1" />
+
+        {/* Plan badge */}
         {!workspaceLoading && (
           <Link
             href="/billing"
-            className="flex items-center gap-2 text-xs font-medium bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 px-3 py-1.5 rounded-full border border-slate-200/50 dark:border-white/5 transition-colors"
+            className="flex items-center gap-2 text-[11px] font-semibold bg-slate-100/80 dark:bg-white/[0.04] hover:bg-slate-200/60 dark:hover:bg-white/[0.07] px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/[0.06] hover:border-slate-300 dark:hover:border-white/10 transition-all"
           >
-            <span className="text-sky-600 dark:text-[#00E5FF] font-semibold">{planName}</span>
-            <span className="text-slate-300 dark:text-white/20">•</span>
-            <span className="text-slate-500 dark:text-[#888]">
+            <span className="font-bold" style={{ color: 'var(--accent)' }}>{planName}</span>
+            <span className="text-slate-300 dark:text-white/15">·</span>
+            <span className="text-slate-500 dark:text-white/35">
               {isUnlimited
                 ? "Unlimited"
                 : creditsRemaining !== null
-                ? `${creditsRemaining.toLocaleString()} credits left`
+                ? `${creditsRemaining.toLocaleString()} left`
                 : `${creditsUsed.toLocaleString()} used`}
             </span>
           </Link>
         )}
-        <button className="relative p-2 text-slate-500 dark:text-[#888] hover:text-slate-900 dark:hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 group hover:bg-slate-100 dark:hover:bg-white/5 rounded-full">
-          <Bell size={18} className="group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.3)] transition-all" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 dark:bg-[#FF2E93] border-2 border-white dark:border-[#020617] shadow-[0_0_8px_rgba(255,46,147,0.6)]"></span>
+
+        {/* Notifications */}
+        <button className="relative p-2 text-slate-400 dark:text-white/30 hover:text-slate-700 dark:hover:text-white/70 transition-all duration-200 hover:scale-105 active:scale-95 hover:bg-slate-100 dark:hover:bg-white/[0.04] rounded-xl group">
+          <Bell size={16} className="group-hover:drop-shadow-sm transition-all" />
+          <span 
+            className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full border border-white dark:border-[#060d19]"
+            style={{ background: '#f43f5e', boxShadow: '0 0 6px rgba(244,63,94,0.7)' }}
+          />
         </button>
-        <button onClick={() => toast.info('New entity creation menu opened.')} className="relative flex items-center justify-center p-2 rounded-full bg-slate-900 dark:bg-[#00E5FF] text-white dark:text-slate-900 hover:opacity-90 transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(0,229,255,0.4)] group overflow-hidden">
-          <span className="absolute inset-0 bg-white/20 dark:bg-white/40 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></span>
-          <Plus size={16} className="relative z-10" />
+
+        {/* Create new */}
+        <button 
+          onClick={() => toast.info('New entity creation menu opened.')} 
+          className="relative flex items-center justify-center w-8 h-8 rounded-xl text-white transition-all duration-200 hover:scale-105 active:scale-95 group overflow-hidden"
+          style={{ 
+            background: 'var(--accent)', 
+            boxShadow: '0 0 16px var(--accent-glow)' 
+          }}
+        >
+          <span className="absolute inset-0 bg-white/0 group-hover:bg-white/20 transition-all duration-200" />
+          <Plus size={15} className="relative z-10 text-slate-900" strokeWidth={2.5} />
         </button>
       </div>
     </header>
