@@ -47,24 +47,14 @@ export default function IntegrationsPage() {
       toast.error("User not authenticated.");
       return;
     }
-    
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 1);
-    
-    const { error } = await supabase.from('oauth_sessions').insert({
-      user_id: user.id,
-      provider: appId,
-      expires_at: expiresAt.toISOString(),
-      state: crypto.randomUUID(),
-      used: false
-    });
-    
-    if (error) {
-      toast.error("Failed to start OAuth flow.");
-      console.error(error);
-    } else {
-      toast.success(`Starting OAuth flow for ${appName}...`);
-    }
+
+    toast.success(`Redirecting to connect ${appName}...`);
+
+    // knoxified-auth owns session creation and building the real provider
+    // consent URL — the dashboard just kicks off the redirect and tells it
+    // where to send the user back to when it's done.
+    const returnTo = encodeURIComponent(window.location.pathname);
+    window.location.href = `https://oauth.knoxified.org/auth/${appId}/start?user_id=${user.id}&return_to=${returnTo}`;
   };
 
   const baseOauthIntegrations = [
