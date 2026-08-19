@@ -1,7 +1,7 @@
 "use client";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { useState, useEffect } from "react";
-import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, Users, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell, Mic, PhoneOff, Settings2, Volume2, Radio, Send } from "lucide-react";
+import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell, Settings2, Radio } from "lucide-react";
 import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, CartesianGrid, Bar } from "recharts";
 import { useDashboardMetrics, useSystemLogs, useSystems, useAutomations } from "@/lib/services/hooks";
@@ -35,9 +35,6 @@ export default function DashboardOverview() {
   const [dateRange, setDateRange] = useState("7d");
   const [logFilter, setLogFilter] = useState("All");
   const [isMounted, setIsMounted] = useState(false);
-  const [takeoverActive, setTakeoverActive] = useState(false);
-  const [whisperMode, setWhisperMode] = useState(false);
-  const [whisperText, setWhisperText] = useState("");
   const { data: metrics, loading: metricsLoading } = useDashboardMetrics(dateRange);
   const { data: logs, loading: logsLoading } = useSystemLogs();
   const { data: systems, loading: systemsLoading } = useSystems();
@@ -186,151 +183,22 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
         
         {/* Voice Agent Interface */}
-        <div className="xl:col-span-2 bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl p-6 relative overflow-hidden group card-hover shadow-sm flex flex-col">
-          {/* Ambient glow */}
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full -mr-20 -mt-20 pointer-events-none transition-opacity duration-700 opacity-30 group-hover:opacity-60" style={{ background: 'radial-gradient(circle, var(--accent-dim) 0%, transparent 70%)' }} />
-          
-          <div className="flex items-center justify-between mb-6 relative z-10">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-muted)' }}>
-                <Radio size={15} style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 4px var(--accent-glow))' }} className="animate-pulse" />
-              </div>
-              <h3 className="text-slate-900 dark:text-white font-semibold text-[15px]">Active Voice Agent</h3>
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 px-2 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Listening
-              </span>
-            </div>
-            <Link href="/agent-config" className="p-2 rounded-xl text-slate-400 dark:text-white/25 hover:text-slate-600 dark:hover:text-white/60 hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-all">
-              <Settings2 size={15} />
-            </Link>
+        <div className="xl:col-span-2 bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl p-6 relative overflow-hidden shadow-sm flex flex-col items-center justify-center text-center gap-3 min-h-[260px]">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-muted)' }}>
+            <Radio size={20} style={{ color: 'var(--accent)' }} />
           </div>
-          
-          <div className="relative z-10 flex flex-col lg:flex-row gap-4 items-stretch flex-1">
-            
-            {/* Transcript */}
-            <div className="flex-1 w-full bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-4 flex flex-col justify-between">
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 dark:text-white/25 mb-3 uppercase tracking-widest">Live Transcript</p>
-                <div className="space-y-3">
-                  <div className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-white/[0.08] flex items-center justify-center shrink-0">
-                      <Users size={11} className="text-slate-500 dark:text-white/50" />
-                    </div>
-                    <div className="bg-white dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl rounded-tl-none px-3 py-2 text-[13px] text-slate-700 dark:text-white/70 shadow-sm max-w-[85%]">
-                      Yes, I would like to schedule a follow-up for next week.
-                    </div>
-                  </div>
-                  <div className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)' }}>
-                      <Mic size={11} style={{ color: 'var(--accent)' }} />
-                    </div>
-                    <div className="rounded-2xl rounded-tl-none px-3 py-2 text-[13px] text-slate-700 dark:text-white/80 shadow-sm max-w-[85%] relative" style={{ background: 'var(--accent-muted)', border: '1px solid var(--accent-dim)' }}>
-                      Perfect, I have that scheduled for Tuesday at 10 AM. Is there anything else you need help with?
-                      <span className="absolute bottom-2 right-3 flex items-center gap-0.5">
-                         <span className="waveform-bar h-[4px]" style={{ animationDelay: '0ms' }}></span>
-                         <span className="waveform-bar h-[8px]" style={{ animationDelay: '100ms' }}></span>
-                         <span className="waveform-bar h-[4px]" style={{ animationDelay: '200ms' }}></span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mic / Controls */}
-            <div className="w-full lg:w-44 flex flex-col justify-center items-center gap-5 bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-5 shrink-0">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: 'var(--accent)' }} />
-                <div className="w-16 h-16 rounded-full flex items-center justify-center relative z-10 shadow-xl border-4 border-white dark:border-[#0d1117]"
-                  style={{ background: 'var(--accent-muted)', boxShadow: '0 0 20px var(--accent-glow)' }}
-                >
-                  <Mic size={22} style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 6px var(--accent-glow))' }} />
-                </div>
-              </div>
-              
-              {/* Waveform visualization */}
-              <div className="flex items-center gap-[3px] h-6">
-                {[4,8,14,20,14,8,4].map((h, i) => (
-                  <div key={i} className="waveform-bar" style={{ height: `${h}px`, animationDelay: `${i * 80}ms` }} />
-                ))}
-              </div>
-              
-              <div className="flex gap-2.5">
-                <button className="w-9 h-9 rounded-full bg-white dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 transition-all shadow-sm">
-                  <Volume2 size={14} />
-                </button>
-                <button className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white transition-all shadow-sm" style={{ boxShadow: '0 0 12px rgba(239,68,68,0.4)' }}>
-                  <PhoneOff size={14} />
-                </button>
-              </div>
-              
-              <div className="w-full space-y-1.5 mt-auto">
-                <div className="flex justify-between text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-wider">
-                  <span>Signal</span>
-                  <span className="text-emerald-500">Excellent</span>
-                </div>
-                <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
-                  <div className="h-full w-[92%] rounded-full bg-emerald-500" style={{ boxShadow: '0 0 6px rgba(16,185,129,0.6)' }} />
-                </div>
-              </div>
-            </div>
-            
-            {/* Quick Actions */}
-            <div className="w-full lg:w-52 shrink-0 bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-4 flex flex-col">
-               <h4 className="text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-widest mb-3">Quick Actions</h4>
-               <div className="flex flex-col gap-2 flex-1">
-                  <ToggleButton 
-                    label="Live Takeover" 
-                    active={takeoverActive} 
-                    onToggle={() => setTakeoverActive(!takeoverActive)}
-                    activeColor="bg-red-500"
-                    activeStyle="bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20"
-                    activeTextStyle="text-red-600 dark:text-red-400"
-                  />
-                  <ToggleButton 
-                    label="Whisper Mode" 
-                    active={whisperMode} 
-                    onToggle={() => setWhisperMode(!whisperMode)}
-                    activeStyle="dark:border-white/10"
-                    useAccent
-                  />
-                  {whisperMode && (
-                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-top-2">
-                      <input 
-                        type="text" 
-                        value={whisperText}
-                        onChange={(e) => setWhisperText(e.target.value)}
-                        placeholder="Prompt AI..." 
-                        className="w-full bg-white dark:bg-white/[0.04] text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 outline-none transition-all border"
-                        style={{ borderColor: 'var(--accent-dim)' }}
-                      />
-                      <button className="w-7 h-7 flex items-center justify-center shrink-0 rounded-xl text-slate-900 dark:text-[#0d1117] hover:opacity-90 transition-opacity" style={{ background: 'var(--accent)', boxShadow: '0 0 10px var(--accent-glow)' }}>
-                        <Send size={12} />
-                      </button>
-                    </div>
-                  )}
-                  <ToggleButton 
-                    label="Do Not Disturb" 
-                    active={false} 
-                    onToggle={() => {}}
-                    activeStyle=""
-                  />
-               </div>
-               
-               <div className="mt-4 pt-4 border-t border-slate-200/80 dark:border-white/[0.05] w-full">
-                 <div className="flex justify-between text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-wider mb-1.5">
-                   <span>Voice Minutes</span>
-                   <span className="text-slate-600 dark:text-white/50">120/500</span>
-                 </div>
-                 <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
-                   <div className="h-full w-[24%] rounded-full" style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent-glow)' }} />
-                 </div>
-               </div>
-            </div>
-
-          </div>
+          <h3 className="text-slate-900 dark:text-white font-semibold text-[15px]">Voice Agent — Launching Shortly</h3>
+          <p className="text-slate-500 dark:text-white/50 text-sm max-w-sm">
+            Live call handling is being finished up. Once it's ready, you'll be able to see and take over real conversations right here.
+          </p>
+          <Link
+            href="/agent-config"
+            className="mt-2 text-xs font-semibold px-4 py-2 rounded-full transition-colors"
+            style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}
+          >
+            Configure Agent Settings
+          </Link>
         </div>
-
         {/* Active Systems section — col-span-1 on the right */}
         <div className="bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl overflow-hidden card-hover shadow-sm flex flex-col">
           <div className="p-5 border-b border-slate-100/80 dark:border-white/[0.04] flex items-center justify-between">
@@ -529,44 +397,5 @@ function StatCard({ label, value, icon: Icon, trend, trendUp, subtitle, isWarnin
         </div>
       )}
     </div>
-  );
-}
-
-// ── ToggleButton ─────────────────────────────────────────────────────────────
-interface ToggleButtonProps {
-  label: string;
-  active: boolean;
-  onToggle: () => void;
-  activeStyle?: string;
-  activeTextStyle?: string;
-  activeColor?: string;
-  useAccent?: boolean;
-}
-
-function ToggleButton({ label, active, onToggle, activeStyle, activeTextStyle, activeColor, useAccent }: ToggleButtonProps) {
-  return (
-    <button 
-      onClick={onToggle} 
-      className={`group flex items-center justify-between p-2.5 rounded-xl border shadow-sm transition-all ${
-        active 
-          ? (activeStyle || 'bg-white/[0.04] border-white/10')
-          : 'bg-white dark:bg-white/[0.04] border-slate-200/80 dark:border-white/[0.06] hover:border-slate-300 dark:hover:border-white/10'
-      }`}
-    >
-      <span className={`text-[12px] font-semibold transition-colors ${
-        active 
-          ? (activeTextStyle || (useAccent ? '' : 'text-slate-700 dark:text-white/80'))
-          : 'text-slate-500 dark:text-white/40 group-hover:text-slate-700 dark:group-hover:text-white/70'
-      }`}
-        style={active && useAccent ? { color: 'var(--accent)' } : {}}
-      >
-        {label}
-      </span>
-      <div className={`w-8 h-4 rounded-full relative transition-all ${active ? (activeColor || '') : 'bg-slate-200 dark:bg-white/10'}`}
-        style={active && useAccent ? { background: 'var(--accent)', boxShadow: '0 0 8px var(--accent-glow)' } : {}}
-      >
-        <div className={`w-3 h-3 bg-white rounded-full absolute top-[2px] shadow-sm transition-transform duration-200 ${active ? 'right-[2px]' : 'left-[2px]'}`} />
-      </div>
-    </button>
   );
 }
