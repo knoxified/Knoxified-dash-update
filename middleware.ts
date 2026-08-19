@@ -31,8 +31,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const hasBypass = request.cookies.get('bypass_login')?.value === 'true'
-  const isAuth = user || hasBypass
+  const isAuth = !!user
 
   if (
     !isAuth &&

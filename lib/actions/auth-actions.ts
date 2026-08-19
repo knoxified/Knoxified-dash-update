@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 
 export async function login(formData: FormData) {
   try {
@@ -13,20 +12,15 @@ export async function login(formData: FormData) {
       return { error: "Email and password are required" };
     }
 
-    if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      const cookieStore = await cookies();
-      cookieStore.set('mock_session', 'true');
-    } else {
-      const supabase = await createClient();
+    const supabase = await createClient();
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (error) {
-        return { error: error.message };
-      }
+    if (error) {
+      return { error: error.message };
     }
   } catch (err: any) {
     console.error("Login error:", err);
@@ -38,13 +32,8 @@ export async function login(formData: FormData) {
 
 export async function logout() {
   try {
-    if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      const cookieStore = await cookies();
-      cookieStore.delete('mock_session');
-    } else {
-      const supabase = await createClient();
-      await supabase.auth.signOut();
-    }
+    const supabase = await createClient();
+    await supabase.auth.signOut();
   } catch (err) {
     console.error("Logout error:", err);
   }
@@ -58,16 +47,12 @@ export async function resetPassword(formData: FormData) {
     if (!email) {
       return { error: "Email is required" };
     }
-    
-    if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return { success: true };
-    }
 
     const supabase = await createClient();
-    
+
     // Provide the callback URL using process.env or fallback to localhost
     const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/api/auth/confirm?next=/reset-password`,
     });
@@ -87,10 +72,6 @@ export async function updatePassword(password: string) {
   try {
     if (!password) {
       return { error: "Password is required" };
-    }
-    
-    if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return { success: true };
     }
 
     const supabase = await createClient();

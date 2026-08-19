@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Knoxified | Enterprise AI OS',
   description: 'Manage your Enterprise AI Systems and Automations.',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 import { Toaster } from 'sonner';

@@ -221,15 +221,6 @@ function LoginContent() {
                     "Sign In"
                   )}
                 </button>
-
-                <button 
-                  type="button" 
-                  onClick={() => { document.cookie = "bypass_login=true; path=/"; window.location.href = "/"; }} 
-                  className="w-full text-white/50 hover:text-white/80 border font-semibold py-3 rounded-2xl transition-all flex items-center justify-center text-sm"
-                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}
-                >
-                  Bypass Login (Dev Mode)
-                </button>
               </form>
             </div>
           </div>
