@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, CartesianGrid, Bar } from "recharts";
 import { useDashboardMetrics, useSystemLogs, useSystems, useAutomations } from "@/lib/services/hooks";
 import { Select } from "@/components/ui/Select";
+import { createClient } from "@/lib/supabase/client";
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -62,9 +63,21 @@ export default function DashboardOverview() {
       if (!voiceAgentUrl) {
         throw new Error("Voice agent isn't configured yet.");
       }
-      const res = await fetch(`${voiceAgentUrl}/voice/web-call/start`, { method: "POST" });
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("You need to be logged in to start a call.");
+      }
+      const res = await fetch(`${voiceAgentUrl}/voice/web-call/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
       if (!res.ok) {
-        throw new Error(`Voice agent isn't ready yet (${res.status}).`);
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error === "quota_exceeded"
+          ? "You're out of voice minutes for this plan."
+          : `Voice agent isn't ready yet (${res.status}).`);
       }
       // Real call-connect wiring (Twilio Voice SDK device.connect(), WebSocket
       // audio) lands here once voice-agent-beta's Durable Object pipeline is
