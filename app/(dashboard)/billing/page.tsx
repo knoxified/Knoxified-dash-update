@@ -4,6 +4,24 @@ import { useState } from "react";
 import { CreditCard, Check, Zap, AlertTriangle } from "lucide-react";
 import { usePlans, useWorkspace } from "@/lib/services/hooks";
 
+// Global glow styles for AI theme
+const GlobalStyles = () => (
+  <style dangerouslySetInnerHTML={{
+    __html: `
+      @keyframes pulse-slow {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+      .animate-pulse-slow {
+        animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      .glow-text {
+        text-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+      }
+    `
+  }} />
+);
+
 export default function BillingPage() {
   const { data: plans, loading } = usePlans();
   const { data: wsData, loading: wsLoading } = useWorkspace();
@@ -21,70 +39,126 @@ export default function BillingPage() {
     return isAnnual ? (p.billing_interval === 'year' || p.name.includes('(Annual)')) : (p.billing_interval === 'month' || p.name.includes('(Monthly)'));
   });
 
+  // Helper to get feature list for a plan name based on pricing page
+  const getPlanFeatures = (planName: string) => {
+    switch (planName) {
+      case 'Starter':
+        return [
+          "Inbound Voice Agents",
+          "1 Active Automation",
+          "250 Mins Inbound Limit",
+          "700 Automation Credits",
+        ];
+      case 'Pro':
+        return [
+          "Everything in Starter",
+          "Customer Communication Tools",
+          "3 Active Automations",
+          "1,000 Mins (Inbound + Follow-Up)",
+          "2,000 Automation Credits",
+        ];
+      case 'Enterprise':
+        return [
+          "Everything in Pro",
+          "Virtual System Tools",
+          "8 Active Automations",
+          "5,500 Mins Limits",
+          "8,000 Automation Credits",
+        ];
+      case 'Custom':
+        return [
+          "Everything in Enterprise",
+          "Dedicated Success Manager",
+          "Custom AI model training",
+          "Bespoke limits",
+        ];
+      default:
+        return [];
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">
+      <GlobalStyles />
+
+      {/* Header with glowing title */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
+        <div className="relative">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-2 relative z-10">
             Billing & Plans
+            <span className="absolute -bottom-1 left-0 w-1/3 h-1 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full blur-sm opacity-80"></span>
           </h1>
           <p className="text-slate-500 dark:text-[#888] text-sm">
             Manage your subscription and usage limits.
           </p>
         </div>
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-lg p-1 inline-flex">
-          <button onClick={() => setIsAnnual(false)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${!isAnnual ? 'bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white border border-slate-200 dark:border-white/5 shadow-sm' : 'text-slate-500 dark:text-[#888] hover:text-slate-900 dark:text-white'}`}>Monthly</button>
-          <button onClick={() => setIsAnnual(true)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${isAnnual ? 'bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white border border-slate-200 dark:border-white/5 shadow-sm' : 'text-slate-500 dark:text-[#888] hover:text-slate-900 dark:text-white'}`}>Annually <span className="text-emerald-600 dark:text-[#10B981] ml-1 text-[11px] font-bold border border-[#10B981]/20 bg-emerald-100 dark:bg-[#10B981]/10 px-1 rounded">-20%</span></button>
+        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-lg p-1 inline-flex relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 z-0"></div>
+          <button onClick={() => setIsAnnual(false)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all relative z-10 ${!isAnnual ? 'bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white border border-slate-200 dark:border-white/5 shadow-sm' : 'text-slate-500 dark:text-[#888] hover:text-slate-900 dark:text-white'}`}>Monthly</button>
+          <button onClick={() => setIsAnnual(true)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all relative z-10 ${isAnnual ? 'bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white border border-slate-200 dark:border-white/5 shadow-sm' : 'text-slate-500 dark:text-[#888] hover:text-slate-900 dark:text-white'}`}>Annually <span className="text-emerald-600 dark:text-[#10B981] ml-1 text-[11px] font-bold border border-[#10B981]/20 bg-emerald-100 dark:bg-[#10B981]/10 px-1 rounded">-20%</span></button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-8">
         {displayPlans.map(plan => {
           const isCurrent = plan.id === workspace?.planId;
+          const isPro = plan.name.includes('Pro');
           return (
-            <div key={plan.id} className={`bg-white dark:bg-[#0F172A] rounded-2xl p-6 flex flex-col relative border hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ${isCurrent ? 'border-sky-600 dark:border-[#00E5FF] shadow-lg shadow-[#00E5FF]/5' : 'border-slate-200 dark:border-white/5 hover:border-slate-300 dark:border-white/10'}`}>
+            <div 
+              key={plan.id} 
+              className={`rounded-2xl p-6 flex flex-col relative border transition-all duration-500 transform-gpu ${
+                isPro 
+                  ? 'bg-gradient-to-br from-cyan-900/30 to-blue-900/20 border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] hover:shadow-[0_0_40px_rgba(6,182,212,0.25)] hover:-translate-y-2 ring-1 ring-cyan-500/20' 
+                  : isCurrent 
+                    ? 'bg-white dark:bg-[#0F172A] border-sky-600 dark:border-[#00E5FF] shadow-lg shadow-[#00E5FF]/10' 
+                    : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
+              }`}
+            >
               {isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00E5FF] text-slate-900 dark:text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00E5FF] text-slate-900 dark:text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider z-10">
                   Current Plan
                 </div>
               )}
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">{plan.name.replace(' (Monthly)', '').replace(' (Annual)', '')}</h3>
-              <div className="text-[32px] font-bold text-slate-900 dark:text-white tracking-tight mb-2 leading-none">
+              {isPro && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider z-10 shadow-[0_0_15px_rgba(6,182,212,0.4)] animate-pulse-slow">
+                  People's Choice
+                </div>
+              )}
+              <h3 className={`text-xl font-bold mb-2 ${isPro ? 'text-cyan-400' : 'text-slate-900 dark:text-white'}`}>
+                {plan.name.replace(' (Monthly)', '').replace(' (Annual)', '')}
+              </h3>
+              <div className="text-[36px] font-bold tracking-tight mb-3 leading-none bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 {plan.price === "Paid" ? "Paid" : plan.price}
-                {plan.price !== "Free" && plan.price !== "Custom" && !plan.price.includes('/') && <span className="text-sm font-normal text-slate-500">/{plan.billing_interval === 'year' ? 'yr' : 'mo'}</span>}
+                {plan.price !== "Free" && plan.price !== "Custom" && !plan.price.includes('/') && (
+                  <span className="text-sm font-normal text-slate-500">/{plan.billing_interval === 'year' ? 'yr' : 'mo'}</span>
+                )}
               </div>
               <p className="text-[13px] text-slate-500 dark:text-[#888] mb-6 flex-1">{plan.keyRestrictions}</p>
               
               <div className="space-y-4 mb-8">
-                <div className="flex items-start gap-3 text-[13px] text-slate-700 dark:text-[#EDEDED]">
-                  <Check size={16} className="text-emerald-600 dark:text-[#10B981] shrink-0" />
-                  <span>{plan.limit_voice_minutes ? `${plan.limit_voice_minutes.toLocaleString()} voice minutes` : 'Custom voice limits'}</span>
-                </div>
-                <div className="flex items-start gap-3 text-[13px] text-slate-700 dark:text-[#EDEDED]">
-                  <Check size={16} className="text-emerald-600 dark:text-[#10B981] shrink-0" />
-                  <span>{plan.limit_email_sent ? `${plan.limit_email_sent.toLocaleString()} email limit` : 'Custom / Unlimited emails'}</span>
-                </div>
-                <div className="flex items-start gap-3 text-[13px] text-slate-700 dark:text-[#EDEDED]">
-                  <Check size={16} className="text-emerald-600 dark:text-[#10B981] shrink-0" />
-                  <span>{plan.limit_active_automations ? `${plan.limit_active_automations} active automations` : 'Unlimited automations'}</span>
-                </div>
-                {plan.credit_overage_allowed && (
-                  <div className="flex items-start gap-3 text-[13px] text-slate-700 dark:text-[#EDEDED]">
-                    <Check size={16} className="text-emerald-600 dark:text-[#10B981] shrink-0" />
-                    <span>Credit overages permitted</span>
-                  </div>
-                )}
+                <ul className="space-y-3 text-[13px] text-slate-700 dark:text-[#EDEDED]">
+                  {getPlanFeatures(plan.name.replace(' (Monthly)', '').replace(' (Annual)', '')).map((feat, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 dark:bg-[#10B981] text-white font-bold text-xs flex items-center justify-center">
+                        ✓
+                      </span>
+                      <span className="ml-2">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
-              <button className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              <button className={`w-full py-3 rounded-lg text-sm font-semibold transition-all transform hover:scale-[1.02] ${
                 isCurrent 
                   ? 'bg-transparent border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-200 dark:bg-white/5' 
-                  : 'bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-slate-900 dark:text-white border border-transparent'
+                  : isPro
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)]'
+                    : 'bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-slate-900 dark:text-white border border-transparent'
               }`}>
                 {isCurrent ? 'Manage Plan' : 'Upgrade'}
               </button>
             </div>
-          )
+          );
         })}
       </div>
       

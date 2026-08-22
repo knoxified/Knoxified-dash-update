@@ -26,6 +26,15 @@ export async function createClient() {
         }
       },
     },
+    global: {
+      fetch: (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          // Add network-friendly timeouts
+          signal: AbortSignal.timeout(10000), // 10 second timeout
+        });
+      },
+    },
   });
 
   return client;

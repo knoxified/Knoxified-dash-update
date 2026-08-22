@@ -20,12 +20,40 @@ function LoginContent() {
   const [isPending, setIsPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline' | 'slow'>('online');
   const submitRef = useRef<boolean>(false);
 
   // Cycle through features
   useEffect(() => {
     const t = setInterval(() => setActiveFeature(p => (p + 1) % FEATURES.length), 3000);
     return () => clearInterval(t);
+  }, []);
+
+  // Network status detection
+  useEffect(() => {
+    const updateNetworkStatus = () => {
+      if (!navigator.onLine) {
+        setNetworkStatus('offline');
+      } else {
+        // Test connection speed with a small request
+        const start = Date.now();
+        fetch('/api/health', { method: 'HEAD' })
+          .then(() => {
+            const duration = Date.now() - start;
+            setNetworkStatus(duration > 2000 ? 'slow' : 'online');
+          })
+          .catch(() => setNetworkStatus('slow'));
+      }
+    };
+
+    updateNetworkStatus();
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+
+    return () => {
+      window.removeEventListener('online', updateNetworkStatus);
+      window.removeEventListener('offline', updateNetworkStatus);
+    };
   }, []);
 
   async function handleLogin(formData: FormData) {
@@ -155,6 +183,20 @@ function LoginContent() {
                 <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 text-sm flex items-start gap-3 mb-6 backdrop-blur-sm">
                   <svg className="mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                   <p>{error}</p>
+                </div>
+              )}
+
+              {networkStatus === 'offline' && (
+                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-4 text-orange-400 text-sm flex items-start gap-3 mb-6 backdrop-blur-sm">
+                  <svg className="mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 16.88a1 1 0 0 1-.32-1.43l9-13.02a1 1 0 0 1 1.64 0l9 13.01a1 1 0 0 1-.32 1.44l-8.51 4.86a2 2 0 0 1-1.98 0Z"/><path d="M12 6v4"/><path d="M12 14.5v.5"/></svg>
+                  <p>You're offline. Please check your internet connection.</p>
+                </div>
+              )}
+
+              {networkStatus === 'slow' && (
+                <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-yellow-400 text-sm flex items-start gap-3 mb-6 backdrop-blur-sm">
+                  <svg className="mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 16.88a1 1 0 0 1-.32-1.43l9-13.02a1 1 0 0 1 1.64 0l9 13.01a1 1 0 0 1-.32 1.44l-8.51 4.86a2 2 0 0 1-1.98 0Z"/><path d="M12 6v4"/><path d="M12 14.5v.5"/></svg>
+                  <p>Slow network detected. Login may take longer than usual.</p>
                 </div>
               )}
 

@@ -24,6 +24,16 @@ export async function login(formData: FormData) {
     }
   } catch (err: any) {
     console.error("Login error:", err);
+    
+    // Check for network-related errors
+    if (err.message?.includes('fetch') || err.message?.includes('network') || err.code === 'NETWORK_ERROR') {
+      return { error: "Network connection issue. Please check your internet connection or try a different network." };
+    }
+    
+    if (err.message?.includes('timeout')) {
+      return { error: "Request timed out. Please try again or switch to a different network." };
+    }
+    
     return { error: "Authentication service unavailable. Please check your network or try again later." };
   }
 
