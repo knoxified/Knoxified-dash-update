@@ -1,6 +1,6 @@
 "use client";
 import { ActivityFeed } from "@/components/ActivityFeed";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell, Settings2, Radio, Mic, PhoneOff, Volume2, Users, Send } from "lucide-react";
 import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, CartesianGrid, Bar } from "recharts";
@@ -50,10 +50,11 @@ export default function DashboardOverview() {
   const [whisperText, setWhisperText] = useState("");
   const voiceMinutesUsed = metrics?.voiceUsage?.used ?? 0;
   const voiceMinutesLimit = metrics?.voiceUsage?.total ?? 0;
+  const deviceRef = useRef<any>(null);
+  const activeCallRef = useRef<any>(null);
 
-  // NEXT_PUBLIC_VOICE_AGENT_URL points at voice-agent-beta's deployment --
-  // e.g. https://voice.knoxified.workers.dev. Set this in Cloudflare Pages'
-  // environment variables once that deployment has a real URL.
+  // NEXT_PUBLIC_VOICE_AGENT_URL points at voice-agent-beta's deployment,
+  // e.g. https://voice-agent-beta.roofing-dashboard.workers.dev
   async function startWebCall() {
     setCallError(null);
     setCallStatus("connecting");
@@ -68,30 +69,97 @@ export default function DashboardOverview() {
       if (!user) {
         throw new Error("You need to be logged in to start a call.");
       }
-      const res = await fetch(`${voiceAgentUrl}/voice/web-call/start`, {
+
+      // Readiness check first -- confirms the account/quota is good before
+      // we ask the browser for microphone access.
+      const startRes = await fetch(`${voiceAgentUrl}/voice/web-call/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
+      if (!startRes.ok) {
+        const body = await startRes.json().catch(() => null);
         throw new Error(body?.error === "quota_exceeded"
           ? "You're out of voice minutes for this plan."
-          : `Voice agent isn't ready yet (${res.status}).`);
+          : `Voice agent isn't ready yet (${startRes.status}).`);
       }
-      // Real call-connect wiring (Twilio Voice SDK device.connect(), WebSocket
-      // audio) lands here once voice-agent-beta's Durable Object pipeline is
-      // live -- this confirms the agent is reachable, not yet a full call.
-      setCallStatus("active");
+
+      // Real Access Token for the browser SDK.
+      const tokenRes = await fetch(`${voiceAgentUrl}/voice/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      if (!tokenRes.ok) {
+        throw new Error("Couldn't get a call token from the voice agent.");
+      }
+      const { token } = await tokenRes.json();
+
+      // Dynamic import: this SDK needs browser APIs (microphone, WebRTC)
+      // that don't exist during any server-side render pass.
+      const { Device } = await import("@twilio/voice-sdk");
+
+      if (deviceRef.current) {
+        deviceRef.current.destroy();
+        deviceRef.current = null;
+      }
+
+      const device = new Device(token, {
+        logLevel: 1,
+        codecPreferences: ["opus", "pcmu"] as any,
+      });
+      deviceRef.current = device;
+
+      device.on("error", (twilioError: any) => {
+        setCallError(`Call error: ${twilioError.message}`);
+        cleanupCall();
+      });
+
+      // Required before connect() on the v2 SDK.
+      await device.register();
+
+      const call = await device.connect({ params: { userId: user.id, mode: "dashboard" } });
+      activeCallRef.current = call;
+
+      call.on("accept", () => {
+        setCallStatus("active");
+      });
+
+      call.on("disconnect", () => {
+        cleanupCall();
+      });
+
+      call.on("cancel", () => {
+        cleanupCall();
+      });
+
+      call.on("error", (err: any) => {
+        setCallError(`Call error: ${err.message}`);
+        cleanupCall();
+      });
+
     } catch (err: any) {
       setCallError(err.message || "Couldn't reach the voice agent.");
-      setCallStatus("idle");
+      cleanupCall();
     }
   }
 
-  function endWebCall() {
+  function cleanupCall() {
+    try {
+      activeCallRef.current?.disconnect();
+    } catch { /* already gone */ }
+    try {
+      deviceRef.current?.unregister();
+      deviceRef.current?.destroy();
+    } catch { /* already gone */ }
+    activeCallRef.current = null;
+    deviceRef.current = null;
     setCallStatus("idle");
     setCallTranscript([]);
+  }
+
+  function endWebCall() {
+    cleanupCall();
   }
   
   useEffect(() => {
