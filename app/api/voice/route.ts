@@ -1,44 +1,66 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/auth';
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-// Proxy to voice-agent-beta using Cloudflare service binding
+/**
+ * Proxy route for voice-agent-beta via service binding (VOICE_AGENTS).
+ * Requests to /api/voice/* are forwarded internally to the voice-agent-beta Worker.
+ * No public internet call — goes directly through Cloudflare's network.
+ */
 export async function POST(request: Request) {
-  const session = await getServerSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { env } = getCloudflareContext();
+
+  const url = new URL(request.url);
+  // Forward the path after /api/voice to the voice agent
+  const targetPath = url.pathname.replace("/api/voice", "") || "/";
 
   try {
-    // Forward the request to voice-agent-beta via service binding
-    const url = new URL(request.url);
-    const pathname = url.pathname.replace('/api/voice', '');
-    const targetUrl = `https://voice-agent-beta.internal${pathname}`;
+    const response = await env.VOICE_AGENTS.fetch(
+      `https://voice-agent-beta.internal${targetPath}`,
+      {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+      }
+    );
 
-    const body = await request.text();
-    const headers = new Headers(request.headers);
-    headers.set('Content-Type', 'application/json');
-
-    // In a Cloudflare Worker context, you would use:
-    // const response = await env.VOICE_AGENTS.fetch(targetUrl, {
-    //   method: request.method,
-    //   headers,
-    //   body,
-    // });
-
-    // For now, we'll proxy to the public URL (to be replaced with service binding)
-    const response = await fetch(`https://voice-agent-beta.roofing-dashboard.workers.dev${pathname}`, {
-      method: request.method,
-      headers,
-      body,
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
     });
+  } catch (error) {
+    console.error("Voice agent service binding error:", error);
+    return Response.json(
+      { error: "Failed to reach voice agent service" },
+      { status: 502 }
+    );
+  }
+}
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('Voice API error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
+export async function GET(request: Request) {
+  const { env } = getCloudflareContext();
+
+  const url = new URL(request.url);
+  const targetPath = url.pathname.replace("/api/voice", "") || "/";
+
+  try {
+    const response = await env.VOICE_AGENTS.fetch(
+      `https://voice-agent-beta.internal${targetPath}`,
+      {
+        method: "GET",
+        headers: request.headers,
+      }
+    );
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+  } catch (error) {
+    console.error("Voice agent service binding error:", error);
+    return Response.json(
+      { error: "Failed to reach voice agent service" },
+      { status: 502 }
     );
   }
 }

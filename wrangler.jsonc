@@ -1,14 +1,29 @@
-{
+﻿{
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "knoxified-dashboard",
-  "bindings": [
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-20",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://elpljgrwrzaugsunoidf.supabase.co",
+    "NEXT_PUBLIC_VOICE_AGENT_URL": "https://voice-agent-beta.roofing-dashboard.workers.dev",
+    "SUPABASE_URL": "https://elpljgrwrzaugsunoidf.supabase.co"
+  },
+  "services": [
     {
-      "name": "VOICE_AGENTS",
-      "type": "service",
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "knoxified-dashboard"
+    },
+    {
+      "binding": "VOICE_AGENTS",
       "service": "voice-agent-beta"
     },
     {
-      "name": "OAUTH",
-      "type": "service",
+      "binding": "OAUTH",
       "service": "knoxified-auth"
     }
   ]
