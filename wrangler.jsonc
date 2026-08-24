@@ -1,0 +1,15 @@
+{
+  "name": "knoxified-dashboard",
+  "bindings": [
+    {
+      "name": "VOICE_AGENTS",
+      "type": "service",
+      "service": "voice-agent-beta"
+    },
+    {
+      "name": "OAUTH",
+      "type": "service",
+      "service": "knoxified-auth"
+    }
+  ]
+}

@@ -1,7 +1,25 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// List of paths that should be proxied to voice-agent-beta
+const voiceApiPaths = [
+  '/voice/web-call/start',
+  '/voice/token',
+  '/voice/transcribe',
+  '/voice/respond',
+];
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Check if this is a voice API request
+  if (pathname.startsWith('/internal/voice')) {
+    // Rewrite to API route handler
+    const newPath = pathname.replace('/internal/voice', '/api/voice');
+    const url = new URL(newPath, request.url);
+    return NextResponse.rewrite(url);
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -60,5 +78,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/internal/voice/:path*',
   ],
 }

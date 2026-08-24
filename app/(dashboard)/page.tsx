@@ -53,26 +53,22 @@ export default function DashboardOverview() {
   const deviceRef = useRef<any>(null);
   const activeCallRef = useRef<any>(null);
 
-  // NEXT_PUBLIC_VOICE_AGENT_URL points at voice-agent-beta's deployment,
-  // e.g. https://voice-agent-beta.roofing-dashboard.workers.dev
+  // Uses Cloudflare service bindings to call voice-agent-beta internally
   async function startWebCall() {
     setCallError(null);
     setCallStatus("connecting");
     setCallTranscript([]);
     try {
-      const voiceAgentUrl = process.env.NEXT_PUBLIC_VOICE_AGENT_URL;
-      if (!voiceAgentUrl) {
-        throw new Error("Voice agent isn't configured yet.");
-      }
+      // Fetch from internal service binding instead of public URL
+      const voiceAgentUrl = "/internal/voice"; // placeholder, actual routing handled by binding
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("You need to be logged in to start a call.");
       }
 
-      // Readiness check first -- confirms the account/quota is good before
-      // we ask the browser for microphone access.
-      const startRes = await fetch(`${voiceAgentUrl}/voice/web-call/start`, {
+      // Readiness check using internal service binding
+      const startRes = await fetch("/internal/voice/web-call/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id }),
@@ -84,8 +80,8 @@ export default function DashboardOverview() {
           : `Voice agent isn't ready yet (${startRes.status}).`);
       }
 
-      // Real Access Token for the browser SDK.
-      const tokenRes = await fetch(`${voiceAgentUrl}/voice/token`, {
+      // Get Twilio token using internal service binding
+      const tokenRes = await fetch("/internal/voice/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id }),
