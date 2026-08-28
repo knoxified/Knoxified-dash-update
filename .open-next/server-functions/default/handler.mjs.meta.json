@@ -3272,7 +3272,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/server/load-manifest.external.js": {
-      "bytes": 248285,
+      "bytes": 248025,
       "imports": [
         {
           "path": "path",
@@ -4391,8 +4391,8 @@
       ],
       "format": "cjs"
     },
-    ".open-next/server-functions/default/.next/server/app/(dashboard)/campaigns/page.js": {
-      "bytes": 32734,
+    ".open-next/server-functions/default/.next/server/app/(dashboard)/knowledge/page.js": {
+      "bytes": 29899,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4457,8 +4457,8 @@
       ],
       "format": "cjs"
     },
-    ".open-next/server-functions/default/.next/server/app/(dashboard)/knowledge/page.js": {
-      "bytes": 29899,
+    ".open-next/server-functions/default/.next/server/app/(dashboard)/campaigns/page.js": {
+      "bytes": 32734,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4640,7 +4640,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/voice/[...path]/route.js": {
-      "bytes": 6884,
+      "bytes": 6903,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4853,8 +4853,8 @@
       ],
       "format": "cjs"
     },
-    ".open-next/server-functions/default/.next/server/app/(dashboard)/metrics/page.js": {
-      "bytes": 113805,
+    ".open-next/server-functions/default/.next/server/app/(dashboard)/systems/page.js": {
+      "bytes": 36815,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4919,8 +4919,8 @@
       ],
       "format": "cjs"
     },
-    ".open-next/server-functions/default/.next/server/app/(dashboard)/systems/page.js": {
-      "bytes": 36815,
+    ".open-next/server-functions/default/.next/server/app/(dashboard)/metrics/page.js": {
+      "bytes": 113805,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -5342,7 +5342,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/(dashboard)/page.js": {
-      "bytes": 55925,
+      "bytes": 55915,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -5412,6 +5412,47 @@
       ],
       "format": "cjs"
     },
+    ".open-next/server-functions/default/.next/server/app/api/voice/route.js": {
+      "bytes": 6728,
+      "imports": [
+        {
+          "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
+          "kind": "require-call",
+          "original": "next/dist/shared/lib/router/utils/app-paths"
+        },
+        {
+          "path": ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js",
+          "kind": "require-call",
+          "original": "next/dist/compiled/next-server/app-page.runtime.prod.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/node_modules/next/dist/server/app-render/work-async-storage.external.js",
+          "kind": "require-call",
+          "original": "next/dist/server/app-render/work-async-storage.external.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js",
+          "kind": "require-call",
+          "original": "next/dist/compiled/next-server/app-route.runtime.prod.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/node_modules/next/dist/server/app-render/work-unit-async-storage.external.js",
+          "kind": "require-call",
+          "original": "next/dist/server/app-render/work-unit-async-storage.external.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/no-fallback-error.external.js",
+          "kind": "require-call",
+          "original": "next/dist/shared/lib/no-fallback-error.external"
+        },
+        {
+          "path": ".open-next/server-functions/default/.next/server/webpack-runtime.js",
+          "kind": "require-call",
+          "original": "../../../webpack-runtime.js"
+        }
+      ],
+      "format": "cjs"
+    },
     ".open-next/server-functions/default/.next/server/app/_not-found/page.js": {
       "bytes": 20198,
       "imports": [
@@ -5474,47 +5515,6 @@
           "path": ".open-next/server-functions/default/.next/server/webpack-runtime.js",
           "kind": "require-call",
           "original": "../../webpack-runtime.js"
-        }
-      ],
-      "format": "cjs"
-    },
-    ".open-next/server-functions/default/.next/server/app/api/voice/route.js": {
-      "bytes": 7163,
-      "imports": [
-        {
-          "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
-          "kind": "require-call",
-          "original": "next/dist/shared/lib/router/utils/app-paths"
-        },
-        {
-          "path": ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js",
-          "kind": "require-call",
-          "original": "next/dist/compiled/next-server/app-page.runtime.prod.js"
-        },
-        {
-          "path": ".open-next/server-functions/default/node_modules/next/dist/server/app-render/work-async-storage.external.js",
-          "kind": "require-call",
-          "original": "next/dist/server/app-render/work-async-storage.external.js"
-        },
-        {
-          "path": ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js",
-          "kind": "require-call",
-          "original": "next/dist/compiled/next-server/app-route.runtime.prod.js"
-        },
-        {
-          "path": ".open-next/server-functions/default/node_modules/next/dist/server/app-render/work-unit-async-storage.external.js",
-          "kind": "require-call",
-          "original": "next/dist/server/app-render/work-unit-async-storage.external.js"
-        },
-        {
-          "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/no-fallback-error.external.js",
-          "kind": "require-call",
-          "original": "next/dist/shared/lib/no-fallback-error.external"
-        },
-        {
-          "path": ".open-next/server-functions/default/.next/server/webpack-runtime.js",
-          "kind": "require-call",
-          "original": "../../../webpack-runtime.js"
         }
       ],
       "format": "cjs"
@@ -6029,14 +6029,14 @@
           "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\compliance\\page.js"
         },
         {
-          "path": ".open-next/server-functions/default/.next/server/app/(dashboard)/campaigns/page.js",
-          "kind": "require-call",
-          "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\campaigns\\page.js"
-        },
-        {
           "path": ".open-next/server-functions/default/.next/server/app/(dashboard)/knowledge/page.js",
           "kind": "require-call",
           "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\knowledge\\page.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/.next/server/app/(dashboard)/campaigns/page.js",
+          "kind": "require-call",
+          "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\campaigns\\page.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/voice/[...path]/route.js",
@@ -6059,14 +6059,14 @@
           "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\billing\\page.js"
         },
         {
-          "path": ".open-next/server-functions/default/.next/server/app/(dashboard)/metrics/page.js",
-          "kind": "require-call",
-          "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\metrics\\page.js"
-        },
-        {
           "path": ".open-next/server-functions/default/.next/server/app/(dashboard)/systems/page.js",
           "kind": "require-call",
           "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\systems\\page.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/.next/server/app/(dashboard)/metrics/page.js",
+          "kind": "require-call",
+          "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\metrics\\page.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/auth/confirm/route.js",
@@ -6104,14 +6104,14 @@
           "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\(dashboard)\\page.js"
         },
         {
-          "path": ".open-next/server-functions/default/.next/server/app/_not-found/page.js",
-          "kind": "require-call",
-          "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\_not-found\\page.js"
-        },
-        {
           "path": ".open-next/server-functions/default/.next/server/app/api/voice/route.js",
           "kind": "require-call",
           "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\api\\voice\\route.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/.next/server/app/_not-found/page.js",
+          "kind": "require-call",
+          "original": "C:\\Users\\DELL\\Knoxified-dash-update\\.open-next\\server-functions\\default\\.next\\server\\app\\_not-found\\page.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/pages/_document.js",
@@ -7058,7 +7058,7 @@
       "format": "esm"
     },
     ".open-next/server-functions/default/index.mjs": {
-      "bytes": 94267,
+      "bytes": 94041,
       "imports": [
         {
           "path": "node:module",
@@ -8358,7 +8358,7 @@
           "bytesInOutput": 12796
         },
         ".open-next/server-functions/default/node_modules/next/dist/server/load-manifest.external.js": {
-          "bytesInOutput": 218343
+          "bytesInOutput": 218129
         },
         ".open-next/server-functions/default/node_modules/next/dist/server/app-render/action-async-storage-instance.js": {
           "bytesInOutput": 501
@@ -8492,17 +8492,17 @@
         ".open-next/server-functions/default/.next/server/app/(dashboard)/compliance/page.js": {
           "bytesInOutput": 33614
         },
-        ".open-next/server-functions/default/.next/server/app/(dashboard)/campaigns/page.js": {
-          "bytesInOutput": 32982
-        },
         ".open-next/server-functions/default/.next/server/app/(dashboard)/knowledge/page.js": {
-          "bytesInOutput": 30214
+          "bytesInOutput": 30213
+        },
+        ".open-next/server-functions/default/.next/server/app/(dashboard)/campaigns/page.js": {
+          "bytesInOutput": 32983
         },
         ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js": {
           "bytesInOutput": 171586
         },
         ".open-next/server-functions/default/.next/server/app/api/voice/[...path]/route.js": {
-          "bytesInOutput": 7053
+          "bytesInOutput": 7072
         },
         ".open-next/server-functions/default/.next/server/app/(dashboard)/settings/page.js": {
           "bytesInOutput": 27606
@@ -8513,11 +8513,11 @@
         ".open-next/server-functions/default/.next/server/app/(dashboard)/billing/page.js": {
           "bytesInOutput": 29794
         },
-        ".open-next/server-functions/default/.next/server/app/(dashboard)/metrics/page.js": {
-          "bytesInOutput": 125051
-        },
         ".open-next/server-functions/default/.next/server/app/(dashboard)/systems/page.js": {
           "bytesInOutput": 37222
+        },
+        ".open-next/server-functions/default/.next/server/app/(dashboard)/metrics/page.js": {
+          "bytesInOutput": 125051
         },
         ".open-next/server-functions/default/.next/server/app/api/auth/confirm/route.js": {
           "bytesInOutput": 294130
@@ -8538,13 +8538,13 @@
           "bytesInOutput": 7498
         },
         ".open-next/server-functions/default/.next/server/app/(dashboard)/page.js": {
-          "bytesInOutput": 56450
+          "bytesInOutput": 56440
+        },
+        ".open-next/server-functions/default/.next/server/app/api/voice/route.js": {
+          "bytesInOutput": 6862
         },
         ".open-next/server-functions/default/.next/server/app/_not-found/page.js": {
           "bytesInOutput": 20473
-        },
-        ".open-next/server-functions/default/.next/server/app/api/voice/route.js": {
-          "bytesInOutput": 7314
         },
         ".open-next/server-functions/default/node_modules/react/cjs/react-jsx-runtime.production.js": {
           "bytesInOutput": 740
@@ -8709,10 +8709,10 @@
           "bytesInOutput": 5074
         },
         ".open-next/server-functions/default/index.mjs": {
-          "bytesInOutput": 66867
+          "bytesInOutput": 66651
         }
       },
-      "bytes": 5311787
+      "bytes": 5310914
     }
   }
 }

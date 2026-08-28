@@ -10,7 +10,7 @@
     "clean": "next clean",
     "preview": "opennextjs-cloudflare build && wrangler dev",
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
-    "test:bindings": "node test-service-bindings.ts",
+    "test:bindings": "node test-service-bindings.js",
     "test:deployment": "node post-deployment-test.js"
   },
   "dependencies": {

@@ -3,8 +3,8 @@
 async function proxyToVoiceAgent(request: Request) {
   const { env } = getCloudflareContext();
   const url = new URL(request.url);
-  const targetPath = url.pathname.replace("/api/voice", "") || "/";
-  const targetUrl = "https://voice-agent-beta.internal" + targetPath + url.search;
+  const targetPath = url.pathname.replace(/\/(api|internal)\/voice/, "") || "/";
+  const targetUrl = "https://voice-agent-beta.internal/voice" + targetPath + url.search;
 
   try {
     const response = await env.VOICE_AGENTS.fetch(targetUrl, {
