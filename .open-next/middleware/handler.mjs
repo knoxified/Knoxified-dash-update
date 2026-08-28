@@ -1608,581 +1608,7 @@ var require_middleware = __commonJS({
       function g(a2) {
         return (b2, c2) => (0, d.withRequest)(b2, e.reader, () => a2(b2, c2));
       }
-    }, 814: (a, b, c) => {
-      "use strict";
-      a.exports = c(440);
-    }, 952: (a, b, c) => {
-      "use strict";
-      var d, e, f, g, h, i;
-      c.r(b), c.d(b, { DiagConsoleLogger: () => F, DiagLogLevel: () => d, INVALID_SPANID: () => ad, INVALID_SPAN_CONTEXT: () => af, INVALID_TRACEID: () => ae, ProxyTracer: () => ax, ProxyTracerProvider: () => aA, ROOT_CONTEXT: () => C, SamplingDecision: () => g, SpanKind: () => h, SpanStatusCode: () => i, TraceFlags: () => f, ValueType: () => e, baggageEntryMetadataFromString: () => z, context: () => aJ, createContextKey: () => A, createNoopMeter: () => Y, createTraceState: () => aI, default: () => a1, defaultTextMapGetter: () => Z, defaultTextMapSetter: () => $, diag: () => aK, isSpanContextValid: () => as, isValidSpanId: () => ar, isValidTraceId: () => aq, metrics: () => aP, propagation: () => aZ, trace: () => a0 });
-      let j = "1.9.1", k = /^(\d+)\.(\d+)\.(\d+)(-(.+))?$/, l = function(a2) {
-        let b2 = /* @__PURE__ */ new Set([a2]), c2 = /* @__PURE__ */ new Set(), d2 = a2.match(k);
-        if (!d2) return () => false;
-        let e2 = { major: +d2[1], minor: +d2[2], patch: +d2[3], prerelease: d2[4] };
-        if (null != e2.prerelease) return function(b3) {
-          return b3 === a2;
-        };
-        function f2(a3) {
-          return c2.add(a3), false;
-        }
-        return function(a3) {
-          if (b2.has(a3)) return true;
-          if (c2.has(a3)) return false;
-          let d3 = a3.match(k);
-          if (!d3) return f2(a3);
-          let g2 = { major: +d3[1], minor: +d3[2], patch: +d3[3], prerelease: d3[4] };
-          if (null != g2.prerelease || e2.major !== g2.major) return f2(a3);
-          if (0 === e2.major) return e2.minor === g2.minor && e2.patch <= g2.patch ? (b2.add(a3), true) : f2(a3);
-          return e2.minor <= g2.minor ? (b2.add(a3), true) : f2(a3);
-        };
-      }(j), m = j.split(".")[0], n = Symbol.for(`opentelemetry.js.api.${m}`), o = "object" == typeof globalThis ? globalThis : "object" == typeof self ? self : "object" == typeof window ? window : "object" == typeof c.g ? c.g : {};
-      function p(a2, b2, c2, d2 = false) {
-        var e2;
-        let f2 = o[n] = null != (e2 = o[n]) ? e2 : { version: j };
-        if (!d2 && f2[a2]) {
-          let b3 = Error(`@opentelemetry/api: Attempted duplicate registration of API: ${a2}`);
-          return c2.error(b3.stack || b3.message), false;
-        }
-        if (f2.version !== j) {
-          let b3 = Error(`@opentelemetry/api: Registration of version v${f2.version} for ${a2} does not match previously registered API v${j}`);
-          return c2.error(b3.stack || b3.message), false;
-        }
-        return f2[a2] = b2, c2.debug(`@opentelemetry/api: Registered a global for ${a2} v${j}.`), true;
-      }
-      function q(a2) {
-        var b2, c2;
-        let d2 = null == (b2 = o[n]) ? void 0 : b2.version;
-        if (d2 && l(d2)) return null == (c2 = o[n]) ? void 0 : c2[a2];
-      }
-      function r(a2, b2) {
-        b2.debug(`@opentelemetry/api: Unregistering a global for ${a2} v${j}.`);
-        let c2 = o[n];
-        c2 && delete c2[a2];
-      }
-      class s {
-        constructor(a2) {
-          this._namespace = a2.namespace || "DiagComponentLogger";
-        }
-        debug(...a2) {
-          return t("debug", this._namespace, a2);
-        }
-        error(...a2) {
-          return t("error", this._namespace, a2);
-        }
-        info(...a2) {
-          return t("info", this._namespace, a2);
-        }
-        warn(...a2) {
-          return t("warn", this._namespace, a2);
-        }
-        verbose(...a2) {
-          return t("verbose", this._namespace, a2);
-        }
-      }
-      function t(a2, b2, c2) {
-        let d2 = q("diag");
-        if (d2) return d2[a2](b2, ...c2);
-      }
-      !function(a2) {
-        a2[a2.NONE = 0] = "NONE", a2[a2.ERROR = 30] = "ERROR", a2[a2.WARN = 50] = "WARN", a2[a2.INFO = 60] = "INFO", a2[a2.DEBUG = 70] = "DEBUG", a2[a2.VERBOSE = 80] = "VERBOSE", a2[a2.ALL = 9999] = "ALL";
-      }(d || (d = {}));
-      class u {
-        static instance() {
-          return this._instance || (this._instance = new u()), this._instance;
-        }
-        constructor() {
-          function a2(a3) {
-            return function(...b3) {
-              let c3 = q("diag");
-              if (c3) return c3[a3](...b3);
-            };
-          }
-          let b2 = this, c2 = (a3, c3 = { logLevel: d.INFO }) => {
-            var e2, f2, g2;
-            if (a3 === b2) {
-              let a4 = Error("Cannot use diag as the logger for itself. Please use a DiagLogger implementation like ConsoleDiagLogger or a custom implementation");
-              return b2.error(null != (e2 = a4.stack) ? e2 : a4.message), false;
-            }
-            "number" == typeof c3 && (c3 = { logLevel: c3 });
-            let h2 = q("diag"), i2 = function(a4, b3) {
-              function c4(c5, d2) {
-                let e3 = b3[c5];
-                return "function" == typeof e3 && a4 >= d2 ? e3.bind(b3) : function() {
-                };
-              }
-              return a4 < d.NONE ? a4 = d.NONE : a4 > d.ALL && (a4 = d.ALL), b3 = b3 || {}, { error: c4("error", d.ERROR), warn: c4("warn", d.WARN), info: c4("info", d.INFO), debug: c4("debug", d.DEBUG), verbose: c4("verbose", d.VERBOSE) };
-            }(null != (f2 = c3.logLevel) ? f2 : d.INFO, a3);
-            if (h2 && !c3.suppressOverrideMessage) {
-              let a4 = null != (g2 = Error().stack) ? g2 : "<failed to generate stacktrace>";
-              h2.warn(`Current logger will be overwritten from ${a4}`), i2.warn(`Current logger will overwrite one already registered from ${a4}`);
-            }
-            return p("diag", i2, b2, true);
-          };
-          b2.setLogger = c2, b2.disable = () => {
-            r("diag", b2);
-          }, b2.createComponentLogger = (a3) => new s(a3), b2.verbose = a2("verbose"), b2.debug = a2("debug"), b2.info = a2("info"), b2.warn = a2("warn"), b2.error = a2("error");
-        }
-      }
-      class v {
-        constructor(a2) {
-          this._entries = a2 ? new Map(a2) : /* @__PURE__ */ new Map();
-        }
-        getEntry(a2) {
-          let b2 = this._entries.get(a2);
-          if (b2) return Object.assign({}, b2);
-        }
-        getAllEntries() {
-          return Array.from(this._entries.entries());
-        }
-        setEntry(a2, b2) {
-          let c2 = new v(this._entries);
-          return c2._entries.set(a2, b2), c2;
-        }
-        removeEntry(a2) {
-          let b2 = new v(this._entries);
-          return b2._entries.delete(a2), b2;
-        }
-        removeEntries(...a2) {
-          let b2 = new v(this._entries);
-          for (let c2 of a2) b2._entries.delete(c2);
-          return b2;
-        }
-        clear() {
-          return new v();
-        }
-      }
-      let w = Symbol("BaggageEntryMetadata"), x = u.instance();
-      function y(a2 = {}) {
-        return new v(new Map(Object.entries(a2)));
-      }
-      function z(a2) {
-        return "string" != typeof a2 && (x.error(`Cannot create baggage metadata from unknown type: ${typeof a2}`), a2 = ""), { __TYPE__: w, toString: () => a2 };
-      }
-      function A(a2) {
-        return Symbol.for(a2);
-      }
-      class B {
-        constructor(a2) {
-          let b2 = this;
-          b2._currentContext = a2 ? new Map(a2) : /* @__PURE__ */ new Map(), b2.getValue = (a3) => b2._currentContext.get(a3), b2.setValue = (a3, c2) => {
-            let d2 = new B(b2._currentContext);
-            return d2._currentContext.set(a3, c2), d2;
-          }, b2.deleteValue = (a3) => {
-            let c2 = new B(b2._currentContext);
-            return c2._currentContext.delete(a3), c2;
-          };
-        }
-      }
-      let C = new B(), D = [{ n: "error", c: "error" }, { n: "warn", c: "warn" }, { n: "info", c: "info" }, { n: "debug", c: "debug" }, { n: "verbose", c: "trace" }], E = {};
-      if ("undefined" != typeof console) for (let a2 of ["error", "warn", "info", "debug", "trace", "log"]) "function" == typeof console[a2] && (E[a2] = console[a2]);
-      class F {
-        constructor() {
-          for (let a2 = 0; a2 < D.length; a2++) this[D[a2].n] = /* @__PURE__ */ function(a3) {
-            return function(...b2) {
-              let c2 = E[a3];
-              if ("function" != typeof c2 && (c2 = E.log), "function" != typeof c2 && console && "function" != typeof (c2 = console[a3]) && (c2 = console.log), "function" == typeof c2) return c2.apply(console, b2);
-            };
-          }(D[a2].c);
-        }
-      }
-      class G {
-        constructor() {
-        }
-        createGauge(a2, b2) {
-          return S;
-        }
-        createHistogram(a2, b2) {
-          return T;
-        }
-        createCounter(a2, b2) {
-          return R;
-        }
-        createUpDownCounter(a2, b2) {
-          return U;
-        }
-        createObservableGauge(a2, b2) {
-          return W;
-        }
-        createObservableCounter(a2, b2) {
-          return V;
-        }
-        createObservableUpDownCounter(a2, b2) {
-          return X;
-        }
-        addBatchObservableCallback(a2, b2) {
-        }
-        removeBatchObservableCallback(a2) {
-        }
-      }
-      class H {
-      }
-      class I extends H {
-        add(a2, b2) {
-        }
-      }
-      class J extends H {
-        add(a2, b2) {
-        }
-      }
-      class K extends H {
-        record(a2, b2) {
-        }
-      }
-      class L extends H {
-        record(a2, b2) {
-        }
-      }
-      class M {
-        addCallback(a2) {
-        }
-        removeCallback(a2) {
-        }
-      }
-      class N extends M {
-      }
-      class O extends M {
-      }
-      class P extends M {
-      }
-      let Q = new G(), R = new I(), S = new K(), T = new L(), U = new J(), V = new N(), W = new O(), X = new P();
-      function Y() {
-        return Q;
-      }
-      !function(a2) {
-        a2[a2.INT = 0] = "INT", a2[a2.DOUBLE = 1] = "DOUBLE";
-      }(e || (e = {}));
-      let Z = { get(a2, b2) {
-        if (null != a2) return a2[b2];
-      }, keys: (a2) => null == a2 ? [] : Object.keys(a2) }, $ = { set(a2, b2, c2) {
-        null != a2 && (a2[b2] = c2);
-      } };
-      class _ {
-        active() {
-          return C;
-        }
-        with(a2, b2, c2, ...d2) {
-          return b2.call(c2, ...d2);
-        }
-        bind(a2, b2) {
-          return b2;
-        }
-        enable() {
-          return this;
-        }
-        disable() {
-          return this;
-        }
-      }
-      let aa = "context", ab = new _();
-      class ac {
-        constructor() {
-        }
-        static getInstance() {
-          return this._instance || (this._instance = new ac()), this._instance;
-        }
-        setGlobalContextManager(a2) {
-          return p(aa, a2, u.instance());
-        }
-        active() {
-          return this._getContextManager().active();
-        }
-        with(a2, b2, c2, ...d2) {
-          return this._getContextManager().with(a2, b2, c2, ...d2);
-        }
-        bind(a2, b2) {
-          return this._getContextManager().bind(a2, b2);
-        }
-        _getContextManager() {
-          return q(aa) || ab;
-        }
-        disable() {
-          this._getContextManager().disable(), r(aa, u.instance());
-        }
-      }
-      !function(a2) {
-        a2[a2.NONE = 0] = "NONE", a2[a2.SAMPLED = 1] = "SAMPLED";
-      }(f || (f = {}));
-      let ad = "0000000000000000", ae = "00000000000000000000000000000000", af = { traceId: ae, spanId: ad, traceFlags: f.NONE };
-      class ag {
-        constructor(a2 = af) {
-          this._spanContext = a2;
-        }
-        spanContext() {
-          return this._spanContext;
-        }
-        setAttribute(a2, b2) {
-          return this;
-        }
-        setAttributes(a2) {
-          return this;
-        }
-        addEvent(a2, b2) {
-          return this;
-        }
-        addLink(a2) {
-          return this;
-        }
-        addLinks(a2) {
-          return this;
-        }
-        setStatus(a2) {
-          return this;
-        }
-        updateName(a2) {
-          return this;
-        }
-        end(a2) {
-        }
-        isRecording() {
-          return false;
-        }
-        recordException(a2, b2) {
-        }
-      }
-      let ah = A("OpenTelemetry Context Key SPAN");
-      function ai(a2) {
-        return a2.getValue(ah) || void 0;
-      }
-      function aj() {
-        return ai(ac.getInstance().active());
-      }
-      function ak(a2, b2) {
-        return a2.setValue(ah, b2);
-      }
-      function al(a2) {
-        return a2.deleteValue(ah);
-      }
-      function am(a2, b2) {
-        return ak(a2, new ag(b2));
-      }
-      function an(a2) {
-        var b2;
-        return null == (b2 = ai(a2)) ? void 0 : b2.spanContext();
-      }
-      let ao = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]);
-      function ap(a2, b2) {
-        if ("string" != typeof a2 || a2.length !== b2) return false;
-        let c2 = 0;
-        for (let b3 = 0; b3 < a2.length; b3 += 4) c2 += (0 | ao[a2.charCodeAt(b3)]) + (0 | ao[a2.charCodeAt(b3 + 1)]) + (0 | ao[a2.charCodeAt(b3 + 2)]) + (0 | ao[a2.charCodeAt(b3 + 3)]);
-        return c2 === b2;
-      }
-      function aq(a2) {
-        return ap(a2, 32) && a2 !== ae;
-      }
-      function ar(a2) {
-        return ap(a2, 16) && a2 !== ad;
-      }
-      function as(a2) {
-        return aq(a2.traceId) && ar(a2.spanId);
-      }
-      function at(a2) {
-        return new ag(a2);
-      }
-      let au = ac.getInstance();
-      class av {
-        startSpan(a2, b2, c2 = au.active()) {
-          var d2;
-          if (null == b2 ? void 0 : b2.root) return new ag();
-          let e2 = c2 && an(c2);
-          return null !== (d2 = e2) && "object" == typeof d2 && "spanId" in d2 && "string" == typeof d2.spanId && "traceId" in d2 && "string" == typeof d2.traceId && "traceFlags" in d2 && "number" == typeof d2.traceFlags && as(e2) ? new ag(e2) : new ag();
-        }
-        startActiveSpan(a2, b2, c2, d2) {
-          let e2, f2, g2;
-          if (arguments.length < 2) return;
-          2 == arguments.length ? g2 = b2 : 3 == arguments.length ? (e2 = b2, g2 = c2) : (e2 = b2, f2 = c2, g2 = d2);
-          let h2 = null != f2 ? f2 : au.active(), i2 = this.startSpan(a2, e2, h2), j2 = ak(h2, i2);
-          return au.with(j2, g2, void 0, i2);
-        }
-      }
-      let aw = new av();
-      class ax {
-        constructor(a2, b2, c2, d2) {
-          this._provider = a2, this.name = b2, this.version = c2, this.options = d2;
-        }
-        startSpan(a2, b2, c2) {
-          return this._getTracer().startSpan(a2, b2, c2);
-        }
-        startActiveSpan(a2, b2, c2, d2) {
-          let e2 = this._getTracer();
-          return Reflect.apply(e2.startActiveSpan, e2, arguments);
-        }
-        _getTracer() {
-          if (this._delegate) return this._delegate;
-          let a2 = this._provider.getDelegateTracer(this.name, this.version, this.options);
-          return a2 ? (this._delegate = a2, this._delegate) : aw;
-        }
-      }
-      class ay {
-        getTracer(a2, b2, c2) {
-          return new av();
-        }
-      }
-      let az = new ay();
-      class aA {
-        getTracer(a2, b2, c2) {
-          var d2;
-          return null != (d2 = this.getDelegateTracer(a2, b2, c2)) ? d2 : new ax(this, a2, b2, c2);
-        }
-        getDelegate() {
-          var a2;
-          return null != (a2 = this._delegate) ? a2 : az;
-        }
-        setDelegate(a2) {
-          this._delegate = a2;
-        }
-        getDelegateTracer(a2, b2, c2) {
-          var d2;
-          return null == (d2 = this._delegate) ? void 0 : d2.getTracer(a2, b2, c2);
-        }
-      }
-      !function(a2) {
-        a2[a2.NOT_RECORD = 0] = "NOT_RECORD", a2[a2.RECORD = 1] = "RECORD", a2[a2.RECORD_AND_SAMPLED = 2] = "RECORD_AND_SAMPLED";
-      }(g || (g = {})), function(a2) {
-        a2[a2.INTERNAL = 0] = "INTERNAL", a2[a2.SERVER = 1] = "SERVER", a2[a2.CLIENT = 2] = "CLIENT", a2[a2.PRODUCER = 3] = "PRODUCER", a2[a2.CONSUMER = 4] = "CONSUMER";
-      }(h || (h = {})), function(a2) {
-        a2[a2.UNSET = 0] = "UNSET", a2[a2.OK = 1] = "OK", a2[a2.ERROR = 2] = "ERROR";
-      }(i || (i = {}));
-      let aB = "[_0-9a-z-*/]", aC = `[a-z]${aB}{0,255}`, aD = `[a-z0-9]${aB}{0,240}@[a-z]${aB}{0,13}`, aE = RegExp(`^(?:${aC}|${aD})$`), aF = /^[ -~]{0,255}[!-~]$/, aG = /,|=/;
-      class aH {
-        constructor(a2) {
-          this._internalState = /* @__PURE__ */ new Map(), a2 && this._parse(a2);
-        }
-        set(a2, b2) {
-          let c2 = this._clone();
-          return c2._internalState.has(a2) && c2._internalState.delete(a2), c2._internalState.set(a2, b2), c2;
-        }
-        unset(a2) {
-          let b2 = this._clone();
-          return b2._internalState.delete(a2), b2;
-        }
-        get(a2) {
-          return this._internalState.get(a2);
-        }
-        serialize() {
-          return Array.from(this._internalState.keys()).reduceRight((a2, b2) => (a2.push(b2 + "=" + this.get(b2)), a2), []).join(",");
-        }
-        _parse(a2) {
-          !(a2.length > 512) && (this._internalState = a2.split(",").reduceRight((a3, b2) => {
-            let c2 = b2.trim(), d2 = c2.indexOf("=");
-            if (-1 !== d2) {
-              let e2 = c2.slice(0, d2), f2 = c2.slice(d2 + 1, b2.length);
-              aE.test(e2) && aF.test(f2) && !aG.test(f2) && a3.set(e2, f2);
-            }
-            return a3;
-          }, /* @__PURE__ */ new Map()), this._internalState.size > 32 && (this._internalState = new Map(Array.from(this._internalState.entries()).reverse().slice(0, 32))));
-        }
-        _keys() {
-          return Array.from(this._internalState.keys()).reverse();
-        }
-        _clone() {
-          let a2 = new aH();
-          return a2._internalState = new Map(this._internalState), a2;
-        }
-      }
-      function aI(a2) {
-        return new aH(a2);
-      }
-      let aJ = ac.getInstance(), aK = u.instance();
-      class aL {
-        getMeter(a2, b2, c2) {
-          return Q;
-        }
-      }
-      let aM = new aL(), aN = "metrics";
-      class aO {
-        constructor() {
-        }
-        static getInstance() {
-          return this._instance || (this._instance = new aO()), this._instance;
-        }
-        setGlobalMeterProvider(a2) {
-          return p(aN, a2, u.instance());
-        }
-        getMeterProvider() {
-          return q(aN) || aM;
-        }
-        getMeter(a2, b2, c2) {
-          return this.getMeterProvider().getMeter(a2, b2, c2);
-        }
-        disable() {
-          r(aN, u.instance());
-        }
-      }
-      let aP = aO.getInstance();
-      class aQ {
-        inject(a2, b2) {
-        }
-        extract(a2, b2) {
-          return a2;
-        }
-        fields() {
-          return [];
-        }
-      }
-      let aR = A("OpenTelemetry Baggage Key");
-      function aS(a2) {
-        return a2.getValue(aR) || void 0;
-      }
-      function aT() {
-        return aS(ac.getInstance().active());
-      }
-      function aU(a2, b2) {
-        return a2.setValue(aR, b2);
-      }
-      function aV(a2) {
-        return a2.deleteValue(aR);
-      }
-      let aW = "propagation", aX = new aQ();
-      class aY {
-        constructor() {
-          this.createBaggage = y, this.getBaggage = aS, this.getActiveBaggage = aT, this.setBaggage = aU, this.deleteBaggage = aV;
-        }
-        static getInstance() {
-          return this._instance || (this._instance = new aY()), this._instance;
-        }
-        setGlobalPropagator(a2) {
-          return p(aW, a2, u.instance());
-        }
-        inject(a2, b2, c2 = $) {
-          return this._getGlobalPropagator().inject(a2, b2, c2);
-        }
-        extract(a2, b2, c2 = Z) {
-          return this._getGlobalPropagator().extract(a2, b2, c2);
-        }
-        fields() {
-          return this._getGlobalPropagator().fields();
-        }
-        disable() {
-          r(aW, u.instance());
-        }
-        _getGlobalPropagator() {
-          return q(aW) || aX;
-        }
-      }
-      let aZ = aY.getInstance(), a$ = "trace";
-      class a_ {
-        constructor() {
-          this._proxyTracerProvider = new aA(), this.wrapSpanContext = at, this.isSpanContextValid = as, this.deleteSpan = al, this.getSpan = ai, this.getActiveSpan = aj, this.getSpanContext = an, this.setSpan = ak, this.setSpanContext = am;
-        }
-        static getInstance() {
-          return this._instance || (this._instance = new a_()), this._instance;
-        }
-        setGlobalTracerProvider(a2) {
-          let b2 = p(a$, this._proxyTracerProvider, u.instance());
-          return b2 && this._proxyTracerProvider.setDelegate(a2), b2;
-        }
-        getTracerProvider() {
-          return q(a$) || this._proxyTracerProvider;
-        }
-        getTracer(a2, b2) {
-          return this.getTracerProvider().getTracer(a2, b2);
-        }
-        disable() {
-          r(a$, u.instance()), this._proxyTracerProvider = new aA();
-        }
-      }
-      let a0 = a_.getInstance(), a1 = { context: aJ, diag: aK, metrics: aP, propagation: aZ, trace: a0 };
-    }, 983: (a, b, c) => {
+    }, 733: (a, b, c) => {
       "use strict";
       let d, e, f, g;
       c.r(b), c.d(b, { default: () => fz });
@@ -8824,12 +8250,7 @@ ${r3}`;
       fn("\x1B[38;2;173;127;168m", "\x1B[39m"), fn("\x1B[36m", "\x1B[39m");
       let ft = fn("\x1B[37m", "\x1B[39m");
       async function fu(a10) {
-        let { pathname: b10 } = a10.nextUrl;
-        if (b10.startsWith("/internal/voice")) {
-          let c11 = new URL(b10.replace("/internal/voice", "/api/voice"), a10.url);
-          return ab.rewrite(c11);
-        }
-        let c10 = ab.next({ request: a10 }), d10 = function(a11, b11, c11) {
+        let b10 = ab.next({ request: a10 }), c10 = function(a11, b11, c11) {
           if (!function() {
             if (fg || "undefined" == typeof process || !process.env?.npm_package_name) return;
             let a12 = process.env.npm_package_name;
@@ -8857,8 +8278,8 @@ ${r3}`;
 Check your Supabase project's API settings to find these values
 
 https://supabase.com/dashboard/project/_/settings/api`);
-          let { storage: d11, getAll: e11, setAll: f3, setItems: g2, removedItems: h2 } = function(a12, b12) {
-            let c12, d12, e12 = a12.cookies ?? null, f4 = a12.cookieEncoding, g3 = {}, h3 = {}, i3 = () => {
+          let { storage: d11, getAll: e11, setAll: f2, setItems: g2, removedItems: h2 } = function(a12, b12) {
+            let c12, d12, e12 = a12.cookies ?? null, f3 = a12.cookieEncoding, g3 = {}, h3 = {}, i3 = () => {
               let a13 = (0, e1.qg)(document.cookie);
               return Object.keys(a13).map((b13) => ({ name: b13, value: a13[b13] ?? "" }));
             }, j2 = (a13) => {
@@ -8877,8 +8298,8 @@ https://supabase.com/dashboard/project/_/settings/api`);
               };
               if (c12 = async (b13) => await a13(b13), "set" in e12 && "remove" in e12) d12 = async (a14) => {
                 for (let b13 = 0; b13 < a14.length; b13 += 1) {
-                  let { name: c13, value: d13, options: f5 } = a14[b13];
-                  d13 ? await e12.set(c13, d13, f5) : await e12.remove(c13, f5);
+                  let { name: c13, value: d13, options: f4 } = a14[b13];
+                  d13 ? await e12.set(c13, d13, f4) : await e12.remove(c13, f4);
                 }
               };
               else if (b12) d12 = async () => {
@@ -8906,9 +8327,9 @@ https://supabase.com/dashboard/project/_/settings/api`);
               });
               return d13 ? "string" != typeof d13 ? d13 : fe(d13) : null;
             }, setItem: async (b13, e13) => {
-              b13.endsWith("-code-verifier") && await ff({ getAll: c12, setAll: d12, setItems: { [b13]: e13 }, removedItems: {} }, { cookieOptions: a12?.cookieOptions ?? null, cookieEncoding: f4 }), g3[b13] = e13, delete h3[b13];
+              b13.endsWith("-code-verifier") && await ff({ getAll: c12, setAll: d12, setItems: { [b13]: e13 }, removedItems: {} }, { cookieOptions: a12?.cookieOptions ?? null, cookieEncoding: f3 }), g3[b13] = e13, delete h3[b13];
             }, removeItem: async (b13) => {
-              (fd.test(b13) || b13.endsWith("-flows-code-verifier")) && await ff({ getAll: c12, setAll: d12, setItems: {}, removedItems: { [b13]: true } }, { cookieOptions: a12?.cookieOptions ?? null, cookieEncoding: f4 }), delete g3[b13], h3[b13] = true;
+              (fd.test(b13) || b13.endsWith("-flows-code-verifier")) && await ff({ getAll: c12, setAll: d12, setItems: {}, removedItems: { [b13]: true } }, { cookieOptions: a12?.cookieOptions ?? null, cookieEncoding: f3 }), delete g3[b13], h3[b13] = true;
             } } } : { getAll: c12, setAll: d12, setItems: g3, removedItems: h3, storage: { isServer: false, getItem: async (a13) => {
               let b13 = await c12([a13]), d13 = await fa(a13, async (a14) => {
                 let c13 = b13?.find(({ name: b14 }) => b14 === a14) || null;
@@ -8917,7 +8338,7 @@ https://supabase.com/dashboard/project/_/settings/api`);
               return d13 ? fe(d13) : null;
             }, setItem: async (b13, e13) => {
               let g4 = await c12([b13]), h4 = new Set((g4?.map(({ name: a13 }) => a13) || []).filter((a13) => e8(a13, b13))), i4 = e13;
-              "base64url" === f4 && (i4 = fc + e5(e13));
+              "base64url" === f3 && (i4 = fc + e5(e13));
               let j3 = e9(b13, i4);
               j3.forEach(({ name: a13 }) => {
                 h4.delete(a13);
@@ -8930,14 +8351,14 @@ https://supabase.com/dashboard/project/_/settings/api`);
               })() : null, n2 = [...m2 ? [...h4].map((a13) => ({ name: a13, value: "", options: m2 })) : [], ...[...h4].map((a13) => ({ name: a13, value: "", options: k2 })), ...j3.map(({ name: a13, value: b14 }) => ({ name: a13, value: b14, options: l2 }))];
               n2.length > 0 && await d12(n2, {});
             }, removeItem: async (b13) => {
-              let e13 = await c12([b13]), f5 = (e13?.map(({ name: a13 }) => a13) || []).filter((a13) => e8(a13, b13));
-              if (0 === f5.length) return;
+              let e13 = await c12([b13]), f4 = (e13?.map(({ name: a13 }) => a13) || []).filter((a13) => e8(a13, b13));
+              if (0 === f4.length) return;
               let g4 = { ...fb, ...a12?.cookieOptions, maxAge: 0 };
               delete g4.name;
               let h4 = g4.domain ? (() => {
                 let { domain: a13, ...b14 } = g4;
                 return b14;
-              })() : null, i4 = [...h4 ? f5.map((a13) => ({ name: a13, value: "", options: h4 })) : [], ...f5.map((a13) => ({ name: a13, value: "", options: g4 }))];
+              })() : null, i4 = [...h4 ? f4.map((a13) => ({ name: a13, value: "", options: h4 })) : [], ...f4.map((a13) => ({ name: a13, value: "", options: g4 }))];
               await d12(i4, {});
             } } };
           }({ ...c11, cookieEncoding: c11?.cookieEncoding ?? "base64url" }, true), i2 = new e0(a11, b11, { ...c11, global: { ...c11?.global, headers: { ...c11?.global?.headers, "X-Client-Info": "supabase-ssr/0.12.4 createServerClient" } }, auth: { ...c11?.cookieOptions?.name ? { storageKey: c11.cookieOptions.name } : null, ...c11?.auth, flowType: "pkce", autoRefreshToken: false, detectSessionInUrl: false, persistSession: true, skipAutoInitialize: true, storage: d11, ...c11?.cookies && "encode" in c11.cookies && "tokens-only" === c11.cookies.encode ? { userStorage: c11?.auth?.userStorage ?? /* @__PURE__ */ function(a12 = {}) {
@@ -8948,23 +8369,23 @@ https://supabase.com/dashboard/project/_/settings/api`);
             } };
           }() } : null } });
           return i2.auth.onAuthStateChange(async (a12) => {
-            (Object.keys(g2).length > 0 || Object.keys(h2).length > 0) && ("SIGNED_IN" === a12 || "TOKEN_REFRESHED" === a12 || "USER_UPDATED" === a12 || "PASSWORD_RECOVERY" === a12 || "SIGNED_OUT" === a12 || "MFA_CHALLENGE_VERIFIED" === a12) && await ff({ getAll: e11, setAll: f3, setItems: g2, removedItems: h2 }, { cookieOptions: c11?.cookieOptions ?? null, cookieEncoding: c11?.cookieEncoding ?? "base64url" });
+            (Object.keys(g2).length > 0 || Object.keys(h2).length > 0) && ("SIGNED_IN" === a12 || "TOKEN_REFRESHED" === a12 || "USER_UPDATED" === a12 || "PASSWORD_RECOVERY" === a12 || "SIGNED_OUT" === a12 || "MFA_CHALLENGE_VERIFIED" === a12) && await ff({ getAll: e11, setAll: f2, setItems: g2, removedItems: h2 }, { cookieOptions: c11?.cookieOptions ?? null, cookieEncoding: c11?.cookieEncoding ?? "base64url" });
           }), i2;
-        }(process.env.SUPABASE_URL || "https://placeholder.supabase.co", process.env.SUPABASE_ANON_KEY || "placeholder-key", { cookies: { getAll: () => a10.cookies.getAll(), setAll(b11) {
-          b11.forEach(({ name: b12, value: c11, options: d11 }) => a10.cookies.set(b12, c11)), c10 = ab.next({ request: a10 }), b11.forEach(({ name: a11, value: b12, options: d11 }) => c10.cookies.set(a11, b12, d11));
-        } } }), { data: { user: e10 } } = await d10.auth.getUser(), f2 = !!e10;
-        if (!f2 && !a10.nextUrl.pathname.startsWith("/login") && !a10.nextUrl.pathname.startsWith("/forgot-password") && !a10.nextUrl.pathname.startsWith("/reset-password") && !a10.nextUrl.pathname.startsWith("/api") && !a10.nextUrl.pathname.startsWith("/auth")) {
+        }(process.env.SUPABASE_URL || "https://placeholder.supabase.co", process.env.SUPABASE_ANON_KEY || "placeholder-key", { cookies: { getAll: () => a10.cookies.getAll(), setAll(c11) {
+          c11.forEach(({ name: b11, value: c12, options: d11 }) => a10.cookies.set(b11, c12)), b10 = ab.next({ request: a10 }), c11.forEach(({ name: a11, value: c12, options: d11 }) => b10.cookies.set(a11, c12, d11));
+        } } }), { data: { user: d10 } } = await c10.auth.getUser(), e10 = !!d10;
+        if (!e10 && !a10.nextUrl.pathname.startsWith("/login") && !a10.nextUrl.pathname.startsWith("/forgot-password") && !a10.nextUrl.pathname.startsWith("/reset-password") && !a10.nextUrl.pathname.startsWith("/api") && !a10.nextUrl.pathname.startsWith("/auth")) {
           let b11 = a10.nextUrl.clone();
           return b11.pathname = "/login", ab.redirect(b11);
         }
-        if (f2 && ("/login" === a10.nextUrl.pathname || "/forgot-password" === a10.nextUrl.pathname)) {
+        if (e10 && ("/login" === a10.nextUrl.pathname || "/forgot-password" === a10.nextUrl.pathname)) {
           let b11 = a10.nextUrl.clone();
           return b11.pathname = "/", ab.redirect(b11);
         }
-        return c10;
+        return b10;
       }
       fn("\x1B[90m", "\x1B[39m"), fn("\x1B[40m", "\x1B[49m"), fn("\x1B[41m", "\x1B[49m"), fn("\x1B[42m", "\x1B[49m"), fn("\x1B[43m", "\x1B[49m"), fn("\x1B[44m", "\x1B[49m"), fn("\x1B[45m", "\x1B[49m"), fn("\x1B[46m", "\x1B[49m"), fn("\x1B[47m", "\x1B[49m"), ft(fo("\u25CB")), fp(fo("\u2A2F")), fr(fo("\u26A0")), ft(fo(" ")), fq(fo("\u2713")), fs(fo("\xBB")), new a3(1e4, (a10) => a10.length), /* @__PURE__ */ new WeakMap();
-      let fv = { matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)", "/internal/voice/:path*"] };
+      let fv = { matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"] };
       Object.values({ NOT_FOUND: 404, FORBIDDEN: 403, UNAUTHORIZED: 401 });
       let fw = { ...q }, fx = fw.middleware || fw.default, fy = "/middleware";
       if ("function" != typeof fx) throw Object.defineProperty(Error(`The Middleware "${fy}" must export a \`middleware\` or a \`default\` function`), "__NEXT_ERROR_CODE", { value: "E120", enumerable: false, configurable: true });
@@ -8978,8 +8399,582 @@ https://supabase.com/dashboard/project/_/settings/api`);
           }
         } });
       }
+    }, 814: (a, b, c) => {
+      "use strict";
+      a.exports = c(440);
+    }, 952: (a, b, c) => {
+      "use strict";
+      var d, e, f, g, h, i;
+      c.r(b), c.d(b, { DiagConsoleLogger: () => F, DiagLogLevel: () => d, INVALID_SPANID: () => ad, INVALID_SPAN_CONTEXT: () => af, INVALID_TRACEID: () => ae, ProxyTracer: () => ax, ProxyTracerProvider: () => aA, ROOT_CONTEXT: () => C, SamplingDecision: () => g, SpanKind: () => h, SpanStatusCode: () => i, TraceFlags: () => f, ValueType: () => e, baggageEntryMetadataFromString: () => z, context: () => aJ, createContextKey: () => A, createNoopMeter: () => Y, createTraceState: () => aI, default: () => a1, defaultTextMapGetter: () => Z, defaultTextMapSetter: () => $, diag: () => aK, isSpanContextValid: () => as, isValidSpanId: () => ar, isValidTraceId: () => aq, metrics: () => aP, propagation: () => aZ, trace: () => a0 });
+      let j = "1.9.1", k = /^(\d+)\.(\d+)\.(\d+)(-(.+))?$/, l = function(a2) {
+        let b2 = /* @__PURE__ */ new Set([a2]), c2 = /* @__PURE__ */ new Set(), d2 = a2.match(k);
+        if (!d2) return () => false;
+        let e2 = { major: +d2[1], minor: +d2[2], patch: +d2[3], prerelease: d2[4] };
+        if (null != e2.prerelease) return function(b3) {
+          return b3 === a2;
+        };
+        function f2(a3) {
+          return c2.add(a3), false;
+        }
+        return function(a3) {
+          if (b2.has(a3)) return true;
+          if (c2.has(a3)) return false;
+          let d3 = a3.match(k);
+          if (!d3) return f2(a3);
+          let g2 = { major: +d3[1], minor: +d3[2], patch: +d3[3], prerelease: d3[4] };
+          if (null != g2.prerelease || e2.major !== g2.major) return f2(a3);
+          if (0 === e2.major) return e2.minor === g2.minor && e2.patch <= g2.patch ? (b2.add(a3), true) : f2(a3);
+          return e2.minor <= g2.minor ? (b2.add(a3), true) : f2(a3);
+        };
+      }(j), m = j.split(".")[0], n = Symbol.for(`opentelemetry.js.api.${m}`), o = "object" == typeof globalThis ? globalThis : "object" == typeof self ? self : "object" == typeof window ? window : "object" == typeof c.g ? c.g : {};
+      function p(a2, b2, c2, d2 = false) {
+        var e2;
+        let f2 = o[n] = null != (e2 = o[n]) ? e2 : { version: j };
+        if (!d2 && f2[a2]) {
+          let b3 = Error(`@opentelemetry/api: Attempted duplicate registration of API: ${a2}`);
+          return c2.error(b3.stack || b3.message), false;
+        }
+        if (f2.version !== j) {
+          let b3 = Error(`@opentelemetry/api: Registration of version v${f2.version} for ${a2} does not match previously registered API v${j}`);
+          return c2.error(b3.stack || b3.message), false;
+        }
+        return f2[a2] = b2, c2.debug(`@opentelemetry/api: Registered a global for ${a2} v${j}.`), true;
+      }
+      function q(a2) {
+        var b2, c2;
+        let d2 = null == (b2 = o[n]) ? void 0 : b2.version;
+        if (d2 && l(d2)) return null == (c2 = o[n]) ? void 0 : c2[a2];
+      }
+      function r(a2, b2) {
+        b2.debug(`@opentelemetry/api: Unregistering a global for ${a2} v${j}.`);
+        let c2 = o[n];
+        c2 && delete c2[a2];
+      }
+      class s {
+        constructor(a2) {
+          this._namespace = a2.namespace || "DiagComponentLogger";
+        }
+        debug(...a2) {
+          return t("debug", this._namespace, a2);
+        }
+        error(...a2) {
+          return t("error", this._namespace, a2);
+        }
+        info(...a2) {
+          return t("info", this._namespace, a2);
+        }
+        warn(...a2) {
+          return t("warn", this._namespace, a2);
+        }
+        verbose(...a2) {
+          return t("verbose", this._namespace, a2);
+        }
+      }
+      function t(a2, b2, c2) {
+        let d2 = q("diag");
+        if (d2) return d2[a2](b2, ...c2);
+      }
+      !function(a2) {
+        a2[a2.NONE = 0] = "NONE", a2[a2.ERROR = 30] = "ERROR", a2[a2.WARN = 50] = "WARN", a2[a2.INFO = 60] = "INFO", a2[a2.DEBUG = 70] = "DEBUG", a2[a2.VERBOSE = 80] = "VERBOSE", a2[a2.ALL = 9999] = "ALL";
+      }(d || (d = {}));
+      class u {
+        static instance() {
+          return this._instance || (this._instance = new u()), this._instance;
+        }
+        constructor() {
+          function a2(a3) {
+            return function(...b3) {
+              let c3 = q("diag");
+              if (c3) return c3[a3](...b3);
+            };
+          }
+          let b2 = this, c2 = (a3, c3 = { logLevel: d.INFO }) => {
+            var e2, f2, g2;
+            if (a3 === b2) {
+              let a4 = Error("Cannot use diag as the logger for itself. Please use a DiagLogger implementation like ConsoleDiagLogger or a custom implementation");
+              return b2.error(null != (e2 = a4.stack) ? e2 : a4.message), false;
+            }
+            "number" == typeof c3 && (c3 = { logLevel: c3 });
+            let h2 = q("diag"), i2 = function(a4, b3) {
+              function c4(c5, d2) {
+                let e3 = b3[c5];
+                return "function" == typeof e3 && a4 >= d2 ? e3.bind(b3) : function() {
+                };
+              }
+              return a4 < d.NONE ? a4 = d.NONE : a4 > d.ALL && (a4 = d.ALL), b3 = b3 || {}, { error: c4("error", d.ERROR), warn: c4("warn", d.WARN), info: c4("info", d.INFO), debug: c4("debug", d.DEBUG), verbose: c4("verbose", d.VERBOSE) };
+            }(null != (f2 = c3.logLevel) ? f2 : d.INFO, a3);
+            if (h2 && !c3.suppressOverrideMessage) {
+              let a4 = null != (g2 = Error().stack) ? g2 : "<failed to generate stacktrace>";
+              h2.warn(`Current logger will be overwritten from ${a4}`), i2.warn(`Current logger will overwrite one already registered from ${a4}`);
+            }
+            return p("diag", i2, b2, true);
+          };
+          b2.setLogger = c2, b2.disable = () => {
+            r("diag", b2);
+          }, b2.createComponentLogger = (a3) => new s(a3), b2.verbose = a2("verbose"), b2.debug = a2("debug"), b2.info = a2("info"), b2.warn = a2("warn"), b2.error = a2("error");
+        }
+      }
+      class v {
+        constructor(a2) {
+          this._entries = a2 ? new Map(a2) : /* @__PURE__ */ new Map();
+        }
+        getEntry(a2) {
+          let b2 = this._entries.get(a2);
+          if (b2) return Object.assign({}, b2);
+        }
+        getAllEntries() {
+          return Array.from(this._entries.entries());
+        }
+        setEntry(a2, b2) {
+          let c2 = new v(this._entries);
+          return c2._entries.set(a2, b2), c2;
+        }
+        removeEntry(a2) {
+          let b2 = new v(this._entries);
+          return b2._entries.delete(a2), b2;
+        }
+        removeEntries(...a2) {
+          let b2 = new v(this._entries);
+          for (let c2 of a2) b2._entries.delete(c2);
+          return b2;
+        }
+        clear() {
+          return new v();
+        }
+      }
+      let w = Symbol("BaggageEntryMetadata"), x = u.instance();
+      function y(a2 = {}) {
+        return new v(new Map(Object.entries(a2)));
+      }
+      function z(a2) {
+        return "string" != typeof a2 && (x.error(`Cannot create baggage metadata from unknown type: ${typeof a2}`), a2 = ""), { __TYPE__: w, toString: () => a2 };
+      }
+      function A(a2) {
+        return Symbol.for(a2);
+      }
+      class B {
+        constructor(a2) {
+          let b2 = this;
+          b2._currentContext = a2 ? new Map(a2) : /* @__PURE__ */ new Map(), b2.getValue = (a3) => b2._currentContext.get(a3), b2.setValue = (a3, c2) => {
+            let d2 = new B(b2._currentContext);
+            return d2._currentContext.set(a3, c2), d2;
+          }, b2.deleteValue = (a3) => {
+            let c2 = new B(b2._currentContext);
+            return c2._currentContext.delete(a3), c2;
+          };
+        }
+      }
+      let C = new B(), D = [{ n: "error", c: "error" }, { n: "warn", c: "warn" }, { n: "info", c: "info" }, { n: "debug", c: "debug" }, { n: "verbose", c: "trace" }], E = {};
+      if ("undefined" != typeof console) for (let a2 of ["error", "warn", "info", "debug", "trace", "log"]) "function" == typeof console[a2] && (E[a2] = console[a2]);
+      class F {
+        constructor() {
+          for (let a2 = 0; a2 < D.length; a2++) this[D[a2].n] = /* @__PURE__ */ function(a3) {
+            return function(...b2) {
+              let c2 = E[a3];
+              if ("function" != typeof c2 && (c2 = E.log), "function" != typeof c2 && console && "function" != typeof (c2 = console[a3]) && (c2 = console.log), "function" == typeof c2) return c2.apply(console, b2);
+            };
+          }(D[a2].c);
+        }
+      }
+      class G {
+        constructor() {
+        }
+        createGauge(a2, b2) {
+          return S;
+        }
+        createHistogram(a2, b2) {
+          return T;
+        }
+        createCounter(a2, b2) {
+          return R;
+        }
+        createUpDownCounter(a2, b2) {
+          return U;
+        }
+        createObservableGauge(a2, b2) {
+          return W;
+        }
+        createObservableCounter(a2, b2) {
+          return V;
+        }
+        createObservableUpDownCounter(a2, b2) {
+          return X;
+        }
+        addBatchObservableCallback(a2, b2) {
+        }
+        removeBatchObservableCallback(a2) {
+        }
+      }
+      class H {
+      }
+      class I extends H {
+        add(a2, b2) {
+        }
+      }
+      class J extends H {
+        add(a2, b2) {
+        }
+      }
+      class K extends H {
+        record(a2, b2) {
+        }
+      }
+      class L extends H {
+        record(a2, b2) {
+        }
+      }
+      class M {
+        addCallback(a2) {
+        }
+        removeCallback(a2) {
+        }
+      }
+      class N extends M {
+      }
+      class O extends M {
+      }
+      class P extends M {
+      }
+      let Q = new G(), R = new I(), S = new K(), T = new L(), U = new J(), V = new N(), W = new O(), X = new P();
+      function Y() {
+        return Q;
+      }
+      !function(a2) {
+        a2[a2.INT = 0] = "INT", a2[a2.DOUBLE = 1] = "DOUBLE";
+      }(e || (e = {}));
+      let Z = { get(a2, b2) {
+        if (null != a2) return a2[b2];
+      }, keys: (a2) => null == a2 ? [] : Object.keys(a2) }, $ = { set(a2, b2, c2) {
+        null != a2 && (a2[b2] = c2);
+      } };
+      class _ {
+        active() {
+          return C;
+        }
+        with(a2, b2, c2, ...d2) {
+          return b2.call(c2, ...d2);
+        }
+        bind(a2, b2) {
+          return b2;
+        }
+        enable() {
+          return this;
+        }
+        disable() {
+          return this;
+        }
+      }
+      let aa = "context", ab = new _();
+      class ac {
+        constructor() {
+        }
+        static getInstance() {
+          return this._instance || (this._instance = new ac()), this._instance;
+        }
+        setGlobalContextManager(a2) {
+          return p(aa, a2, u.instance());
+        }
+        active() {
+          return this._getContextManager().active();
+        }
+        with(a2, b2, c2, ...d2) {
+          return this._getContextManager().with(a2, b2, c2, ...d2);
+        }
+        bind(a2, b2) {
+          return this._getContextManager().bind(a2, b2);
+        }
+        _getContextManager() {
+          return q(aa) || ab;
+        }
+        disable() {
+          this._getContextManager().disable(), r(aa, u.instance());
+        }
+      }
+      !function(a2) {
+        a2[a2.NONE = 0] = "NONE", a2[a2.SAMPLED = 1] = "SAMPLED";
+      }(f || (f = {}));
+      let ad = "0000000000000000", ae = "00000000000000000000000000000000", af = { traceId: ae, spanId: ad, traceFlags: f.NONE };
+      class ag {
+        constructor(a2 = af) {
+          this._spanContext = a2;
+        }
+        spanContext() {
+          return this._spanContext;
+        }
+        setAttribute(a2, b2) {
+          return this;
+        }
+        setAttributes(a2) {
+          return this;
+        }
+        addEvent(a2, b2) {
+          return this;
+        }
+        addLink(a2) {
+          return this;
+        }
+        addLinks(a2) {
+          return this;
+        }
+        setStatus(a2) {
+          return this;
+        }
+        updateName(a2) {
+          return this;
+        }
+        end(a2) {
+        }
+        isRecording() {
+          return false;
+        }
+        recordException(a2, b2) {
+        }
+      }
+      let ah = A("OpenTelemetry Context Key SPAN");
+      function ai(a2) {
+        return a2.getValue(ah) || void 0;
+      }
+      function aj() {
+        return ai(ac.getInstance().active());
+      }
+      function ak(a2, b2) {
+        return a2.setValue(ah, b2);
+      }
+      function al(a2) {
+        return a2.deleteValue(ah);
+      }
+      function am(a2, b2) {
+        return ak(a2, new ag(b2));
+      }
+      function an(a2) {
+        var b2;
+        return null == (b2 = ai(a2)) ? void 0 : b2.spanContext();
+      }
+      let ao = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]);
+      function ap(a2, b2) {
+        if ("string" != typeof a2 || a2.length !== b2) return false;
+        let c2 = 0;
+        for (let b3 = 0; b3 < a2.length; b3 += 4) c2 += (0 | ao[a2.charCodeAt(b3)]) + (0 | ao[a2.charCodeAt(b3 + 1)]) + (0 | ao[a2.charCodeAt(b3 + 2)]) + (0 | ao[a2.charCodeAt(b3 + 3)]);
+        return c2 === b2;
+      }
+      function aq(a2) {
+        return ap(a2, 32) && a2 !== ae;
+      }
+      function ar(a2) {
+        return ap(a2, 16) && a2 !== ad;
+      }
+      function as(a2) {
+        return aq(a2.traceId) && ar(a2.spanId);
+      }
+      function at(a2) {
+        return new ag(a2);
+      }
+      let au = ac.getInstance();
+      class av {
+        startSpan(a2, b2, c2 = au.active()) {
+          var d2;
+          if (null == b2 ? void 0 : b2.root) return new ag();
+          let e2 = c2 && an(c2);
+          return null !== (d2 = e2) && "object" == typeof d2 && "spanId" in d2 && "string" == typeof d2.spanId && "traceId" in d2 && "string" == typeof d2.traceId && "traceFlags" in d2 && "number" == typeof d2.traceFlags && as(e2) ? new ag(e2) : new ag();
+        }
+        startActiveSpan(a2, b2, c2, d2) {
+          let e2, f2, g2;
+          if (arguments.length < 2) return;
+          2 == arguments.length ? g2 = b2 : 3 == arguments.length ? (e2 = b2, g2 = c2) : (e2 = b2, f2 = c2, g2 = d2);
+          let h2 = null != f2 ? f2 : au.active(), i2 = this.startSpan(a2, e2, h2), j2 = ak(h2, i2);
+          return au.with(j2, g2, void 0, i2);
+        }
+      }
+      let aw = new av();
+      class ax {
+        constructor(a2, b2, c2, d2) {
+          this._provider = a2, this.name = b2, this.version = c2, this.options = d2;
+        }
+        startSpan(a2, b2, c2) {
+          return this._getTracer().startSpan(a2, b2, c2);
+        }
+        startActiveSpan(a2, b2, c2, d2) {
+          let e2 = this._getTracer();
+          return Reflect.apply(e2.startActiveSpan, e2, arguments);
+        }
+        _getTracer() {
+          if (this._delegate) return this._delegate;
+          let a2 = this._provider.getDelegateTracer(this.name, this.version, this.options);
+          return a2 ? (this._delegate = a2, this._delegate) : aw;
+        }
+      }
+      class ay {
+        getTracer(a2, b2, c2) {
+          return new av();
+        }
+      }
+      let az = new ay();
+      class aA {
+        getTracer(a2, b2, c2) {
+          var d2;
+          return null != (d2 = this.getDelegateTracer(a2, b2, c2)) ? d2 : new ax(this, a2, b2, c2);
+        }
+        getDelegate() {
+          var a2;
+          return null != (a2 = this._delegate) ? a2 : az;
+        }
+        setDelegate(a2) {
+          this._delegate = a2;
+        }
+        getDelegateTracer(a2, b2, c2) {
+          var d2;
+          return null == (d2 = this._delegate) ? void 0 : d2.getTracer(a2, b2, c2);
+        }
+      }
+      !function(a2) {
+        a2[a2.NOT_RECORD = 0] = "NOT_RECORD", a2[a2.RECORD = 1] = "RECORD", a2[a2.RECORD_AND_SAMPLED = 2] = "RECORD_AND_SAMPLED";
+      }(g || (g = {})), function(a2) {
+        a2[a2.INTERNAL = 0] = "INTERNAL", a2[a2.SERVER = 1] = "SERVER", a2[a2.CLIENT = 2] = "CLIENT", a2[a2.PRODUCER = 3] = "PRODUCER", a2[a2.CONSUMER = 4] = "CONSUMER";
+      }(h || (h = {})), function(a2) {
+        a2[a2.UNSET = 0] = "UNSET", a2[a2.OK = 1] = "OK", a2[a2.ERROR = 2] = "ERROR";
+      }(i || (i = {}));
+      let aB = "[_0-9a-z-*/]", aC = `[a-z]${aB}{0,255}`, aD = `[a-z0-9]${aB}{0,240}@[a-z]${aB}{0,13}`, aE = RegExp(`^(?:${aC}|${aD})$`), aF = /^[ -~]{0,255}[!-~]$/, aG = /,|=/;
+      class aH {
+        constructor(a2) {
+          this._internalState = /* @__PURE__ */ new Map(), a2 && this._parse(a2);
+        }
+        set(a2, b2) {
+          let c2 = this._clone();
+          return c2._internalState.has(a2) && c2._internalState.delete(a2), c2._internalState.set(a2, b2), c2;
+        }
+        unset(a2) {
+          let b2 = this._clone();
+          return b2._internalState.delete(a2), b2;
+        }
+        get(a2) {
+          return this._internalState.get(a2);
+        }
+        serialize() {
+          return Array.from(this._internalState.keys()).reduceRight((a2, b2) => (a2.push(b2 + "=" + this.get(b2)), a2), []).join(",");
+        }
+        _parse(a2) {
+          !(a2.length > 512) && (this._internalState = a2.split(",").reduceRight((a3, b2) => {
+            let c2 = b2.trim(), d2 = c2.indexOf("=");
+            if (-1 !== d2) {
+              let e2 = c2.slice(0, d2), f2 = c2.slice(d2 + 1, b2.length);
+              aE.test(e2) && aF.test(f2) && !aG.test(f2) && a3.set(e2, f2);
+            }
+            return a3;
+          }, /* @__PURE__ */ new Map()), this._internalState.size > 32 && (this._internalState = new Map(Array.from(this._internalState.entries()).reverse().slice(0, 32))));
+        }
+        _keys() {
+          return Array.from(this._internalState.keys()).reverse();
+        }
+        _clone() {
+          let a2 = new aH();
+          return a2._internalState = new Map(this._internalState), a2;
+        }
+      }
+      function aI(a2) {
+        return new aH(a2);
+      }
+      let aJ = ac.getInstance(), aK = u.instance();
+      class aL {
+        getMeter(a2, b2, c2) {
+          return Q;
+        }
+      }
+      let aM = new aL(), aN = "metrics";
+      class aO {
+        constructor() {
+        }
+        static getInstance() {
+          return this._instance || (this._instance = new aO()), this._instance;
+        }
+        setGlobalMeterProvider(a2) {
+          return p(aN, a2, u.instance());
+        }
+        getMeterProvider() {
+          return q(aN) || aM;
+        }
+        getMeter(a2, b2, c2) {
+          return this.getMeterProvider().getMeter(a2, b2, c2);
+        }
+        disable() {
+          r(aN, u.instance());
+        }
+      }
+      let aP = aO.getInstance();
+      class aQ {
+        inject(a2, b2) {
+        }
+        extract(a2, b2) {
+          return a2;
+        }
+        fields() {
+          return [];
+        }
+      }
+      let aR = A("OpenTelemetry Baggage Key");
+      function aS(a2) {
+        return a2.getValue(aR) || void 0;
+      }
+      function aT() {
+        return aS(ac.getInstance().active());
+      }
+      function aU(a2, b2) {
+        return a2.setValue(aR, b2);
+      }
+      function aV(a2) {
+        return a2.deleteValue(aR);
+      }
+      let aW = "propagation", aX = new aQ();
+      class aY {
+        constructor() {
+          this.createBaggage = y, this.getBaggage = aS, this.getActiveBaggage = aT, this.setBaggage = aU, this.deleteBaggage = aV;
+        }
+        static getInstance() {
+          return this._instance || (this._instance = new aY()), this._instance;
+        }
+        setGlobalPropagator(a2) {
+          return p(aW, a2, u.instance());
+        }
+        inject(a2, b2, c2 = $) {
+          return this._getGlobalPropagator().inject(a2, b2, c2);
+        }
+        extract(a2, b2, c2 = Z) {
+          return this._getGlobalPropagator().extract(a2, b2, c2);
+        }
+        fields() {
+          return this._getGlobalPropagator().fields();
+        }
+        disable() {
+          r(aW, u.instance());
+        }
+        _getGlobalPropagator() {
+          return q(aW) || aX;
+        }
+      }
+      let aZ = aY.getInstance(), a$ = "trace";
+      class a_ {
+        constructor() {
+          this._proxyTracerProvider = new aA(), this.wrapSpanContext = at, this.isSpanContextValid = as, this.deleteSpan = al, this.getSpan = ai, this.getActiveSpan = aj, this.getSpanContext = an, this.setSpan = ak, this.setSpanContext = am;
+        }
+        static getInstance() {
+          return this._instance || (this._instance = new a_()), this._instance;
+        }
+        setGlobalTracerProvider(a2) {
+          let b2 = p(a$, this._proxyTracerProvider, u.instance());
+          return b2 && this._proxyTracerProvider.setDelegate(a2), b2;
+        }
+        getTracerProvider() {
+          return q(a$) || this._proxyTracerProvider;
+        }
+        getTracer(a2, b2) {
+          return this.getTracerProvider().getTracer(a2, b2);
+        }
+        disable() {
+          r(a$, u.instance()), this._proxyTracerProvider = new aA();
+        }
+      }
+      let a0 = a_.getInstance(), a1 = { context: aJ, diag: aK, metrics: aP, propagation: aZ, trace: a0 };
     } }, (a) => {
-      var b = a(a.s = 983);
+      var b = a(a.s = 733);
       (_ENTRIES = "undefined" == typeof _ENTRIES ? {} : _ENTRIES).middleware_middleware = b;
     }]);
   }
@@ -9023,7 +9018,7 @@ var init_edgeFunctionHandler = __esm({
   "node_modules/@opennextjs/aws/dist/core/edgeFunctionHandler.js"() {
     globalThis._ENTRIES = {};
     globalThis.self = globalThis;
-    globalThis._ROUTES = [{ "name": "middleware", "page": "/", "regex": ["^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*))(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$", "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/internal\\/voice(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$"] }];
+    globalThis._ROUTES = [{ "name": "middleware", "page": "/", "regex": ["^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*))(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$"] }];
     require_edge_runtime_webpack();
     require_middleware();
   }
@@ -9198,12 +9193,12 @@ var NEXT_DIR = path.join(__dirname, ".next");
 var OPEN_NEXT_DIR = path.join(__dirname, ".open-next");
 debug({ NEXT_DIR, OPEN_NEXT_DIR });
 var NextConfig = { "env": {}, "eslint": { "ignoreDuringBuilds": true }, "typescript": { "ignoreBuildErrors": false, "tsconfigPath": "tsconfig.json" }, "typedRoutes": false, "distDir": ".next", "cleanDistDir": true, "assetPrefix": "", "cacheMaxMemorySize": 52428800, "configOrigin": "next.config.ts", "useFileSystemPublicRoutes": true, "generateEtags": true, "pageExtensions": ["tsx", "ts", "jsx", "js"], "poweredByHeader": true, "compress": true, "images": { "deviceSizes": [640, 750, 828, 1080, 1200, 1920, 2048, 3840], "imageSizes": [16, 32, 48, 64, 96, 128, 256, 384], "path": "/_next/image", "loader": "default", "loaderFile": "", "domains": [], "disableStaticImages": false, "minimumCacheTTL": 60, "formats": ["image/webp"], "maximumResponseBody": 5e7, "dangerouslyAllowSVG": false, "contentSecurityPolicy": "script-src 'none'; frame-src 'none'; sandbox;", "contentDispositionType": "attachment", "remotePatterns": [{ "protocol": "https", "hostname": "picsum.photos", "port": "", "pathname": "/**" }], "unoptimized": false }, "devIndicators": { "position": "bottom-left" }, "onDemandEntries": { "maxInactiveAge": 6e4, "pagesBufferLength": 5 }, "amp": { "canonicalBase": "" }, "basePath": "", "sassOptions": {}, "trailingSlash": false, "i18n": null, "productionBrowserSourceMaps": false, "excludeDefaultMomentLocales": true, "serverRuntimeConfig": {}, "publicRuntimeConfig": {}, "reactProductionProfiling": false, "reactStrictMode": true, "reactMaxHeadersLength": 6e3, "httpAgentOptions": { "keepAlive": true }, "logging": {}, "compiler": {}, "expireTime": 31536e3, "staticPageGenerationTimeout": 60, "output": "standalone", "modularizeImports": { "@mui/icons-material": { "transform": "@mui/icons-material/{{member}}" }, "lodash": { "transform": "lodash/{{member}}" } }, "outputFileTracingRoot": "C:\\Users\\DELL\\Knoxified-dash-update", "experimental": { "useSkewCookie": false, "cacheLife": { "default": { "stale": 300, "revalidate": 900, "expire": 4294967294 }, "seconds": { "stale": 30, "revalidate": 1, "expire": 60 }, "minutes": { "stale": 300, "revalidate": 60, "expire": 3600 }, "hours": { "stale": 300, "revalidate": 3600, "expire": 86400 }, "days": { "stale": 300, "revalidate": 86400, "expire": 604800 }, "weeks": { "stale": 300, "revalidate": 604800, "expire": 2592e3 }, "max": { "stale": 300, "revalidate": 2592e3, "expire": 4294967294 } }, "cacheHandlers": {}, "cssChunking": true, "multiZoneDraftMode": false, "appNavFailHandling": false, "prerenderEarlyExit": true, "serverMinification": true, "serverSourceMaps": false, "linkNoTouchStart": false, "caseSensitiveRoutes": false, "clientSegmentCache": false, "clientParamParsing": false, "dynamicOnHover": false, "preloadEntriesOnStart": true, "clientRouterFilter": true, "clientRouterFilterRedirects": false, "fetchCacheKeyPrefix": "", "middlewarePrefetch": "flexible", "optimisticClientCache": true, "manualClientBasePath": false, "cpus": 7, "memoryBasedWorkersCount": false, "imgOptConcurrency": null, "imgOptTimeoutInSeconds": 7, "imgOptMaxInputPixels": 268402689, "imgOptSequentialRead": null, "isrFlushToDisk": true, "workerThreads": false, "optimizeCss": false, "nextScriptWorkers": false, "scrollRestoration": false, "externalDir": false, "disableOptimizedLoading": false, "gzipSize": true, "craCompat": false, "esmExternals": true, "fullySpecified": false, "swcTraceProfiling": false, "forceSwcTransforms": false, "largePageDataBytes": 128e3, "typedEnv": false, "parallelServerCompiles": false, "parallelServerBuildTraces": false, "ppr": false, "authInterrupts": false, "webpackMemoryOptimizations": false, "optimizeServerReact": true, "viewTransition": false, "routerBFCache": false, "removeUncaughtErrorAndRejectionListeners": false, "validateRSCRequestHeaders": false, "staleTimes": { "dynamic": 0, "static": 300 }, "serverComponentsHmrCache": true, "staticGenerationMaxConcurrency": 8, "staticGenerationMinPagesPerWorker": 25, "cacheComponents": false, "inlineCss": false, "useCache": false, "globalNotFound": false, "devtoolSegmentExplorer": true, "browserDebugInfoInTerminal": false, "optimizeRouterScrolling": false, "middlewareClientMaxBodySize": 10485760, "optimizePackageImports": ["lucide-react", "date-fns", "lodash-es", "ramda", "antd", "react-bootstrap", "ahooks", "@ant-design/icons", "@headlessui/react", "@headlessui-float/react", "@heroicons/react/20/solid", "@heroicons/react/24/solid", "@heroicons/react/24/outline", "@visx/visx", "@tremor/react", "rxjs", "@mui/material", "@mui/icons-material", "recharts", "react-use", "effect", "@effect/schema", "@effect/platform", "@effect/platform-node", "@effect/platform-browser", "@effect/platform-bun", "@effect/sql", "@effect/sql-mssql", "@effect/sql-mysql2", "@effect/sql-pg", "@effect/sql-sqlite-node", "@effect/sql-sqlite-bun", "@effect/sql-sqlite-wasm", "@effect/sql-sqlite-react-native", "@effect/rpc", "@effect/rpc-http", "@effect/typeclass", "@effect/experimental", "@effect/opentelemetry", "@material-ui/core", "@material-ui/icons", "@tabler/icons-react", "mui-core", "react-icons/ai", "react-icons/bi", "react-icons/bs", "react-icons/cg", "react-icons/ci", "react-icons/di", "react-icons/fa", "react-icons/fa6", "react-icons/fc", "react-icons/fi", "react-icons/gi", "react-icons/go", "react-icons/gr", "react-icons/hi", "react-icons/hi2", "react-icons/im", "react-icons/io", "react-icons/io5", "react-icons/lia", "react-icons/lib", "react-icons/lu", "react-icons/md", "react-icons/pi", "react-icons/ri", "react-icons/rx", "react-icons/si", "react-icons/sl", "react-icons/tb", "react-icons/tfi", "react-icons/ti", "react-icons/vsc", "react-icons/wi"], "trustHostHeader": false, "isExperimentalCompile": false }, "htmlLimitedBots": "[\\w-]+-Google|Google-[\\w-]+|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight", "bundlePagesRouterDependencies": false, "configFileName": "next.config.ts", "transpilePackages": ["motion"], "turbopack": { "root": "C:\\Users\\DELL\\Knoxified-dash-update" } };
-var BuildId = "18UJvJ65DhnTLmY9lppdZ";
+var BuildId = "53lLSiziBwAV9G9JmAlHo";
 var RoutesManifest = { "basePath": "", "rewrites": { "beforeFiles": [], "afterFiles": [], "fallback": [] }, "redirects": [{ "source": "/:path+/", "destination": "/:path+", "internal": true, "statusCode": 308, "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$" }], "routes": { "static": [{ "page": "/", "regex": "^/(?:/)?$", "routeKeys": {}, "namedRegex": "^/(?:/)?$" }, { "page": "/_not-found", "regex": "^/_not\\-found(?:/)?$", "routeKeys": {}, "namedRegex": "^/_not\\-found(?:/)?$" }, { "page": "/admin", "regex": "^/admin(?:/)?$", "routeKeys": {}, "namedRegex": "^/admin(?:/)?$" }, { "page": "/agent-config", "regex": "^/agent\\-config(?:/)?$", "routeKeys": {}, "namedRegex": "^/agent\\-config(?:/)?$" }, { "page": "/automations", "regex": "^/automations(?:/)?$", "routeKeys": {}, "namedRegex": "^/automations(?:/)?$" }, { "page": "/billing", "regex": "^/billing(?:/)?$", "routeKeys": {}, "namedRegex": "^/billing(?:/)?$" }, { "page": "/campaigns", "regex": "^/campaigns(?:/)?$", "routeKeys": {}, "namedRegex": "^/campaigns(?:/)?$" }, { "page": "/compliance", "regex": "^/compliance(?:/)?$", "routeKeys": {}, "namedRegex": "^/compliance(?:/)?$" }, { "page": "/conversations", "regex": "^/conversations(?:/)?$", "routeKeys": {}, "namedRegex": "^/conversations(?:/)?$" }, { "page": "/deployments", "regex": "^/deployments(?:/)?$", "routeKeys": {}, "namedRegex": "^/deployments(?:/)?$" }, { "page": "/forgot-password", "regex": "^/forgot\\-password(?:/)?$", "routeKeys": {}, "namedRegex": "^/forgot\\-password(?:/)?$" }, { "page": "/integrations", "regex": "^/integrations(?:/)?$", "routeKeys": {}, "namedRegex": "^/integrations(?:/)?$" }, { "page": "/knowledge", "regex": "^/knowledge(?:/)?$", "routeKeys": {}, "namedRegex": "^/knowledge(?:/)?$" }, { "page": "/leads", "regex": "^/leads(?:/)?$", "routeKeys": {}, "namedRegex": "^/leads(?:/)?$" }, { "page": "/login", "regex": "^/login(?:/)?$", "routeKeys": {}, "namedRegex": "^/login(?:/)?$" }, { "page": "/metrics", "regex": "^/metrics(?:/)?$", "routeKeys": {}, "namedRegex": "^/metrics(?:/)?$" }, { "page": "/reset-password", "regex": "^/reset\\-password(?:/)?$", "routeKeys": {}, "namedRegex": "^/reset\\-password(?:/)?$" }, { "page": "/settings", "regex": "^/settings(?:/)?$", "routeKeys": {}, "namedRegex": "^/settings(?:/)?$" }, { "page": "/systems", "regex": "^/systems(?:/)?$", "routeKeys": {}, "namedRegex": "^/systems(?:/)?$" }], "dynamic": [{ "page": "/api/auth/[...path]", "regex": "^/api/auth/(.+?)(?:/)?$", "routeKeys": { "nxtPpath": "nxtPpath" }, "namedRegex": "^/api/auth/(?<nxtPpath>.+?)(?:/)?$" }, { "page": "/api/voice/[...path]", "regex": "^/api/voice/(.+?)(?:/)?$", "routeKeys": { "nxtPpath": "nxtPpath" }, "namedRegex": "^/api/voice/(?<nxtPpath>.+?)(?:/)?$" }, { "page": "/automations/[id]", "regex": "^/automations/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/automations/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/systems/[id]", "regex": "^/systems/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/systems/(?<nxtPid>[^/]+?)(?:/)?$" }], "data": { "static": [], "dynamic": [] } }, "locales": [] };
 var ConfigHeaders = [];
-var PrerenderManifest = { "version": 4, "routes": { "/_not-found": { "initialStatus": 404, "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/_not-found", "dataRoute": "/_not-found.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/reset-password": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/reset-password", "dataRoute": "/reset-password.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/login": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/login", "dataRoute": "/login.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing", "dataRoute": "/billing.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/agent-config": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/agent-config", "dataRoute": "/agent-config.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/campaigns": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/campaigns", "dataRoute": "/campaigns.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/deployments": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/deployments", "dataRoute": "/deployments.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/compliance": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/compliance", "dataRoute": "/compliance.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/knowledge": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/knowledge", "dataRoute": "/knowledge.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/conversations": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/conversations", "dataRoute": "/conversations.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/integrations": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/integrations", "dataRoute": "/integrations.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/automations": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/automations", "dataRoute": "/automations.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/admin": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/admin", "dataRoute": "/admin.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/leads": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/leads", "dataRoute": "/leads.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/systems": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/systems", "dataRoute": "/systems.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/metrics": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/metrics", "dataRoute": "/metrics.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/", "dataRoute": "/index.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/settings": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/settings", "dataRoute": "/settings.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/forgot-password": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/forgot-password", "dataRoute": "/forgot-password.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] } }, "dynamicRoutes": {}, "notFoundRoutes": [], "preview": { "previewModeId": "757266c26b8b83a1cede46a0201b619d", "previewModeSigningKey": "f036acd6a2589bd34d3c75990e94fe2c7626b576efc6650a389561b86114f64c", "previewModeEncryptionKey": "95a9509a422e625af6b207ebc8fab742e006a7e1de6a939fa431f8ca814ab22a" } };
-var MiddlewareManifest = { "version": 3, "middleware": { "/": { "files": ["server/edge-runtime-webpack.js", "server/middleware.js"], "name": "middleware", "page": "/", "matchers": [{ "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*))(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$", "originalSource": "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)" }, { "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/internal\\/voice(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$", "originalSource": "/internal/voice/:path*" }], "wasm": [], "assets": [], "env": { "__NEXT_BUILD_ID": "18UJvJ65DhnTLmY9lppdZ", "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "0AjCYrsbgQEjr7MDHr77s0rcbLGgJLXwkFTPBo6CMSQ=", "__NEXT_PREVIEW_MODE_ID": "757266c26b8b83a1cede46a0201b619d", "__NEXT_PREVIEW_MODE_SIGNING_KEY": "f036acd6a2589bd34d3c75990e94fe2c7626b576efc6650a389561b86114f64c", "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "95a9509a422e625af6b207ebc8fab742e006a7e1de6a939fa431f8ca814ab22a" } } }, "functions": {}, "sortedMiddleware": ["/"] };
-var AppPathRoutesManifest = { "/_not-found/page": "/_not-found", "/api/auth/confirm/route": "/api/auth/confirm", "/api/health/route": "/api/health", "/api/voice/route": "/api/voice", "/api/auth/[...path]/route": "/api/auth/[...path]", "/api/voice/[...path]/route": "/api/voice/[...path]", "/forgot-password/page": "/forgot-password", "/login/page": "/login", "/reset-password/page": "/reset-password", "/(dashboard)/admin/page": "/admin", "/(dashboard)/agent-config/page": "/agent-config", "/(dashboard)/automations/[id]/page": "/automations/[id]", "/(dashboard)/billing/page": "/billing", "/(dashboard)/automations/page": "/automations", "/(dashboard)/campaigns/page": "/campaigns", "/(dashboard)/compliance/page": "/compliance", "/(dashboard)/deployments/page": "/deployments", "/(dashboard)/conversations/page": "/conversations", "/(dashboard)/integrations/page": "/integrations", "/(dashboard)/leads/page": "/leads", "/(dashboard)/knowledge/page": "/knowledge", "/(dashboard)/metrics/page": "/metrics", "/(dashboard)/page": "/", "/(dashboard)/settings/page": "/settings", "/(dashboard)/systems/[id]/page": "/systems/[id]", "/(dashboard)/systems/page": "/systems" };
+var PrerenderManifest = { "version": 4, "routes": { "/login": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/login", "dataRoute": "/login.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/_not-found": { "initialStatus": 404, "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/_not-found", "dataRoute": "/_not-found.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing", "dataRoute": "/billing.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/deployments": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/deployments", "dataRoute": "/deployments.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/compliance": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/compliance", "dataRoute": "/compliance.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/forgot-password": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/forgot-password", "dataRoute": "/forgot-password.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/integrations": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/integrations", "dataRoute": "/integrations.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/knowledge": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/knowledge", "dataRoute": "/knowledge.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/reset-password": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/reset-password", "dataRoute": "/reset-password.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/admin": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/admin", "dataRoute": "/admin.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/leads": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/leads", "dataRoute": "/leads.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/conversations": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/conversations", "dataRoute": "/conversations.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/systems": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/systems", "dataRoute": "/systems.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/settings": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/settings", "dataRoute": "/settings.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/", "dataRoute": "/index.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/automations": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/automations", "dataRoute": "/automations.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/campaigns": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/campaigns", "dataRoute": "/campaigns.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/agent-config": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/agent-config", "dataRoute": "/agent-config.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/metrics": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/metrics", "dataRoute": "/metrics.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] } }, "dynamicRoutes": {}, "notFoundRoutes": [], "preview": { "previewModeId": "757266c26b8b83a1cede46a0201b619d", "previewModeSigningKey": "f036acd6a2589bd34d3c75990e94fe2c7626b576efc6650a389561b86114f64c", "previewModeEncryptionKey": "95a9509a422e625af6b207ebc8fab742e006a7e1de6a939fa431f8ca814ab22a" } };
+var MiddlewareManifest = { "version": 3, "middleware": { "/": { "files": ["server/edge-runtime-webpack.js", "server/middleware.js"], "name": "middleware", "page": "/", "matchers": [{ "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*))(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$", "originalSource": "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)" }], "wasm": [], "assets": [], "env": { "__NEXT_BUILD_ID": "53lLSiziBwAV9G9JmAlHo", "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "0AjCYrsbgQEjr7MDHr77s0rcbLGgJLXwkFTPBo6CMSQ=", "__NEXT_PREVIEW_MODE_ID": "757266c26b8b83a1cede46a0201b619d", "__NEXT_PREVIEW_MODE_SIGNING_KEY": "f036acd6a2589bd34d3c75990e94fe2c7626b576efc6650a389561b86114f64c", "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "95a9509a422e625af6b207ebc8fab742e006a7e1de6a939fa431f8ca814ab22a" } } }, "functions": {}, "sortedMiddleware": ["/"] };
+var AppPathRoutesManifest = { "/api/auth/confirm/route": "/api/auth/confirm", "/api/health/route": "/api/health", "/api/voice/route": "/api/voice", "/_not-found/page": "/_not-found", "/api/voice/[...path]/route": "/api/voice/[...path]", "/api/auth/[...path]/route": "/api/auth/[...path]", "/forgot-password/page": "/forgot-password", "/reset-password/page": "/reset-password", "/login/page": "/login", "/(dashboard)/admin/page": "/admin", "/(dashboard)/agent-config/page": "/agent-config", "/(dashboard)/automations/[id]/page": "/automations/[id]", "/(dashboard)/automations/page": "/automations", "/(dashboard)/billing/page": "/billing", "/(dashboard)/conversations/page": "/conversations", "/(dashboard)/compliance/page": "/compliance", "/(dashboard)/integrations/page": "/integrations", "/(dashboard)/deployments/page": "/deployments", "/(dashboard)/page": "/", "/(dashboard)/leads/page": "/leads", "/(dashboard)/knowledge/page": "/knowledge", "/(dashboard)/settings/page": "/settings", "/(dashboard)/campaigns/page": "/campaigns", "/(dashboard)/systems/page": "/systems", "/(dashboard)/systems/[id]/page": "/systems/[id]", "/(dashboard)/metrics/page": "/metrics" };
 var FunctionsConfigManifest = { "version": 1, "functions": {} };
 var PagesManifest = { "/_app": "pages/_app.js", "/_error": "pages/_error.js", "/_document": "pages/_document.js", "/404": "pages/404.html" };
 process.env.NEXT_BUILD_ID = BuildId;

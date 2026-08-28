@@ -59,8 +59,6 @@ export default function DashboardOverview() {
     setCallStatus("connecting");
     setCallTranscript([]);
     try {
-      // Fetch from internal service binding instead of public URL
-      const voiceAgentUrl = "/internal/voice"; // placeholder, actual routing handled by binding
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -68,7 +66,7 @@ export default function DashboardOverview() {
       }
 
       // Readiness check using internal service binding
-      const startRes = await fetch("/internal/voice/web-call/start", {
+      const startRes = await fetch("/api/voice/web-call/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id }),
@@ -81,7 +79,7 @@ export default function DashboardOverview() {
       }
 
       // Get Twilio token using internal service binding
-      const tokenRes = await fetch("/internal/voice/token", {
+      const tokenRes = await fetch("/api/voice/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id }),
