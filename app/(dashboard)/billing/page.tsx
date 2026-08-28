@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, Check, Zap, AlertTriangle } from "lucide-react";
+import { CreditCard, Check, Zap, AlertTriangle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { usePlans, useWorkspace } from "@/lib/services/hooks";
 
 // Global glow styles for AI theme
@@ -26,12 +27,60 @@ export default function BillingPage() {
   const { data: plans, loading } = usePlans();
   const { data: wsData, loading: wsLoading } = useWorkspace();
   const [isAnnual, setIsAnnual] = useState(false);
+  const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
 
   if (loading || wsLoading || !wsData) {
     return <div className="animate-pulse bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl h-64 w-full"></div>;
   }
 
   const { workspace, plan: currentPlan } = wsData;
+
+  const formatPrice = (plan: any) => {
+    if (plan.price === null || plan.price === undefined) {
+      return plan.name === "Custom" ? "Custom" : "Free";
+    }
+    const amount = Number(plan.price);
+    if (Number.isNaN(amount)) return plan.price;
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: plan.currency || "USD",
+      minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const handleUpgrade = async (plan: any) => {
+    if (plan.name === "Custom") {
+      window.location.href = "mailto:sales@knoxified.org?subject=Enterprise%20Custom%20Plan";
+      return;
+    }
+
+    if (!plan.flutterwave_plan_id) {
+      toast.error("This plan isn't available for checkout yet.");
+      return;
+    }
+
+    setCheckoutPlanId(plan.id);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId: plan.id }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.url) {
+        toast.error(data.error || "Couldn't start checkout. Please try again.");
+        setCheckoutPlanId(null);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch {
+      toast.error("Couldn't reach the payment provider. Please try again.");
+      setCheckoutPlanId(null);
+    }
+  };
 
   // Filter plans based on toggle and format the name for display
   const displayPlans = plans.filter(p => {
@@ -128,9 +177,9 @@ export default function BillingPage() {
                 {plan.name.replace(' (Monthly)', '').replace(' (Annual)', '')}
               </h3>
               <div className="text-[36px] font-bold tracking-tight mb-3 leading-none bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                {plan.price === "Paid" ? "Paid" : plan.price}
-                {plan.price !== "Free" && plan.price !== "Custom" && !plan.price.includes('/') && (
-                  <span className="text-sm font-normal text-slate-500">/{plan.billing_interval === 'year' ? 'yr' : 'mo'}</span>
+                {formatPrice(plan)}
+                {plan.price !== null && plan.price !== undefined && (
+                  <span className="text-sm font-normal text-slate-500">/{plan.billing_interval === 'annual' || plan.billing_interval === 'year' ? 'yr' : 'mo'}</span>
                 )}
               </div>
               <p className="text-[13px] text-slate-500 dark:text-[#888] mb-6 flex-1">{plan.keyRestrictions}</p>
@@ -148,14 +197,18 @@ export default function BillingPage() {
                 </ul>
               </div>
 
-              <button className={`w-full py-3 rounded-lg text-sm font-semibold transition-all transform hover:scale-[1.02] ${
+              <button
+                onClick={() => !isCurrent && handleUpgrade(plan)}
+                disabled={isCurrent || checkoutPlanId === plan.id}
+                className={`w-full py-3 rounded-lg text-sm font-semibold transition-all transform hover:scale-[1.02] disabled:hover:scale-100 flex items-center justify-center gap-2 ${
                 isCurrent 
-                  ? 'bg-transparent border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-200 dark:bg-white/5' 
+                  ? 'bg-transparent border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-200 dark:bg-white/5 cursor-default' 
                   : isPro
                     ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)]'
                     : 'bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-slate-900 dark:text-white border border-transparent'
-              }`}>
-                {isCurrent ? 'Manage Plan' : 'Upgrade'}
+              } disabled:opacity-70`}>
+                {checkoutPlanId === plan.id && <Loader2 size={14} className="animate-spin" />}
+                {isCurrent ? 'Manage Plan' : plan.name === 'Custom' ? 'Contact Us' : 'Upgrade'}
               </button>
             </div>
           );
