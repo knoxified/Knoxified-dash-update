@@ -7,7 +7,10 @@ export { type System, type Automation };
 export interface Plan {
   id: string;
   name: string;
-  price: string;
+  price: string | number | null;
+  currency?: string;
+  flutterwave_plan_id?: number | string | null;
+  flutterwave_plan_token?: string | null;
   paddle_price_id?: string;
   paddle_product_id?: string;
   features?: any;
@@ -177,7 +180,10 @@ export class DataService {
         return realPlans.map((p: any) => ({
              id: p.id,
              name: p.name,
-             price: p.paddle_price_id ? "Paid" : (p.name.includes("Trial") ? "Free" : "Custom"),
+             price: p.price,
+             currency: p.currency,
+             flutterwave_plan_id: p.flutterwave_plan_id,
+             flutterwave_plan_token: p.flutterwave_plan_token,
              price_type: p.price_type || "recurring",
              limit_credits: p.limit_credits,
              limit_voice_minutes: p.limit_voice_minutes,
