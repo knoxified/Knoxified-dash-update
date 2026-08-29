@@ -35,12 +35,6 @@ export default function BillingPage() {
 
   const { workspace, plan: currentPlan } = wsData;
 
-  const DEBUG_BLOCK = (
-    <pre style={{ background: "#000", color: "#0f0", padding: 12, fontSize: 11, overflow: "auto", maxHeight: 200, margin: "12px 0" }}>
-      {"DEBUG plans[0]: " + JSON.stringify(plans?.[0], null, 2)}
-    </pre>
-  );
-
   const formatPrice = (plan: any) => {
     if (plan.price === null || plan.price === undefined) {
       return plan.name === "Custom" ? "Custom" : "Free";
@@ -66,6 +60,10 @@ export default function BillingPage() {
       return;
     }
 
+    // Open the tab synchronously, tied to this click, so browsers don't
+    // block it as a popup once we fill in the URL after the await below.
+    const checkoutTab = window.open("", "_blank", "noopener,noreferrer");
+
     setCheckoutPlanId(plan.id);
     try {
       const res = await fetch("/api/checkout", {
@@ -77,13 +75,22 @@ export default function BillingPage() {
 
       if (!res.ok || !data.url) {
         toast.error(data.error || "Couldn't start checkout. Please try again.");
+        checkoutTab?.close();
         setCheckoutPlanId(null);
         return;
       }
 
-      window.location.href = data.url;
+      if (checkoutTab) {
+        checkoutTab.location.href = data.url;
+      } else {
+        // Popup was blocked despite the synchronous open (rare) — fall back
+        // to a normal link the browser can't block.
+        window.open(data.url, "_blank", "noopener,noreferrer");
+      }
+      setCheckoutPlanId(null);
     } catch {
       toast.error("Couldn't reach the payment provider. Please try again.");
+      checkoutTab?.close();
       setCheckoutPlanId(null);
     }
   };
@@ -135,7 +142,6 @@ export default function BillingPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <GlobalStyles />
-      {DEBUG_BLOCK}
 
       {/* Header with glowing title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative">

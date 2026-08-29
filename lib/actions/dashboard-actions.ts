@@ -84,7 +84,6 @@ export async function getRealPlans() {
     console.error("Error fetching plans:", error);
     return [];
   }
-  console.log("DEBUG getRealPlans raw row sample:", JSON.stringify(plans?.[0]));
   return plans || [];
 }
 
