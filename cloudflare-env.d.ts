@@ -11,4 +11,5 @@
   SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   FLUTTERWAVE_SECRET_KEY: string;
+  FLW_SECRET_HASH: string;
 }
