@@ -35,6 +35,12 @@ export default function BillingPage() {
 
   const { workspace, plan: currentPlan } = wsData;
 
+  const DEBUG_BLOCK = (
+    <pre style={{ background: "#000", color: "#0f0", padding: 12, fontSize: 11, overflow: "auto", maxHeight: 200, margin: "12px 0" }}>
+      {"DEBUG plans[0]: " + JSON.stringify(plans?.[0], null, 2)}
+    </pre>
+  );
+
   const formatPrice = (plan: any) => {
     if (plan.price === null || plan.price === undefined) {
       return plan.name === "Custom" ? "Custom" : "Free";
@@ -129,6 +135,7 @@ export default function BillingPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <GlobalStyles />
+      {DEBUG_BLOCK}
 
       {/* Header with glowing title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
