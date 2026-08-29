@@ -62,7 +62,14 @@ export default function BillingPage() {
 
     // Open the tab synchronously, tied to this click, so browsers don't
     // block it as a popup once we fill in the URL after the await below.
-    const checkoutTab = window.open("", "_blank", "noopener,noreferrer");
+    // IMPORTANT: passing "noopener" here would make window.open() return
+    // null (no reference), leaving us with an orphaned blank tab we can
+    // never navigate. Grab a real reference, then sever .opener manually
+    // to still prevent reverse-tabnabbing once we point it at Flutterwave.
+    const checkoutTab = window.open("", "_blank");
+    if (checkoutTab) {
+      checkoutTab.opener = null;
+    }
 
     setCheckoutPlanId(plan.id);
     try {
@@ -80,7 +87,7 @@ export default function BillingPage() {
         return;
       }
 
-      if (checkoutTab) {
+      if (checkoutTab && !checkoutTab.closed) {
         checkoutTab.location.href = data.url;
       } else {
         // Popup was blocked despite the synchronous open (rare) — fall back
