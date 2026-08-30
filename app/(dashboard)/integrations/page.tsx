@@ -1,16 +1,40 @@
 "use client";
 import { Box, Lock, LayoutGrid, Slack, Github, Calendar, MessageSquare, Plus, Check, Phone } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
-export default function IntegrationsPage() {
+function IntegrationsPageInner() {
   const [activeTab, setActiveTab] = useState("oauth");
   const [integrations, setIntegrations] = useState<any[]>([]);
   const [virtualNumber, setVirtualNumber] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const supabase = createClient();
+
+  // Handle the redirect back from oauth.knoxified.org after a connect
+  // attempt (?provider=google&status=connected|failed|invalid_state|...).
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const provider = searchParams.get('provider');
+    if (!status) return;
+
+    const providerLabel = baseOauthIntegrations.find(a => a.id === provider)?.name || provider || 'App';
+
+    if (status === 'connected') {
+      toast.success(`${providerLabel} connected successfully.`);
+    } else if (status === 'already_used') {
+      toast.info('That connection link was already used — try connecting again.');
+    } else {
+      toast.error(`Couldn't connect ${providerLabel}. Please try again.`);
+    }
+
+    // Strip the query params so a page refresh doesn't re-show the toast.
+    router.replace('/integrations');
+  }, [searchParams]);
 
   useEffect(() => {
     let isMounted = true;
@@ -19,7 +43,7 @@ export default function IntegrationsPage() {
       if (!user) return;
       
       const { data: userIntegrations } = await supabase
-        .from('integrations')
+        .from('oauth_connections')
         .select('*')
         .eq('user_id', user.id);
         
@@ -68,7 +92,7 @@ export default function IntegrationsPage() {
   ];
 
   const oauthIntegrations = baseOauthIntegrations.map(app => {
-    const isConnected = integrations.some(i => i.provider === app.id && i.status === 'connected');
+    const isConnected = integrations.some(i => i.provider === app.id && i.status === 'active');
     return { ...app, status: isConnected ? 'connected' : 'disconnected' };
   });
 
@@ -219,3 +243,12 @@ export default function IntegrationsPage() {
     </div>
   );
 }
+
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl h-64 w-full max-w-5xl"></div>}>
+      <IntegrationsPageInner />
+    </Suspense>
+  );
+}
+
