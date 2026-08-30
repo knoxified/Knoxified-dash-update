@@ -14,8 +14,6 @@
 --   provider_configs  - holds real OAuth client secrets; should only ever
 --                        be reachable via the service role (which bypasses
 --                        RLS), never a regular user's session.
---   oauth_connections - not referenced by any code yet; nothing to scope
---                        a policy to. Add one when this gets built.
 
 -- audit_logs: users can view and append to their own audit trail
 CREATE POLICY "Users can view their own audit logs"
@@ -122,4 +120,12 @@ CREATE POLICY "Users can update their own voice settings"
 -- which bypasses RLS -- no write policy needed here.
 CREATE POLICY "Users can view their own voice usage"
   ON public.voice_usage FOR SELECT TO authenticated
+  USING (auth.uid() = user_id);
+
+-- oauth_connections: users view their own connection status (used by the
+-- Integrations page). Rows are written by the knoxified-auth service via
+-- the service role during the OAuth callback -- no write policy needed
+-- for the dashboard's own session.
+CREATE POLICY "Users can view their own oauth connections"
+  ON public.oauth_connections FOR SELECT TO authenticated
   USING (auth.uid() = user_id);
