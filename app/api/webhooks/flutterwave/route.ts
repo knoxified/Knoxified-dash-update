@@ -58,7 +58,12 @@ export async function POST(request: Request) {
     return new Response("OK", { status: 200 });
   }
 
-  const transactionId = payload?.data?.id;
+  // Flutterwave's actual webhook payload shape varies — sometimes the
+  // documented {event, data: {id}} structure, sometimes flat ({id, txRef,
+  // status, ...} at the top level, observed in test mode). Support both;
+  // we only need the transaction id here since everything else gets
+  // re-verified server-side via the /verify call below regardless.
+  const transactionId = payload?.data?.id ?? payload?.id;
   if (!transactionId) {
     return new Response("OK", { status: 200 });
   }
