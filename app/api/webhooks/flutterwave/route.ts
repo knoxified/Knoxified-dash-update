@@ -16,6 +16,26 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  * table is needed for this use case.
  */
 export async function POST(request: Request) {
+  // TEMPORARY: log every incoming call, unconditionally, before any checks,
+  // so we can directly confirm whether Flutterwave is reaching this endpoint
+  // at all — test-mode webhooks have no visible delivery log on Flutterwave's
+  // dashboard, so this is our only window into it.
+  try {
+    const rawBody = await request.clone().text();
+    let parsedBody: any = null;
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      parsedBody = { _raw: rawBody };
+    }
+    await supabaseAdmin.from("webhook_debug_log").insert({
+      headers: Object.fromEntries(request.headers.entries()),
+      body: parsedBody,
+    });
+  } catch (e) {
+    console.error("Failed to write webhook debug log:", e);
+  }
+
   const secretHash = process.env.FLW_SECRET_HASH;
   const signature = request.headers.get("verif-hash");
 
