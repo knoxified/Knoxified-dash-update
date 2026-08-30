@@ -1,13 +1,11 @@
 "use client";
-import { getUuidForId } from "@/lib/utils";
-
 import { Select } from "@/components/ui/Select";
 import { Search, Settings, X, Plus, Workflow, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { AUTOMATIONS } from "@/data/automations";
+import { AUTOMATIONS, AUTOMATION_CATALOG_KEYS } from "@/data/automations";
 
 export default function AutomationsPage() {
   const router = useRouter();
@@ -15,6 +13,8 @@ export default function AutomationsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [planLimit, setPlanLimit] = useState<number>(1);
+  const [planName, setPlanName] = useState<string>("");
   
   // Settings modal state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -32,27 +32,44 @@ export default function AutomationsPage() {
         if (isMounted) setCurrentUser(user);
         
         let userAutomationsMap = new Map();
+        let catalogByKey = new Map();
         if (user) {
-          // Fetch user automations
-          const { data: userAutos, error: userAutosError } = await supabase
-            .from('user_automations')
-            .select('*')
-            .eq('user_id', user.id);
-            
-          if (userAutosError) {
-             console.warn("Could not fetch user automations (expected in mock mode)", userAutosError);
-          } else if (userAutos) {
-            userAutos.forEach(ua => {
-              userAutomationsMap.set(ua.automation_id, ua);
-            });
+          const [userAutosRes, catalogRes, userPlanRes] = await Promise.all([
+            supabase.from('user_automations').select('*').eq('user_id', user.id),
+            supabase.from('automation_catalog').select('id, key, slot_required, trial_eligible, is_active').eq('is_active', true),
+            supabase.from('users').select('plans(name, limit_active_automations)').eq('id', user.id).single(),
+          ]);
+
+          if (userAutosRes.error) {
+            console.warn("Could not fetch user automations (expected in mock mode)", userAutosRes.error);
+          } else if (userAutosRes.data) {
+            userAutosRes.data.forEach(ua => userAutomationsMap.set(ua.automation_id, ua));
+          }
+
+          if (catalogRes.data) {
+            catalogRes.data.forEach((c: any) => catalogByKey.set(c.key, c));
+          }
+
+          const plan = (userPlanRes.data as any)?.plans;
+          if (isMounted && plan) {
+            setPlanLimit(plan.limit_active_automations ?? 1);
+            setPlanName(plan.name || "");
           }
         }
         
-        // Merge hardcoded automations with user state
+        // Merge hardcoded automations with real catalog data + user state.
+        // Only automations listed in AUTOMATION_CATALOG_KEYS have a real,
+        // live backend -- everything else stays catalogId: null, which the
+        // toggle handler treats as "Coming soon".
         const merged = AUTOMATIONS.map(aut => {
-          const ua = userAutomationsMap.get(getUuidForId(aut.id));
+          const catalogKey = AUTOMATION_CATALOG_KEYS[aut.id];
+          const catalog = catalogKey ? catalogByKey.get(catalogKey) : null;
+          const ua = catalog ? userAutomationsMap.get(catalog.id) : null;
           return {
             ...aut,
+            catalogId: catalog?.id || null,
+            slotRequired: catalog?.slot_required ?? 1,
+            trialEligible: catalog?.trial_eligible ?? false,
             user_automation_id: ua?.id || null,
             enabled: ua?.is_enabled || false,
             settings: ua?.settings || {},
@@ -79,8 +96,33 @@ export default function AutomationsPage() {
       toast.error("You must be logged in to enable automations");
       return;
     }
-    
+
+    if (!aut.catalogId) {
+      toast.info("Coming soon! This automation doesn't have a live webhook yet.");
+      return;
+    }
+
     const newEnabled = !aut.enabled;
+
+    if (newEnabled) {
+      const isTrial = planName.toLowerCase().includes("trial");
+      if (isTrial && !aut.trialEligible) {
+        toast.error("This automation isn't included in the Trial plan. Upgrade to unlock it.");
+        return;
+      }
+
+      const usedSlots = automations
+        .filter(a => a.enabled && a.id !== aut.id)
+        .reduce((sum, a) => sum + (a.slotRequired || 1), 0);
+
+      if (usedSlots + aut.slotRequired > planLimit) {
+        toast.error(
+          `Your ${planName || "current"} plan allows ${planLimit} active automation${planLimit === 1 ? "" : "s"} at a time. Disable another first, or upgrade for more.`
+        );
+        return;
+      }
+    }
+
     const previousState = [...automations];
     
     // Optimistic update
@@ -103,7 +145,7 @@ export default function AutomationsPage() {
           .from('user_automations')
           .insert({
             user_id: currentUser.id,
-            automation_id: getUuidForId(aut.id),
+            automation_id: aut.catalogId,
             is_enabled: newEnabled,
             settings: aut.settings || {}
           })
@@ -122,13 +164,7 @@ export default function AutomationsPage() {
       console.error("Error toggling automation:", err);
       // Revert optimistic update
       setAutomations(previousState);
-      
-      // If it's a foreign key violation, it likely means the automation isn't in the catalog yet
-      if (err.code === '23503') {
-        toast.info("Coming soon! This automation doesn't have a live webhook yet.");
-      } else {
-        toast.error("Coming soon! This automation isn't available yet.");
-      }
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -140,6 +176,11 @@ export default function AutomationsPage() {
 
   const saveSettings = async () => {
     if (!currentUser || !activeAutomation) return;
+
+    if (!activeAutomation.catalogId) {
+      toast.info("Coming soon! This automation doesn't have a live webhook yet.");
+      return;
+    }
     
     let parsedSettings = {};
     try {
@@ -164,7 +205,7 @@ export default function AutomationsPage() {
           .from('user_automations')
           .insert({
             user_id: currentUser.id,
-            automation_id: getUuidForId(activeAutomation.id),
+            automation_id: activeAutomation.catalogId,
             is_enabled: false,
             settings: parsedSettings
           })

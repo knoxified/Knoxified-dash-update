@@ -21,6 +21,19 @@ export interface Automation {
 // Metrics were intentionally left OFF new items rather than invented —
 // see note in chat about why fabricated per-user numbers are a problem
 // once this is a paying customer's own dashboard, not a marketing page.
+// Maps a dashboard automation `id` to its real automation_catalog `key`.
+// Only automations with a real n8n workflow behind them belong here --
+// anything not listed has no live backend yet, and the UI shows
+// "Coming soon" for it rather than attempting to enable it.
+// AppointMate covers two catalog rows (appointment_booking + check_availability)
+// but only the booking row is used here as the single toggle/slot-cost
+// representative, since it's one feature with one on/off switch in the dashboard.
+export const AUTOMATION_CATALOG_KEYS: Record<string, string> = {
+  leadreach: "lead_reach_search",
+  mailcraft: "mailcraft_sequence",
+  appointmate: "appointment_booking",
+};
+
 export const AUTOMATIONS: Automation[] = [
   { id: "leadreach", name: "LeadReach 🔍", category: "Sales", description: "Automatically finds and enriches any lead with 12 verified contact fields — name, email, phone, all social handles, LinkedIn URLs, and more.", enabled: false, metrics: { label1: "Leads Enriched", value1: "1,204", label2: "Fields Verified", value2: "14k" } },
   { id: "mailcraft", name: "MailCraft ✍️", category: "Marketing", description: "Takes approved contact context and drafts customer-authorized email follow-ups for team review.", enabled: false, metrics: { label1: "Emails Drafted", value1: "842", label2: "Avg Open Rate", value2: "41%" } },
