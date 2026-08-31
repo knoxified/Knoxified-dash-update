@@ -73,6 +73,8 @@ export default function AutomationsPage() {
             user_automation_id: ua?.id || null,
             enabled: ua?.is_enabled || false,
             settings: ua?.settings || {},
+            disabledAt: ua?.disabled_at || null,
+            lockedUntil: ua?.locked_until || null,
           };
         });
         
@@ -103,12 +105,38 @@ export default function AutomationsPage() {
     }
 
     const newEnabled = !aut.enabled;
+    const nowMs = Date.now();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    // A "self-undo": this exact automation was swapped in earlier (still under
+    // its 24h lock) and got disabled early. Turning it back on is always free.
+    const isUndo = newEnabled && !!aut.lockedUntil && new Date(aut.lockedUntil).getTime() > nowMs;
+
+    let lockedUntilToSet: string | null = null; // only used when newEnabled is true
 
     if (newEnabled) {
       const isTrial = planName.toLowerCase().includes("trial");
       if (isTrial && !aut.trialEligible) {
         toast.error("This automation isn't included in the Trial plan. Upgrade to unlock it.");
         return;
+      }
+
+      if (!isUndo) {
+        // Is a DIFFERENT automation currently sitting in its 24h swap-lock,
+        // disabled early? If so, block picking anything but that one until
+        // the lock clears (re-enabling IT is always allowed, see isUndo above).
+        const lockedElsewhere = automations.find(
+          a => a.id !== aut.id && !a.enabled && a.lockedUntil && new Date(a.lockedUntil).getTime() > nowMs
+        );
+        if (lockedElsewhere) {
+          const unlockTime = new Date(lockedElsewhere.lockedUntil).toLocaleString(undefined, {
+            month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+          });
+          toast.error(
+            `${lockedElsewhere.name} is still in its 24h swap window. Re-enable it anytime, or wait until ${unlockTime} to switch to something else — or upgrade for more slots.`
+          );
+          return;
+        }
       }
 
       const usedSlots = automations
@@ -121,21 +149,51 @@ export default function AutomationsPage() {
         );
         return;
       }
+
+      if (isUndo) {
+        lockedUntilToSet = null;
+      } else {
+        // Only counts as a "swap" (and earns a fresh 24h lock) if this enable
+        // genuinely relies on slots freed by a disable in the last 24h --
+        // not just "something happened to be disabled recently" on a plan
+        // with plenty of spare capacity anyway.
+        const recentlyDisabled = automations.filter(
+          a => a.id !== aut.id && !a.enabled && a.disabledAt && (nowMs - new Date(a.disabledAt).getTime()) < DAY_MS
+        );
+        const recentlyFreedSlots = recentlyDisabled.reduce((sum, a) => sum + (a.slotRequired || 1), 0);
+        const neededTheFreedSlot = (usedSlots + recentlyFreedSlots + aut.slotRequired) > planLimit;
+
+        lockedUntilToSet = (recentlyDisabled.length > 0 && neededTheFreedSlot)
+          ? new Date(nowMs + DAY_MS).toISOString()
+          : null;
+      }
     }
 
     const previousState = [...automations];
     
     // Optimistic update
     setAutomations(prev => 
-      prev.map(a => a.id === aut.id ? { ...a, enabled: newEnabled } : a)
+      prev.map(a => a.id === aut.id ? {
+        ...a,
+        enabled: newEnabled,
+        disabledAt: newEnabled ? a.disabledAt : new Date(nowMs).toISOString(),
+        lockedUntil: newEnabled ? lockedUntilToSet : a.lockedUntil,
+      } : a)
     );
     
     try {
       if (aut.user_automation_id) {
         // Update existing record
+        const updatePayload: any = { is_enabled: newEnabled };
+        if (!newEnabled) {
+          updatePayload.disabled_at = new Date(nowMs).toISOString();
+        } else {
+          updatePayload.locked_until = lockedUntilToSet;
+        }
+
         const { error } = await supabase
           .from('user_automations')
-          .update({ is_enabled: newEnabled })
+          .update(updatePayload)
           .eq('id', aut.user_automation_id);
           
         if (error) throw error;
@@ -147,7 +205,8 @@ export default function AutomationsPage() {
             user_id: currentUser.id,
             automation_id: aut.catalogId,
             is_enabled: newEnabled,
-            settings: aut.settings || {}
+            settings: aut.settings || {},
+            locked_until: lockedUntilToSet,
           })
           .select()
           .single();
