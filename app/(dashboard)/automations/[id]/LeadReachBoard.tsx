@@ -5,246 +5,6 @@ import { toast } from "sonner";
 import { Play, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-const MOCK_RESPONSE = [
-  {
-    "leads": [
-      {
-        "fullName": "Chester Hurtado",
-        "firstName": "Chester",
-        "lastName": "Hurtado",
-        "jobTitle": "CFO",
-        "companyName": "Tradeworks",
-        "companyWebsite": "https://tradeworksny.com, tradeworks.agency, tradeworksllc.com",
-        "companyIndustry": "Business services, Trade exchange",
-        "companySize": "51-200",
-        "companyFounded": "2000",
-        "companyLinkedin": "https://linkedin.com/in/tradeworksinc, linkedin.com/company/tradetechnologies",
-        "companyTwitter": "",
-        "companyFacebook": "",
-        "linkedinPersonal": "https://www.linkedin.com/in/chesterhurtado",
-        "twitterUrl": "",
-        "twitterHandle": "",
-        "facebookUrl": "",
-        "personLocality": "San Francisco Bay Area",
-        "personRegion": "",
-        "personCountry": "US",
-        "sourceUrl": "https://www.linkedin.com/in/chesterhurtado",
-        "department": "Finance",
-        "seniority": "CFO",
-        "seniorityLevels": [
-          "cfo"
-        ],
-        "skills": [
-          "leadership",
-          "financial management"
-        ],
-        "interests": [
-          "swimming",
-          "open-water races"
-        ],
-        "jobTenureStart": "",
-        "headquarters": "Kings Park, NY",
-        "revenue": "",
-        "specialties": "Business-to-business barter exchange, automation for trades",
-        "technologies": "",
-        "companyDescription": "TradeWorks is a business-to-business network where members trade their product and services for other product and services using trade dollars rather than cash. TradeWorks is a membership based barter exchange that helps businesses increase sales and conserve cash.",
-        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
-        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
-        "emailAvailable": false,
-        "phoneAvailable": false
-      },
-      {
-        "fullName": "Sumeet Gagneja",
-        "firstName": "Sumeet",
-        "lastName": "Gagneja",
-        "jobTitle": "CFO",
-        "companyName": "Rambus",
-        "companyWebsite": "https://rambus.com",
-        "companyIndustry": "semiconductor manufacturing",
-        "companySize": "",
-        "companyFounded": "",
-        "companyLinkedin": "https://linkedin.com",
-        "companyTwitter": "",
-        "companyFacebook": "",
-        "linkedinPersonal": "https://www.linkedin.com/in/gagneja",
-        "twitterUrl": "",
-        "twitterHandle": "",
-        "facebookUrl": "",
-        "personLocality": "San Jose",
-        "personRegion": "California",
-        "personCountry": "United States",
-        "sourceUrl": "https://www.linkedin.com/in/gagneja",
-        "department": "",
-        "seniority": "CFO",
-        "seniorityLevels": [
-          "cfo"
-        ],
-        "skills": [
-          "strategic",
-          "business partner",
-          "finance"
-        ],
-        "interests": [
-          "sports"
-        ],
-        "jobTenureStart": "",
-        "headquarters": "San Jose, California",
-        "revenue": "$708M",
-        "specialties": "semiconductor manufacturing, memory, interfaces, security, emerging technologies",
-        "technologies": "architecture licenses, IP cores, chips, software, services",
-        "companyDescription": "Rambus creates innovative hardware, software, and services that drive technology advancements from the data center to the mobile edge.",
-        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
-        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
-        "emailAvailable": false,
-        "phoneAvailable": false
-      },
-      {
-        "fullName": "Shawn Livermore",
-        "firstName": "Shawn",
-        "lastName": "Livermore",
-        "jobTitle": "Fractional CTO, Software Architect, AI Strategist, and Startup Founder",
-        "companyName": "Carvana",
-        "companyWebsite": "https://carvana.com",
-        "companyIndustry": "E-commerce",
-        "companySize": "10,001+ employees",
-        "companyFounded": "2012",
-        "companyLinkedin": "https://www.linkedin.com/company/carvana",
-        "companyTwitter": "https://@Carvana",
-        "companyFacebook": "",
-        "linkedinPersonal": "https://www.linkedin.com/in/shawnlivermore",
-        "twitterUrl": "",
-        "twitterHandle": "",
-        "facebookUrl": "",
-        "personLocality": "Orange County",
-        "personRegion": "California",
-        "personCountry": "United States",
-        "sourceUrl": "https://www.linkedin.com/in/shawnlivermore",
-        "department": "",
-        "seniority": "",
-        "seniorityLevels": [],
-        "skills": [
-          "software architecture",
-          "AI strategy"
-        ],
-        "interests": [],
-        "jobTenureStart": "",
-        "headquarters": "Tempe, Arizona, U.S.",
-        "revenue": "US$20.3 billion (2025)",
-        "specialties": "Buying and selling used vehicles online",
-        "technologies": "Technology-enabled marketplace",
-        "companyDescription": "Carvana is an American online car retailer based in Tempe, Arizona. It allows customers to browse a nationwide inventory and purchase a vehicle from the comfort of their home entirely online.",
-        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
-        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
-        "emailAvailable": false,
-        "phoneAvailable": false
-      },
-      {
-        "fullName": "Karan D.",
-        "firstName": "Karan",
-        "lastName": "D.",
-        "jobTitle": "",
-        "companyName": "SecureAuth Corporation",
-        "companyWebsite": "https://www.secureauth.com/",
-        "companyIndustry": "Security Software; Software",
-        "companySize": "201-500",
-        "companyFounded": "2005",
-        "companyLinkedin": "https://www.linkedin.com/company/secureauth",
-        "companyTwitter": "",
-        "companyFacebook": "",
-        "linkedinPersonal": "https://www.linkedin.com/in/karandua1",
-        "twitterUrl": "",
-        "twitterHandle": "",
-        "facebookUrl": "",
-        "personLocality": "Orange County",
-        "personRegion": "California",
-        "personCountry": "United States",
-        "sourceUrl": "https://www.linkedin.com/in/karandua1",
-        "department": "",
-        "seniority": "",
-        "seniorityLevels": [],
-        "skills": [],
-        "interests": [],
-        "jobTenureStart": "",
-        "headquarters": "Irvine, California, United States",
-        "revenue": "$40.3 Million",
-        "specialties": [
-          "Single Sign On",
-          "Adaptive Access Controls",
-          "Identity Management",
-          "Cloud Security",
-          "Access Management",
-          "Mobile App Security",
-          "Security Token Service",
-          "SAML",
-          "enterprise openid",
-          "web authentication",
-          "federated id",
-          "saas authentication",
-          "Adaptive Authentication",
-          "identity governance and administration"
-        ],
-        "technologies": [
-          "AI-driven Private Authority Platform"
-        ],
-        "companyDescription": "SecureAuth offers the leading next-gen access management & authentication that enables the most secure and passwordless, continuous authentication experience for employees, partners, and customers.",
-        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
-        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
-        "emailAvailable": false,
-        "phoneAvailable": false
-      },
-      {
-        "fullName": "Bruce Felt",
-        "firstName": "Bruce",
-        "lastName": "Felt",
-        "jobTitle": "Chief Financial Officer",
-        "companyName": "Chainalysis",
-        "companyWebsite": "https://chainalysis.com",
-        "companyIndustry": "Software Development",
-        "companySize": "501-1000",
-        "companyFounded": "",
-        "companyLinkedin": "https://www.linkedin.com/company/chainalysis",
-        "companyTwitter": "",
-        "companyFacebook": "",
-        "linkedinPersonal": "https://www.linkedin.com/in/bruce-felt-383b869",
-        "twitterUrl": "",
-        "twitterHandle": "",
-        "facebookUrl": "",
-        "personLocality": "Menlo Park",
-        "personRegion": "California",
-        "personCountry": "United States",
-        "sourceUrl": "https://www.linkedin.com/in/bruce-felt-383b869",
-        "department": "Finance",
-        "seniority": "CFO",
-        "seniorityLevels": [
-          "cfo"
-        ],
-        "skills": [
-          "finance",
-          "strategy",
-          "leadership"
-        ],
-        "interests": [
-          "sports",
-          "education"
-        ],
-        "jobTenureStart": "",
-        "headquarters": "New York, New York",
-        "revenue": "$537M",
-        "specialties": "Software Development, Cryptocurrency Investigation and Compliance",
-        "technologies": "Software solutions for cryptocurrency investigations and compliance",
-        "companyDescription": "Chainalysis offers cryptocurrency investigation and compliance solutions to global law enforcement agencies, regulators, and businesses as they work together to fight illicit cryptocurrency activity.",
-        "workEmail": "🔒 Verified email available on a paid plan — upgrade to unlock",
-        "mobilePhone": "🔒 Phone number available on a paid plan — upgrade to unlock",
-        "emailAvailable": false,
-        "phoneAvailable": false
-      }
-    ],
-    "leadsCount": 5,
-    "planTier": "trial",
-    "creditsCharged": 10
-  }
-];
-
 export default function LeadReachBoard() {
   const [formData, setFormData] = useState({
     country: "united states",
@@ -274,7 +34,7 @@ export default function LeadReachBoard() {
   const handleRun = async () => {
     setIsSearching(true);
     setResults(null);
-    
+
     // The structured payload including userId from session
     const payload = {
       country: formData.country,
@@ -286,15 +46,54 @@ export default function LeadReachBoard() {
     };
 
     console.log("Sending Webhook Payload:", payload);
-    
+
     toast.info("Sending payload to LeadReach webhook...");
-    
-    // Simulate API webhook delay
-    setTimeout(() => {
-      setResults(MOCK_RESPONSE[0]);
+
+    try {
+      const res = await fetch("/api/leadreach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      // The n8n webhook responds with a single-item array: [{ leads, leadsCount, planTier, creditsCharged }]
+      // or, when credits run out, [{ message: "INSUFFICIENT CREDITS", creditsNeeded, creditsRemaining }].
+      const result = Array.isArray(data) ? data[0] : data;
+
+      if (!res.ok || !result) {
+        toast.error("LeadReach didn't respond as expected. Try again.");
+        setResults(null);
+        return;
+      }
+
+      if (result.message === "INSUFFICIENT CREDITS") {
+        toast.error(
+          `Not enough credits: this search needs ${result.creditsNeeded}, you have ${result.creditsRemaining}.`
+        );
+        setResults(null);
+        return;
+      }
+
+      if (!Array.isArray(result.leads)) {
+        toast.error("LeadReach returned an unexpected response shape.");
+        setResults(null);
+        return;
+      }
+
+      setResults(result);
+      toast.success(
+        result.leadsCount > 0
+          ? `Successfully enriched ${result.leadsCount} lead${result.leadsCount === 1 ? "" : "s"}!`
+          : "No matching leads found for this search."
+      );
+    } catch (err) {
+      console.error("LeadReach request failed:", err);
+      toast.error("Couldn't reach LeadReach. Check your connection and try again.");
+      setResults(null);
+    } finally {
       setIsSearching(false);
-      toast.success(`Successfully enriched ${MOCK_RESPONSE[0].leadsCount} leads!`);
-    }, 2000);
+    }
   };
 
   return (
@@ -392,11 +191,11 @@ export default function LeadReachBoard() {
                   onChange={(e) => setFormData({...formData, leadCount: e.target.value})}
                   className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
                 >
-                  <option value="1">1 Lead</option>
                   <option value="5">5 Leads</option>
                   <option value="10">10 Leads</option>
+                  <option value="15">15 Leads</option>
+                  <option value="20">20 Leads</option>
                   <option value="25">25 Leads</option>
-                  <option value="50">50 Leads</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
                   <ChevronDown className="w-4 h-4" />
