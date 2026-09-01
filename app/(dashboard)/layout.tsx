@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { MobileHeader } from '@/components/MobileHeader';
 import { Header } from '@/components/Header';
 import { CommandMenu } from '@/components/CommandMenu';
+import { InactivityLogout } from '@/components/InactivityLogout';
 
 export default function DashboardLayout({
   children,
@@ -10,6 +11,7 @@ export default function DashboardLayout({
 }) {
   return (
     <>
+      <InactivityLogout />
       <CommandMenu />
       <Sidebar />
       <main className="md:pl-60 min-h-screen flex flex-col">
