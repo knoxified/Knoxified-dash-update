@@ -289,6 +289,30 @@ export default function MailCraftBoard() {
     setSingle(prev => ({ ...prev, [field]: value }));
   };
 
+  // JSON is what n8n sends back; CSV is only ever built here, client-side,
+  // from real in-memory objects -- no encode/decode round-trip through a
+  // text format, which is exactly the risk we're avoiding on the n8n side.
+  const downloadCsv = () => {
+    const headers = ["Name", "Company", "Email", "Sender", "Subject 1", "Email 1", "Subject 2", "Email 2", "Subject 3", "Email 3", "Subject 4", "Email 4"];
+    const escapeCsv = (val: string) => `"${String(val ?? "").replace(/"/g, '""')}"`;
+    const rows = results.map((r) => [
+      r.firstName, r.companyName, r.email, r.sequence?.sender || "",
+      r.sequence?.subjectLine1 || "", r.sequence?.emailBody1 || "",
+      r.sequence?.subjectLine2 || "", r.sequence?.emailBody2 || "",
+      r.sequence?.subjectLine3 || "", r.sequence?.emailBody3 || "",
+      r.sequence?.subjectLine4 || "", r.sequence?.emailBody4 || "",
+    ].map(escapeCsv).join(","));
+    const csv = [headers.map(escapeCsv).join(","), ...rows].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mailcraft-sequences-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column: Input */}
@@ -401,9 +425,17 @@ export default function MailCraftBoard() {
             Generated Sequences
           </h3>
           {results.length > 0 && (
-            <span className="text-xs font-mono bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-500/20">
-              {results.reduce((sum, r) => sum + (r.creditsCharged || 0), 0)} credits used
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-500/20">
+                {results.reduce((sum, r) => sum + (r.creditsCharged || 0), 0)} credits used
+              </span>
+              <button
+                onClick={downloadCsv}
+                className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-full px-3 py-1 transition-colors"
+              >
+                Download CSV
+              </button>
+            </div>
           )}
         </div>
 
