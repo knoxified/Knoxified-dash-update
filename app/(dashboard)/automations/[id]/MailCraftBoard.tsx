@@ -48,6 +48,7 @@ const EMPTY_CANDIDATE: Candidate = {
 };
 
 const CSV_COLUMNS = Object.keys(EMPTY_CANDIDATE) as (keyof Candidate)[];
+const MAX_BULK_CANDIDATES = 30;
 
 type MailCraftResult = {
   firstName: string;
@@ -134,16 +135,24 @@ export default function MailCraftBoard() {
         return;
       }
       const missingEmail = parsed.filter(r => !r.email || !r.email.trim()).length;
-      const candidates: Candidate[] = parsed
+      let candidates: Candidate[] = parsed
         .filter(r => r.email && r.email.trim())
         .map(r => {
           const c = { ...EMPTY_CANDIDATE };
           CSV_COLUMNS.forEach(col => { c[col] = r[col] || ""; });
           return c;
         });
+
+      const overflow = candidates.length - MAX_BULK_CANDIDATES;
+      if (overflow > 0) {
+        candidates = candidates.slice(0, MAX_BULK_CANDIDATES);
+      }
+
       setBulkCandidates(candidates);
       setBulkFileName(file.name);
-      if (missingEmail > 0) {
+      if (overflow > 0) {
+        toast.warning(`This automation handles up to ${MAX_BULK_CANDIDATES} at a time — using the first ${MAX_BULK_CANDIDATES} rows, dropped the remaining ${overflow}.`);
+      } else if (missingEmail > 0) {
         toast.warning(`Loaded ${candidates.length} rows — skipped ${missingEmail} with no email (required field).`);
       } else {
         toast.success(`Loaded ${candidates.length} candidates from ${file.name}.`);
@@ -182,43 +191,97 @@ export default function MailCraftBoard() {
     }
   };
 
-  const handleGenerate = async () => {
-    const candidates = mode === "single" ? [single] : bulkCandidates;
+  // Bulk sends the whole sheet as ONE request -- { candidates: [...], userId }
+  // -- and expects ONE response back: an array with one result per candidate,
+  // each shaped like the existing single-candidate response (firstName,
+  // companyName, email, sequence{...}, emailsGenerated). n8n is the engine
+  // here; this just sends the sheet in and renders whatever sheet comes back.
+  const runBatch = async (candidates: Candidate[]): Promise<MailCraftResult[]> => {
+    const payload = { candidates, userId: userId || "ad409f1e-7150-4ed1-a4d1-ab5d523ab265" };
+    try {
+      const res = await fetch("/api/mailcraft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
 
-    if (mode === "single" && !single.email.trim()) {
-      toast.error("Email is required.");
+      if (!res.ok) {
+        toast.error(
+          data?.message === "INSUFFICIENT CREDITS"
+            ? `Insufficient credits (needs ${data.creditsNeeded}, have ${data.creditsRemaining})`
+            : "MailCraft didn't accept this batch."
+        );
+        return [];
+      }
+
+      // Accept either a bare array, or { results: [...] } -- whichever shape
+      // the workflow ends up responding with.
+      const rows: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+
+      if (rows.length === 0) {
+        toast.error("MailCraft returned an empty batch.");
+        return [];
+      }
+
+      return rows.map((r) => ({
+        firstName: r.firstName || "",
+        companyName: r.companyName || "",
+        email: r.email || "",
+        sequence: r.sequence || ({} as any),
+        emailsGenerated: r.emailsGenerated || 0,
+        creditsCharged: r.creditsCharged || 0,
+        error: r.error || (!r.sequence ? "Missing or failed" : undefined),
+      }));
+    } catch (err) {
+      console.error("MailCraft batch request failed:", err);
+      toast.error("Couldn't reach MailCraft. Check your connection and try again.");
+      return [];
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (mode === "single") {
+      if (!single.email.trim()) {
+        toast.error("Email is required.");
+        return;
+      }
+      setIsGenerating(true);
+      setResults([]);
+      setProgress({ done: 0, total: 1 });
+      const result = await runOne(single);
+      setIsGenerating(false);
+      if (result) {
+        setResults([result]);
+        setProgress({ done: 1, total: 1 });
+        if (result.error) toast.error(result.error);
+        else toast.success("Sequence generated.");
+      }
       return;
     }
-    if (mode === "bulk" && candidates.length === 0) {
+
+    if (bulkCandidates.length === 0) {
       toast.error("Upload a sheet with at least one candidate first.");
       return;
     }
 
     setIsGenerating(true);
     setResults([]);
-    setProgress({ done: 0, total: candidates.length });
+    setProgress({ done: 0, total: bulkCandidates.length });
 
-    // Sequential, not parallel: each candidate is ~5 LLM calls plus several
-    // site/social scrapes on n8n's end, running on a resource-constrained
-    // EC2 box (t3.small, ~200MB free at idle). Firing these in parallel for
-    // a bulk sheet would risk overwhelming it -- one at a time is slower
-    // but won't take the instance down mid-batch.
-    const collected: MailCraftResult[] = [];
-    for (const candidate of candidates) {
-      const result = await runOne(candidate);
-      if (result) {
-        collected.push(result);
-        setResults([...collected]);
-      }
-      setProgress(p => ({ ...p, done: p.done + 1 }));
-    }
+    const rows = await runBatch(bulkCandidates);
 
     setIsGenerating(false);
-    const succeeded = collected.filter(r => !r.error).length;
-    if (succeeded === 0) {
+    setResults(rows);
+    setProgress({ done: rows.length, total: bulkCandidates.length });
+
+    const succeeded = rows.filter(r => !r.error).length;
+    if (rows.length === 0) {
+      // runBatch already toasted the specific reason
+    } else if (succeeded === 0) {
       toast.error("No sequences were generated. Check the results for details.");
     } else {
-      toast.success(`Generated sequences for ${succeeded} of ${candidates.length} candidate${candidates.length === 1 ? "" : "s"}.`);
+      toast.success(`Generated sequences for ${succeeded} of ${bulkCandidates.length} candidate${bulkCandidates.length === 1 ? "" : "s"}.`);
     }
   };
 
@@ -280,7 +343,8 @@ export default function MailCraftBoard() {
               >
                 <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Click to upload a CSV</p>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">Up to {MAX_BULK_CANDIDATES} rows at a time.</p>
+                <p className="text-xs text-slate-400 mt-2">
                   Columns: {CSV_COLUMNS.join(", ")}
                 </p>
               </div>
@@ -324,7 +388,7 @@ export default function MailCraftBoard() {
               <Sparkles size={18} fill="currentColor" />
             )}
             {isGenerating
-              ? `Crafting ${progress.done}/${progress.total}...`
+              ? mode === "single" ? "Crafting..." : `Crafting sequences for ${progress.total} candidate${progress.total === 1 ? "" : "s"}...`
               : mode === "single" ? "Generate Sequence" : `Generate for ${bulkCandidates.length || 0} Candidates`}
           </button>
         </div>
@@ -397,12 +461,14 @@ export default function MailCraftBoard() {
                     })}
                   </tr>
                 ))}
-                {isGenerating && progress.done < progress.total && (
+                {isGenerating && (
                   <tr>
                     <td colSpan={5} className="px-4 py-4 text-center text-slate-400 text-xs">
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-4 h-4 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin" />
-                        Processing candidate {progress.done + 1} of {progress.total}...
+                        {progress.total === 1
+                          ? "Crafting sequence..."
+                          : `MailCraft is working through all ${progress.total} candidates in one batch — this can take a while for larger sheets.`}
                       </div>
                     </td>
                   </tr>
