@@ -11,6 +11,7 @@
   "vars": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://elpljgrwrzaugsunoidf.supabase.co",
     "NEXT_PUBLIC_VOICE_AGENT_URL": "https://voice-agent-beta.roofing-dashboard.workers.dev",
+    "NEXT_PUBLIC_VOICE_AGENT_NUMBER": "+15302030545",
     "SUPABASE_URL": "https://elpljgrwrzaugsunoidf.supabase.co"
   },
   "services": [
