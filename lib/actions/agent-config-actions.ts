@@ -12,12 +12,12 @@ export async function getAgentConfig() {
   }
 
   // Try to select with new columns. If it fails (columns don't exist yet), fallback.
-  let agentConfig = null;
+  let agentConfig: any = null;
   let agentError = null;
   
   const res = await supabase
     .from("agent_configs")
-    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email")
+    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt")
     .eq("user_id", user.id)
     .maybeSingle();
     
@@ -36,13 +36,20 @@ export async function getAgentConfig() {
 
   const { data: voiceSettings, error: voiceError } = await supabase
     .from("user_voice_settings")
-    .select("id, agent_persona, agent_greeting")
+    .select("id, agent_persona, agent_greeting, preferred_voice_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("organization_website")
     .eq("user_id", user.id)
     .maybeSingle();
 
   return {
     agentConfig: agentConfig || null,
     voiceSettings: voiceSettings || null,
+    organizationWebsite: profile?.organization_website || null,
     error: agentError?.message || voiceError?.message || null,
   };
 }
@@ -60,6 +67,9 @@ export async function updateAgentConfig(formData: FormData) {
   const organization_name = formData.get("organization_name") as string;
   const business_hours = formData.get("business_hours") as string;
   const temperatureStr = formData.get("temperature") as string;
+  const memory_context = (formData.get("memory_context") as string) || null;
+  const custom_system_prompt = (formData.get("custom_system_prompt") as string) || null;
+  const preferred_voice_id = (formData.get("preferred_voice_id") as string) || null;
   
   const voice_minute_limit_alert = formData.get("voice_minute_limit_alert") === "on" || formData.get("voice_minute_limit_alert") === "true";
   const alert_email = formData.get("alert_email") as string;
@@ -83,6 +93,8 @@ export async function updateAgentConfig(formData: FormData) {
     organization_name,
     business_hours,
     temperature,
+    memory_context,
+    custom_system_prompt,
     updated_at: new Date().toISOString(),
   };
 
@@ -130,6 +142,7 @@ export async function updateAgentConfig(formData: FormData) {
       .update({
         agent_persona,
         agent_greeting,
+        preferred_voice_id,
         updated_at: new Date().toISOString(),
       })
       .eq("id", existingVoiceSettings.id);
@@ -141,6 +154,7 @@ export async function updateAgentConfig(formData: FormData) {
         user_id: user.id,
         agent_persona,
         agent_greeting,
+        preferred_voice_id,
       });
     if (error) return { error: error.message };
   }

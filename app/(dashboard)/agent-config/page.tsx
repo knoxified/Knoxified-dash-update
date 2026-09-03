@@ -3,12 +3,15 @@
 import React, { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getAgentConfig, updateAgentConfig } from "@/lib/actions/agent-config-actions";
-import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X } from "lucide-react";
+import { scanWebsite } from "@/lib/actions/website-scan-actions";
+import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
+import { VOICE_OPTIONS } from "@/lib/voice-options";
+import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded } from "lucide-react";
 
 export default function AgentConfigPage() {
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"settings" | "conversations">("settings");
+  const [activeTab, setActiveTab] = useState<"settings" | "conversations" | "numbers">("settings");
   
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [scheduleCaller, setScheduleCaller] = useState("");
@@ -56,11 +59,21 @@ export default function AgentConfigPage() {
     organization_name: "",
     business_hours: "",
     temperature: "0.7",
+    preferred_voice_id: VOICE_OPTIONS[0].id,
+    memory_context: "",
   });
+
+  const [scanUrl, setScanUrl] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+
+  const [phoneNumbers, setPhoneNumbers] = useState<{ id: string; phone_number: string; is_active: boolean }[]>([]);
+  const [newNumber, setNewNumber] = useState("");
+  const [isNumbersLoading, setIsNumbersLoading] = useState(true);
+  const [isAddingNumber, startAddingNumber] = useTransition();
 
   useEffect(() => {
     async function loadData() {
-      const { agentConfig, voiceSettings, error } = await getAgentConfig();
+      const { agentConfig, voiceSettings, organizationWebsite, error } = await getAgentConfig();
       if (error && !error.includes("Row not found")) {
         toast.error("Failed to load settings: " + error);
       } else {
@@ -70,12 +83,71 @@ export default function AgentConfigPage() {
           organization_name: agentConfig?.organization_name || "",
           business_hours: agentConfig?.business_hours || "",
           temperature: agentConfig?.temperature?.toString() || "0.7",
+          preferred_voice_id: voiceSettings?.preferred_voice_id || VOICE_OPTIONS[0].id,
+          memory_context: agentConfig?.memory_context || "",
         });
+        if (organizationWebsite) setScanUrl(organizationWebsite);
       }
       setLoading(false);
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    async function loadNumbers() {
+      const result = await listMyForwardingNumbers();
+      if (result.error) {
+        toast.error("Failed to load forwarding numbers: " + result.error);
+      } else {
+        setPhoneNumbers(result.numbers || []);
+      }
+      setIsNumbersLoading(false);
+    }
+    loadNumbers();
+  }, []);
+
+  const handleScanWebsite = () => {
+    if (!scanUrl.trim()) {
+      toast.error("Enter a website URL first.");
+      return;
+    }
+    setIsScanning(true);
+    scanWebsite(scanUrl).then((result) => {
+      setIsScanning(false);
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.summary) {
+        setForm((f) => ({ ...f, memory_context: result.summary! }));
+        toast.success("Website scanned — review the summary below and save when ready.");
+      }
+    });
+  };
+
+  const handleAddNumber = () => {
+    if (!newNumber.trim()) return;
+    startAddingNumber(async () => {
+      const result = await addForwardingNumber(newNumber);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Number added.");
+        setNewNumber("");
+        const refreshed = await listMyForwardingNumbers();
+        if (!refreshed.error) setPhoneNumbers(refreshed.numbers || []);
+      }
+    });
+  };
+
+  const handleRemoveNumber = (id: string) => {
+    startAddingNumber(async () => {
+      const result = await removeForwardingNumber(id);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        setPhoneNumbers((prev) => prev.filter((n) => n.id !== id));
+      }
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -172,6 +244,17 @@ export default function AgentConfigPage() {
           <List size={16} />
           Recent Conversations
         </button>
+        <button
+          onClick={() => setActiveTab("numbers")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "numbers"
+              ? "border-sky-500 text-sky-600 dark:text-sky-400"
+              : "border-transparent text-slate-500 dark:text-[#888] hover:text-slate-800 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
+          }`}
+        >
+          <PhoneForwarded size={16} />
+          Call Forwarding
+        </button>
       </div>
 
       <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 md:p-8">
@@ -264,6 +347,26 @@ export default function AgentConfigPage() {
               </div>
 
               <div className="space-y-2 max-w-sm">
+                <label htmlFor="preferred_voice_id" className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500 dark:text-[#888]">
+                  <Volume2 size={14} /> Voice
+                </label>
+                <select
+                  id="preferred_voice_id"
+                  name="preferred_voice_id"
+                  value={form.preferred_voice_id}
+                  onChange={(e) => setForm({ ...form, preferred_voice_id: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
+                >
+                  {VOICE_OPTIONS.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-400 dark:text-[#666]">
+                  {VOICE_OPTIONS.find((v) => v.id === form.preferred_voice_id)?.description}
+                </p>
+              </div>
+
+              <div className="space-y-2 max-w-sm">
                 <label htmlFor="temperature" className="flex items-center justify-between text-[13px] font-medium text-slate-500 dark:text-[#888]">
                   <span className="flex items-center gap-1.5"><Sliders size={14}/> Temperature (0.0 - 1.0)</span>
                   <span className="text-sky-600 dark:text-sky-400 font-semibold">{form.temperature}</span>
@@ -287,6 +390,57 @@ export default function AgentConfigPage() {
             </div>
           </div>
 
+          <div className="h-px bg-slate-200 dark:bg-white/5 w-full"></div>
+
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <Brain size={16} className="text-sky-500" /> Business Memory
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-[#888]">
+              What your agent knows about your business — services, pricing, policies, anything callers might ask about. Write it yourself, or scan your website to get a starting draft.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Globe size={16} className="text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  value={scanUrl}
+                  onChange={(e) => setScanUrl(e.target.value)}
+                  placeholder="yourbusiness.com"
+                  className="w-full pl-10 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleScanWebsite}
+                disabled={isScanning}
+                className="flex items-center justify-center gap-2 bg-sky-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Globe size={16} />}
+                {isScanning ? "Scanning..." : "Scan my website"}
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="memory_context" className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
+                Business Summary (what the agent should know)
+              </label>
+              <textarea
+                id="memory_context"
+                name="memory_context"
+                rows={6}
+                value={form.memory_context}
+                onChange={(e) => setForm({ ...form, memory_context: e.target.value })}
+                className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow resize-none"
+                placeholder="e.g. We're a family dental practice open Mon-Sat, offering cleanings, whitening, and emergency visits. New patients get a free consultation..."
+              />
+              <p className="text-xs text-slate-400 dark:text-[#666]">A scanned draft won't save until you review it and click Save Configuration below.</p>
+            </div>
+          </div>
+
           <div className="pt-4 flex justify-end">
             <button
               type="submit"
@@ -302,7 +456,7 @@ export default function AgentConfigPage() {
             </button>
           </div>
         </form>
-        ) : (
+        ) : activeTab === "conversations" ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
@@ -415,6 +569,82 @@ export default function AgentConfigPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6 max-w-2xl">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <PhoneForwarded size={16} className="text-sky-500" /> Call Forwarding
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-[#888] mt-2">
+                Forward calls from your existing business number to your Knoxified agent. Set up call forwarding with your phone carrier to redirect calls to the number below, then register your business number here so the agent knows it's you answering.
+              </p>
+            </div>
+
+            <div className="bg-sky-50 dark:bg-sky-500/5 border border-sky-100 dark:border-sky-500/10 rounded-lg p-4">
+              <p className="text-xs font-medium text-slate-500 dark:text-[#888] uppercase tracking-wider mb-1">Forward calls to</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white font-mono">{process.env.NEXT_PUBLIC_VOICE_AGENT_NUMBER || "Contact support for your forwarding number"}</p>
+              <p className="text-xs text-slate-400 dark:text-[#666] mt-2">
+                On most carriers: dial *72 followed by this number to enable unconditional call forwarding. Steps vary by carrier and country — check with yours if unsure.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">Your Business Number(s)</label>
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone size={16} className="text-slate-400" />
+                  </div>
+                  <input
+                    type="tel"
+                    value={newNumber}
+                    onChange={(e) => setNewNumber(e.target.value)}
+                    placeholder="+1 555 123 4567"
+                    className="w-full pl-10 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddNumber}
+                  disabled={isAddingNumber}
+                  className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-50 shrink-0"
+                >
+                  <Plus size={16} /> Add
+                </button>
+              </div>
+
+              {isNumbersLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 size={20} className="animate-spin text-slate-400" />
+                </div>
+              ) : phoneNumbers.length === 0 ? (
+                <p className="text-sm text-slate-400 dark:text-[#666] py-4 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-lg">
+                  No numbers registered yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {phoneNumbers.map((n) => (
+                    <div key={n.id} className="flex items-center justify-between bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3">
+                      <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 font-mono">
+                        {n.phone_number}
+                        {n.is_active && (
+                          <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">Active</span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNumber(n.id)}
+                        disabled={isAddingNumber}
+                        className="text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
