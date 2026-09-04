@@ -1,6 +1,7 @@
 "use client";
 import { Select } from "@/components/ui/Select";
 import { Search, Settings, X, Plus, Workflow, ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -359,7 +360,7 @@ export default function AutomationsPage() {
         </div>
         <button 
           onClick={() => setIsRuleBuilderOpen(true)}
-          className="flex items-center gap-2 bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-slate-900 dark:text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-[color:var(--accent)] hover:opacity-90 text-slate-900 text-sm font-medium px-4 py-2.5 rounded-lg transition-all shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)]"
         >
           <Plus size={18} /> Create Custom Rule
         </button>
@@ -373,7 +374,7 @@ export default function AutomationsPage() {
             placeholder="Search automations..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white text-sm rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:border-sky-600 dark:border-[#00E5FF] focus:ring-1 focus:ring-[#00E5FF] transition-all placeholder:text-slate-400 dark:text-[#666]"
+            className="w-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white text-sm rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] transition-all placeholder:text-slate-400 dark:text-[#666]"
           />
         </div>
         <div className="w-48">
@@ -393,8 +394,8 @@ export default function AutomationsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredAutomations.map((aut) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredAutomations.map((aut, idx) => {
           const nameParts = aut.name.split(" ");
           const possibleEmoji = nameParts[nameParts.length - 1];
           const hasEmojiMatch = /\p{Emoji}/u.test(possibleEmoji);
@@ -402,73 +403,77 @@ export default function AutomationsPage() {
           const title = hasEmojiMatch ? nameParts.slice(0, -1).join(" ") : aut.name;
 
           return (
-            <div 
-              key={aut.id} 
-              className={`bg-white dark:bg-[#0F172A] border rounded-xl p-6 flex flex-col hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 ${aut.enabled ? 'border-sky-300 dark:border-[#00E5FF]/20 shadow-sm shadow-[#00E5FF]/5' : 'border-slate-200 dark:border-white/5'}`}
+            <motion.div
+              key={aut.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: (idx % 9) * 0.05 }}
+              onClick={() => router.push(`/automations/${aut.id}`)}
+              className={`relative overflow-hidden rounded-2xl p-8 flex flex-col group cursor-pointer backdrop-blur-md border transition-all duration-300 transform-gpu hover:-translate-y-1 ${
+                aut.enabled
+                  ? 'bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30 border-sky-200 dark:border-[color:var(--accent)]/30 shadow-[0_0_25px_rgba(0,229,255,0.08)] hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60 hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]'
+                  : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
+              }`}
             >
-              <div className="flex items-start justify-between mb-5">
-                <div className="flex gap-3 items-center">
-                  <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 flex items-center justify-center text-lg">
+              {aut.enabled && (
+                <div className="absolute top-0 right-0 w-56 h-56 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+              )}
+
+              <div className="relative z-10 flex items-start justify-between mb-5">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-full bg-[color:var(--accent)]/10 flex items-center justify-center text-2xl group-hover:shadow-[0_0_18px_rgba(0,229,255,0.4)] transition-shadow">
                     {icon}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">{title}</h3>
-                    </div>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${aut.enabled ? 'bg-emerald-100 dark:bg-[#10B981]/10 text-emerald-600 dark:text-[#10B981] border-[#10B981]/20' : 'bg-slate-200 dark:bg-white/5 text-slate-500 dark:text-[#888] border-transparent'}`}>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">{title}</h3>
+                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${aut.enabled ? 'bg-emerald-100 dark:bg-[#10B981]/10 text-emerald-600 dark:text-[#10B981] border-emerald-300 dark:border-[#10B981]/20' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent'}`}>
                       {aut.enabled ? 'Running' : 'Paused'}
                     </span>
                   </div>
                 </div>
                 
                 <button 
-                  onClick={() => toggleAutomation(aut)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${aut.enabled ? 'bg-[#00E5FF]' : 'bg-slate-300 dark:bg-white/10'}`}
+                  onClick={(e) => { e.stopPropagation(); toggleAutomation(aut); }}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 ${aut.enabled ? 'bg-[color:var(--accent)] shadow-[0_0_8px_rgba(0,229,255,0.5)]' : 'bg-slate-300 dark:bg-white/10'}`}
                 >
                   <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${aut.enabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
                 </button>
               </div>
               
-              <p className="text-[14px] text-slate-500 dark:text-[#888] leading-relaxed flex-1 mb-4">
+              <p className="relative z-10 text-[15px] text-slate-500 dark:text-[#888] leading-relaxed flex-1 mb-5">
                 {aut.description}
               </p>
 
-              {/* Only showing metrics if enabled to match typical layout, or always show. Previously it showed if enabled. */}
               {aut.enabled && aut.metrics && (
-                <div className="mt-2 mb-4 border-t border-slate-200 dark:border-white/5 pt-4">
-                   <div className="grid grid-cols-2 gap-4">
-                     <div>
-                       <div className="text-[11px] text-slate-500 dark:text-[#888] font-medium mb-1">{aut.metrics.label1}</div>
-                       <div className="text-sm text-slate-900 dark:text-white font-semibold">{aut.metrics.value1}</div>
-                     </div>
-                     <div>
-                       <div className="text-[11px] text-slate-500 dark:text-[#888] font-medium mb-1">{aut.metrics.label2}</div>
-                       <div className="text-sm text-emerald-600 dark:text-[#10B981] font-semibold">{aut.metrics.value2}</div>
-                     </div>
+                <div className="relative z-10 mb-5 grid grid-cols-2 gap-3 bg-slate-50/80 dark:bg-[#020617]/80 backdrop-blur-sm rounded-lg p-4 border border-slate-200 dark:border-white/5">
+                   <div>
+                     <div className="text-[11px] text-slate-500 dark:text-[#888] font-medium mb-1">{aut.metrics.label1}</div>
+                     <div className="text-sm text-slate-900 dark:text-white font-semibold">{aut.metrics.value1}</div>
+                   </div>
+                   <div>
+                     <div className="text-[11px] text-slate-500 dark:text-[#888] font-medium mb-1">{aut.metrics.label2}</div>
+                     <div className="text-sm text-emerald-600 dark:text-[#10B981] font-semibold">{aut.metrics.value2}</div>
                    </div>
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/5 mt-auto">
-                <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500 dark:text-[#888]">
+              <div className="relative z-10 flex items-center justify-between pt-5 border-t border-slate-200 dark:border-white/5 mt-auto">
+                <div className="text-[12px] font-medium text-slate-500 dark:text-[#888]">
                   {aut.actions ? `${aut.actions.length} actions available` : 'Standard webhook'}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button 
-                    onClick={() => router.push(`/automations/${aut.id}`)}
-                    className="flex items-center gap-1.5 text-[13px] font-medium text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-[#00E5FF] transition-colors bg-slate-50 hover:bg-sky-50 dark:bg-[#020617] dark:hover:bg-[#00E5FF]/10 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5"
+                    onClick={(e) => { e.stopPropagation(); openSettings(aut); }}
+                    className="text-slate-400 dark:text-[#666] hover:text-slate-700 dark:hover:text-white transition-colors"
                   >
-                    View
+                    <Settings size={16} />
                   </button>
-                  <button 
-                    onClick={() => openSettings(aut)}
-                    className="flex items-center gap-1.5 text-[13px] font-medium text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-[#00E5FF] transition-colors bg-slate-50 hover:bg-sky-50 dark:bg-[#020617] dark:hover:bg-[#00E5FF]/10 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5"
-                  >
-                    <Settings size={14} />
-                  </button>
+                  <div className="flex items-center gap-1 text-[13px] text-[color:var(--accent)] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                    Explore <ArrowRight size={14} />
+                  </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )
         })}
       </div>
@@ -497,7 +502,7 @@ export default function AutomationsPage() {
               <textarea
                 value={settingsJson}
                 onChange={(e) => setSettingsJson(e.target.value)}
-                className="w-full h-64 font-mono text-sm bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg p-4 text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-[#00E5FF] focus:border-[#00E5FF]"
+                className="w-full h-64 font-mono text-sm bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg p-4 text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-[color:var(--accent)] focus:border-[color:var(--accent)]"
                 spellCheck={false}
               />
             </div>
@@ -511,7 +516,7 @@ export default function AutomationsPage() {
               </button>
               <button
                 onClick={saveSettings}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-sky-600 hover:bg-sky-700 dark:bg-[#00E5FF] dark:hover:bg-[#00E5FF]/90 text-white dark:text-[#020617] transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-[color:var(--accent)] hover:opacity-90 text-slate-900 transition-all shadow-[0_0_15px_rgba(0,229,255,0.25)]"
               >
                 Save Settings
               </button>
@@ -541,7 +546,7 @@ function RuleBuilderModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
         <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between shrink-0">
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Workflow size={18} className="text-sky-500" /> 
+              <Workflow size={18} className="text-[color:var(--accent)]" /> 
               Visual Automation Builder
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Define trigger and action sequences for your agent.</p>
@@ -593,14 +598,14 @@ function RuleBuilderModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
             </div>
             
             {/* Connecting Line */}
-            <div className="absolute left-8 top-full h-8 w-px bg-sky-200 dark:bg-sky-500/30"></div>
+            <div className="absolute left-8 top-full h-8 w-px bg-[color:var(--accent)]/30"></div>
           </div>
 
           {/* Action Block 1 */}
           <div className="relative">
-            <div className="bg-white dark:bg-[#0F172A] border border-sky-200 dark:border-sky-500/20 rounded-xl p-5 shadow-sm ring-1 ring-sky-500/10">
+            <div className="bg-white dark:bg-[#0F172A] border border-[color:var(--accent)]/30 rounded-xl p-5 shadow-sm ring-1 ring-[color:var(--accent)]/10">
               <div className="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-white/5 pb-3">
-                <div className="bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">Action</div>
+                <div className="bg-[color:var(--accent)]/15 text-[color:var(--accent)] px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">Action</div>
                 <span className="text-sm font-medium text-slate-900 dark:text-white">Do this...</span>
               </div>
               <div className="space-y-4">
@@ -645,7 +650,7 @@ function RuleBuilderModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
               toast.success("Automation rule saved and deployed.");
               onClose();
             }}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-sky-600 hover:bg-sky-700 dark:bg-[#00E5FF] dark:hover:bg-[#00E5FF]/90 text-white dark:text-[#020617] transition-colors"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-[color:var(--accent)] hover:opacity-90 text-slate-900 transition-all shadow-[0_0_15px_rgba(0,229,255,0.25)]"
           >
             Save Automation
           </button>

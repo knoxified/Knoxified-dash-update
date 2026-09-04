@@ -39,6 +39,7 @@ export default function SystemsPage() {
   const [sortBy, setSortBy] = useState<"revenue" | "name" | "active">("revenue");
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [selectMode, setSelectMode] = useState(false);
   const router = useRouter();
 
   if (loading) {
@@ -77,6 +78,7 @@ export default function SystemsPage() {
       return s;
     }));
     setSelected([]);
+    setSelectMode(false);
   };
 
   const filteredSystems = systems.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -103,7 +105,7 @@ export default function SystemsPage() {
         <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-md p-3 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center gap-3">
             <span className="text-slate-900 dark:text-white text-sm font-medium">{selected.length} systems selected</span>
-            <button onClick={() => setSelected([])} className="text-slate-500 dark:text-[#888] text-xs hover:text-slate-900 dark:text-white transition-colors">Clear selection</button>
+            <button onClick={() => { setSelected([]); setSelectMode(false); }} className="text-slate-500 dark:text-[#888] text-xs hover:text-slate-900 dark:text-white transition-colors">Clear selection</button>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => handleBulkAction(true)} className="bg-sky-100 dark:bg-[#00E5FF]/10 text-sky-600 dark:text-[#00E5FF] hover:bg-sky-200 dark:bg-[#00E5FF]/20 border border-sky-300 dark:border-[#00E5FF]/20 px-3 py-1.5 rounded text-xs font-medium transition-colors">Deploy Selected</button>
@@ -144,6 +146,16 @@ export default function SystemsPage() {
                 ]}
               />
             </div>
+            <button
+              onClick={() => { setSelectMode(m => !m); if (selectMode) setSelected([]); }}
+              className={`shrink-0 text-xs font-medium px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+                selectMode
+                  ? 'bg-[color:var(--accent)]/15 text-[color:var(--accent)] border-[color:var(--accent)]/30'
+                  : 'bg-white dark:bg-[#0F172A] text-slate-500 dark:text-[#888] border-slate-200 dark:border-white/5 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {selectMode ? 'Cancel' : 'Select'}
+            </button>
           </div>
         </div>
       </div>
@@ -161,21 +173,23 @@ export default function SystemsPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.4, delay: (idx % 6) * 0.06 }}
-              onClick={() => router.push(`/systems/${sys.id}`)}
-              className={`relative overflow-hidden rounded-2xl p-6 flex flex-col group backdrop-blur-md border transition-all duration-300 cursor-pointer transform-gpu hover:-translate-y-1 ${
+              onClick={() => selectMode ? toggleSelect({ stopPropagation: () => {} } as React.MouseEvent, sys.id) : router.push(`/systems/${sys.id}`)}
+              className={`relative overflow-hidden rounded-2xl p-8 flex flex-col group backdrop-blur-md border transition-all duration-300 cursor-pointer transform-gpu hover:-translate-y-1 ${
                 isActive
                   ? 'bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30 border-sky-200 dark:border-[color:var(--accent)]/30 shadow-[0_0_25px_rgba(0,229,255,0.08)] hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60 hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]'
                   : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
               } ${isSelected ? 'ring-1 ring-[color:var(--accent)]/50 border-sky-400 dark:border-[color:var(--accent)]/50' : ''}`}
             >
-              <div 
-                className={`absolute top-4 right-4 z-20 cursor-pointer ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
-                onClick={(e) => toggleSelect(e, sys.id)}
-              >
-                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-[color:var(--accent)] border-[color:var(--accent)]' : 'border-[#888] bg-slate-50 dark:bg-[#020617] hover:border-white'}`}>
-                  {isSelected && <svg viewBox="0 0 24 24" fill="none" className="w-3 h-3 text-[#020617]"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              {selectMode && (
+                <div 
+                  className="absolute top-4 right-4 z-20 cursor-pointer"
+                  onClick={(e) => toggleSelect(e, sys.id)}
+                >
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-[color:var(--accent)] border-[color:var(--accent)]' : 'border-[#888] bg-slate-50 dark:bg-[#020617] hover:border-white'}`}>
+                    {isSelected && <svg viewBox="0 0 24 24" fill="none" className="w-3 h-3 text-[#020617]"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {isActive && (
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-100"></div>
@@ -190,7 +204,7 @@ export default function SystemsPage() {
                     {getIcon(sys.iconName)}
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">{sys.name}</h3>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{sys.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.7)]' : isActivating ? 'bg-amber-400 dark:bg-[#F59E0B] animate-pulse' : 'bg-[#444]'}`}></span>
                       <span className={`text-[12px] font-medium ${isActive ? 'text-emerald-600 dark:text-[#10B981]' : isActivating ? 'text-amber-500 dark:text-[#F59E0B]' : 'text-slate-400 dark:text-[#666]'}`}>
