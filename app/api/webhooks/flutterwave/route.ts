@@ -95,7 +95,14 @@ export async function POST(request: Request) {
 
   const { error: updateError } = await supabaseAdmin
     .from("users")
-    .update({ plan_id: planId })
+    .update({
+      plan_id: planId,
+      // A successful paid upgrade is exactly the nudge the duplicate-account
+      // lock (see /areas or docs on credits_locked) exists to produce --
+      // clear it here rather than requiring a separate manual step.
+      credits_locked: false,
+      credits_locked_reason: null,
+    })
     .eq("id", userId);
 
   if (updateError) {

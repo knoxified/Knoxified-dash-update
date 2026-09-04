@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 
 export async function runAutomation(automationId: string, actionKey: string | null, payload: any) {
   const supabase = await createClient();
@@ -8,6 +8,18 @@ export async function runAutomation(automationId: string, actionKey: string | nu
 
   if (!user) {
     return { success: false, error: "Unauthorized" };
+  }
+
+  // Duplicate-account abuse lock: this account can browse the dashboard
+  // fine, but can't spend credits/minutes until it upgrades to a paid plan.
+  const { data: userRow } = await supabaseAdmin
+    .from("users")
+    .select("credits_locked")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (userRow?.credits_locked) {
+    return { success: false, error: "locked", locked: true };
   }
 
   // Here you would typically look up the webhook URL from your database
