@@ -1,5 +1,6 @@
 "use client";
 import { Box, Lock, LayoutGrid, Slack, Github, Calendar, MessageSquare, Plus, Check, Phone } from "lucide-react";
+import { motion } from "motion/react";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -116,9 +117,10 @@ function IntegrationsPageInner() {
       </div>
       
       {!loading && virtualNumber && (
-        <div className="bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 rounded-xl p-5 mb-8 flex items-center justify-between">
-           <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400">
+        <div className="glass-card rounded-xl p-5 mb-8 flex items-center justify-between relative overflow-hidden animate-in fade-in slide-in-from-top-2 duration-500">
+           <div className="absolute top-0 right-0 w-40 h-40 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+           <div className="flex items-center gap-4 relative z-10">
+              <div className="w-11 h-11 rounded-full bg-[color:var(--accent)]/10 flex items-center justify-center text-[color:var(--accent)] shadow-[0_0_15px_rgba(0,229,255,0.2)]">
                 <Phone size={20} />
               </div>
               <div>
@@ -126,7 +128,7 @@ function IntegrationsPageInner() {
                 <p className="text-sm font-mono text-slate-700 dark:text-slate-300">{virtualNumber.phone_number}</p>
               </div>
            </div>
-           <div>
+           <div className="relative z-10">
              {virtualNumber.is_active ? (
                <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-[#10B981] bg-emerald-50 dark:bg-[#10B981]/10 px-3 py-1.5 rounded-md">
                  Active
@@ -140,16 +142,16 @@ function IntegrationsPageInner() {
         </div>
       )}
 
-      <div className="flex bg-slate-100 dark:bg-[#020617] p-1 rounded-lg border border-slate-200 dark:border-white/5 w-max mb-6">
+      <div className="flex glass-card p-1 rounded-lg w-max mb-6">
         <button 
           onClick={() => setActiveTab("oauth")}
-          className={`text-xs font-semibold px-4 py-2 rounded-md transition-colors ${activeTab === "oauth" ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
+          className={`text-xs font-semibold px-4 py-2 rounded-md transition-all ${activeTab === "oauth" ? 'bg-[color:var(--accent)]/15 text-[color:var(--accent)] shadow-[0_0_10px_rgba(0,229,255,0.15)]' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
         >
           App Connections (OAuth)
         </button>
         <button 
           onClick={() => setActiveTab("api")}
-          className={`text-xs font-semibold px-4 py-2 rounded-md transition-colors ${activeTab === "api" ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
+          className={`text-xs font-semibold px-4 py-2 rounded-md transition-all ${activeTab === "api" ? 'bg-[color:var(--accent)]/15 text-[color:var(--accent)] shadow-[0_0_10px_rgba(0,229,255,0.15)]' : 'text-slate-500 dark:text-[#666] hover:text-slate-700 dark:hover:text-[#EDEDED]'}`}
         >
           Developer APIs & Keys
         </button>
@@ -157,10 +159,16 @@ function IntegrationsPageInner() {
 
       {activeTab === "oauth" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {oauthIntegrations.map((app) => {
+          {oauthIntegrations.map((app, idx) => {
             const Icon = app.icon;
             return (
-              <div key={app.id} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-5 flex flex-col hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
+              <motion.div
+                key={app.id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: idx * 0.05 }}
+                className="glass-card card-hover rounded-xl p-5 flex flex-col"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div className={`w-10 h-10 rounded-lg bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 flex items-center justify-center ${app.brandColor}`}>
                     <Icon size={20} />
@@ -189,27 +197,27 @@ function IntegrationsPageInner() {
                     initiateOAuthFlow(app.id, app.name);
                   }
                 }}
-                className={`w-full py-2 rounded-lg text-sm font-semibold transition-transform active:scale-[0.98] ${
+                className={`w-full py-2 rounded-lg text-sm font-semibold transition-all active:scale-[0.98] ${
                   app.status === 'connected' 
                     ? 'bg-slate-100 dark:bg-[#020617] text-slate-700 dark:text-[#EDEDED] hover:bg-slate-200 dark:hover:bg-white/5 border border-slate-200 dark:border-white/5'
-                    : 'bg-sky-600 hover:bg-sky-700 dark:bg-[#00E5FF] dark:text-[#020617] dark:hover:bg-[#00E5FF]/90 text-white'
+                    : 'bg-[color:var(--accent)] hover:opacity-90 text-slate-900 shadow-[0_0_15px_rgba(0,229,255,0.25)]'
                 }`}>
                   {app.status === 'connected' ? 'Manage Connection' : 'Connect Account'}
                 </button>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       )}
 
       {activeTab === "api" && (
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden">
+        <div className="glass-card rounded-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="p-6 border-b border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
              <div>
                 <h3 className="text-slate-900 dark:text-white font-semibold">API Credentials map</h3>
                 <p className="text-slate-500 dark:text-[#888] text-sm">Securely store API keys that your automations use.</p>
              </div>
-             <button onClick={() => toast.info('Opening configuration modal...')} className="bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#020617] px-4 py-2 rounded-lg text-sm font-semibold hover:bg-sky-700 dark:hover:bg-[#00E5FF]/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+             <button onClick={() => toast.info('Opening configuration modal...')} className="bg-[color:var(--accent)] text-slate-900 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,229,255,0.25)]">
                <Plus size={16} /> Add Custom Key
              </button>
           </div>
@@ -231,7 +239,7 @@ function IntegrationsPageInner() {
                       {api.status === 'configured' ? 'sk_live_********************' : 'No key provided'}
                     </span>
                   </div>
-                  <button onClick={() => toast.info(`Configuring ${api.name}...`)} className="text-sky-600 dark:text-[#00E5FF] text-sm font-medium hover:underline transition-transform active:scale-95">
+                  <button onClick={() => toast.info(`Configuring ${api.name}...`)} className="text-[color:var(--accent)] text-sm font-medium hover:underline transition-transform active:scale-95">
                     {api.status === 'configured' ? 'Edit' : 'Configure'}
                   </button>
                 </div>
@@ -246,7 +254,7 @@ function IntegrationsPageInner() {
 
 export default function IntegrationsPage() {
   return (
-    <Suspense fallback={<div className="animate-pulse bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl h-64 w-full max-w-5xl"></div>}>
+    <Suspense fallback={<div className="animate-pulse glass-card rounded-xl h-64 w-full max-w-5xl"></div>}>
       <IntegrationsPageInner />
     </Suspense>
   );
