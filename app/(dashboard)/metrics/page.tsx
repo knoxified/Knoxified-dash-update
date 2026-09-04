@@ -45,7 +45,7 @@ export default function MetricsPage() {
           <button onClick={() => toast.success('CSV Export started: Your file will download shortly.')} className="bg-slate-100 dark:bg-[#020617] mt-1 sm:mt-0 px-3 py-1.5 rounded-md text-xs font-semibold text-slate-700 dark:text-[#EDEDED] border border-slate-200 dark:border-white/5 shadow-sm hover:bg-slate-200 dark:hover:bg-white/5 transition-transform active:scale-95">
             Export CSV
           </button>
-          <button onClick={() => toast.success('Report generation scheduled. We will notify you when it is ready.')} className="bg-sky-600 dark:bg-[#00E5FF] mt-1 sm:mt-0 px-3 py-1.5 rounded-md text-xs font-semibold text-white dark:text-[#020617] hover:bg-sky-700 dark:hover:bg-[#00E5FF]/90 transition-transform active:scale-95">
+          <button onClick={() => toast.success('Report generation scheduled. We will notify you when it is ready.')} className="bg-[color:var(--accent)] mt-1 sm:mt-0 px-3 py-1.5 rounded-md text-xs font-semibold text-slate-900 hover:opacity-90 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,229,255,0.25)]">
             Download Report
           </button>
         </div>
@@ -59,7 +59,7 @@ export default function MetricsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 lg:col-span-2 flex flex-col min-h-[350px] hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
+        <div className="glass-card card-hover rounded-xl p-6 lg:col-span-2 flex flex-col min-h-[350px]">
           <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-6">Growth Activity Overview</h3>
           <div className="h-[280px] w-full mt-auto">
             {isMounted && (
@@ -90,7 +90,7 @@ export default function MetricsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 flex flex-col min-h-[350px] hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
+        <div className="glass-card card-hover rounded-xl p-6 flex flex-col min-h-[350px]">
           <div className="flex items-center gap-2 mb-6">
             <Target size={18} className="text-emerald-600 dark:text-[#10B981]" />
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">Conversion Pipeline</h3>
@@ -119,7 +119,7 @@ export default function MetricsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
+      <div className="glass-card card-hover rounded-xl p-6">
         <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-6">Outbound Calls vs Response Rate</h3>
         <div className="h-72 w-full">
            {isMounted && (
@@ -161,10 +161,10 @@ function MetricCard({ title, icon: Icon, total, trend, isUp, dataKey, color, isW
     return () => clearTimeout(timer);
   }, []);
 
-  const bgClasses = isWarning ? 'bg-red-50 dark:bg-[#EF4444]/5 border-red-200 dark:border-[#EF4444]/30' : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5';
+  const bgClasses = isWarning ? 'bg-red-50 dark:bg-[#EF4444]/5 border-red-200 dark:border-[#EF4444]/30' : 'glass-card';
   
   return (
-    <div className={`${bgClasses} border rounded-xl p-5 flex flex-col h-[180px] hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 relative`}>
+    <div className={`${bgClasses} card-hover rounded-xl p-5 flex flex-col h-[180px] relative`}>
       {isWarning && <div className="absolute top-4 right-20 text-red-500 dark:text-[#EF4444] animate-pulse"><AlertTriangle size={14} /></div>}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

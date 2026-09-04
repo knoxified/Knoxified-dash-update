@@ -58,19 +58,19 @@ export default function ConversationsPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden flex flex-col md:flex-row shadow-sm">
+      <div className="flex-1 glass-card rounded-xl overflow-hidden flex flex-col md:flex-row">
         <div className="w-full md:w-80 border-r border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#020617]/50 flex flex-col">
           <div className="p-4 border-b border-slate-200 dark:border-white/5">
             <input
               type="text"
               placeholder="Search logs..."
-              className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-300 dark:border-white/10 text-sm text-slate-900 dark:text-white rounded-md px-3 py-2.5 focus:outline-none focus:border-sky-600 dark:border-[#00E5FF]"
+              className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-300 dark:border-white/10 text-sm text-slate-900 dark:text-white rounded-md px-3 py-2.5 focus:outline-none focus:border-[color:var(--accent)] transition-colors"
             />
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {loading && (
               <div className="flex items-center justify-center py-12">
-                <div className="w-6 h-6 rounded-full border-2 border-sky-500 border-t-transparent animate-spin"></div>
+                <div className="w-6 h-6 rounded-full border-2 border-[color:var(--accent)] border-t-transparent animate-spin"></div>
               </div>
             )}
 
@@ -89,13 +89,13 @@ export default function ConversationsPage() {
                 onClick={() => setSelectedId(t.id)}
                 className={`p-4 rounded-lg mb-1 cursor-pointer transition-colors ${
                   t.id === selectedId
-                    ? "bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10"
+                    ? "bg-[color:var(--accent)]/10 border border-[color:var(--accent)]/30 shadow-[0_0_15px_rgba(0,229,255,0.08)]"
                     : "hover:bg-slate-200 dark:hover:bg-white/5 border border-transparent"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Phone size={14} className="text-sky-600 dark:text-[#00E5FF]" />
+                    <Phone size={14} className="text-[color:var(--accent)]" />
                     <span className="text-[13px] font-semibold text-slate-900 dark:text-white">
                       {t.caller_number || "Unknown caller"}
                     </span>
@@ -140,21 +140,21 @@ export default function ConversationsPage() {
 
                 {selected.messages.map((m, i) =>
                   m.role === "user" ? (
-                    <div key={i} className="flex gap-4 flex-row-reverse">
+                    <div key={i} className="flex gap-4 flex-row-reverse animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-[#10B981]/10 border border-[#10B981]/30 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
                         <Phone size={14} className="text-emerald-600 dark:text-[#10B981]" />
                       </div>
                       <div className="flex flex-col items-end">
                         <p className="text-[12px] font-bold text-slate-500 dark:text-[#888] mb-1">Customer</p>
-                        <div className="bg-[#00E5FF] text-slate-900 dark:text-white p-3.5 rounded-2xl rounded-tr-sm text-[14px] leading-relaxed shadow-sm shadow-[#00E5FF]/20">
+                        <div className="bg-[color:var(--accent)] text-slate-900 p-3.5 rounded-2xl rounded-tr-sm text-[14px] leading-relaxed shadow-[0_0_15px_rgba(0,229,255,0.25)]">
                           {m.content}
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div key={i} className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-white dark:bg-[#0F172A] border border-sky-600 dark:border-[#00E5FF]/30 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(79,140,255,0.2)]">
-                        <Mic size={14} className="text-sky-600 dark:text-[#00E5FF]" />
+                    <div key={i} className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="w-8 h-8 rounded-full bg-white dark:bg-[#0F172A] border border-[color:var(--accent)]/30 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
+                        <Mic size={14} className="text-[color:var(--accent)]" />
                       </div>
                       <div>
                         <p className="text-[12px] font-bold text-slate-500 dark:text-[#888] mb-1">AI Agent</p>

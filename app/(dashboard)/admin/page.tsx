@@ -29,7 +29,7 @@ export default function AdminPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-            <ShieldAlert className="text-rose-600 dark:text-rose-500" />
+            <span className="w-9 h-9 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center shadow-[0_0_15px_rgba(244,63,94,0.25)]"><ShieldAlert size={18} /></span>
             Admin: Risk & Abuse Management
           </h1>
           <p className="text-slate-500 dark:text-[#888] text-sm max-w-2xl">
@@ -38,7 +38,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden flex flex-col">
+      <div className="glass-card rounded-xl overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
         <div className="p-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users size={18} className="text-slate-500 dark:text-[#888]" />

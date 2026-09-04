@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Book, Database, Plus, Search, FileText, Globe, X, MessageSquareQuote } from "lucide-react";
 import { toast } from "sonner";
 import { Select } from "@/components/ui/Select";
+import { motion } from "motion/react";
 
 const INITIAL_SOURCES = [
   { id: 1, type: 'pdf', title: 'Company Handbook 2026', size: '2.4MB', updated: '2d ago', systems: 2, icon: FileText },
@@ -63,14 +64,14 @@ export default function KnowledgeBasePage() {
             Manage the data, PDFs, and links your systems use for context.
           </p>
         </div>
-        <button onClick={() => setShowAddSource(true)} className="flex items-center gap-2 bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-slate-900 dark:text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        <button onClick={() => setShowAddSource(true)} className="flex items-center gap-2 bg-[color:var(--accent)] hover:opacity-90 text-slate-900 text-sm font-medium px-4 py-2 rounded-lg transition-all shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)]">
           <Plus size={18} /> Add Source
         </button>
       </div>
 
       {showAddSource && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0F172A] backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-lg shadow-2xl shadow-black/40 overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/5">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Add New Knowledge Source</h2>
               <button onClick={() => setShowAddSource(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -129,7 +130,7 @@ export default function KnowledgeBasePage() {
               <button onClick={() => setShowAddSource(false)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-[#888] hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
                 Cancel
               </button>
-              <button onClick={handleAddSource} className="px-4 py-2 text-sm font-medium bg-[#00E5FF] text-slate-900 rounded-lg hover:bg-[#00E5FF]/90 transition-colors">
+              <button onClick={handleAddSource} className="px-4 py-2 text-sm font-medium bg-[color:var(--accent)] text-slate-900 rounded-lg hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,229,255,0.25)]">
                 Add Source
               </button>
             </div>
@@ -138,25 +139,32 @@ export default function KnowledgeBasePage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {sources.map(source => (
-          <div key={source.id} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer group flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 flex items-center justify-center mb-4">
-                <source.icon size={18} className="text-sky-600 dark:text-[#00E5FF]" />
+        {sources.map((source, idx) => (
+          <motion.div
+            key={source.id}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: idx * 0.06 }}
+            className="relative overflow-hidden glass-card card-hover rounded-xl p-6 cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="absolute top-0 right-0 w-40 h-40 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <div className="w-11 h-11 rounded-full bg-[color:var(--accent)]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition-shadow">
+                <source.icon size={18} className="text-[color:var(--accent)]" />
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1.5">{source.title}</h3>
               <p className="text-[13px] text-slate-500 dark:text-[#888] mb-6">
                 {source.type === 'pdf' ? 'PDF' : source.type === 'web' ? 'Web' : source.type === 'qa' ? 'Q&A' : 'Database'} &bull; {source.size} &bull; {source.type === 'pdf' ? 'Uploaded' : 'Synced'} {source.updated}
               </p>
             </div>
-            <div className="text-[12px] text-slate-400 dark:text-[#666] font-medium flex items-center justify-between border-t border-slate-200 dark:border-white/5 pt-4">
+            <div className="relative z-10 text-[12px] text-slate-400 dark:text-[#666] font-medium flex items-center justify-between border-t border-slate-200 dark:border-white/5 pt-4">
               <span>Used by {source.systems} systems</span>
-              <span className="text-sky-600 dark:text-[#00E5FF] group-hover:text-sky-600 dark:text-[#00E5FF]/80 transition-colors">Manage</span>
+              <span className="text-[color:var(--accent)] group-hover:opacity-80 transition-colors">Manage</span>
             </div>
-          </div>
+          </motion.div>
         ))}
 
-        <div onClick={() => { setNewSource({ ...newSource, type: 'database' }); setShowAddSource(true); }} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center text-center opacity-70 hover:opacity-100 border-dashed min-h-[220px]">
+        <div onClick={() => { setNewSource({ ...newSource, type: 'database' }); setShowAddSource(true); }} className="bg-transparent border-2 border-dashed border-slate-300 dark:border-white/10 rounded-xl p-6 hover:border-[color:var(--accent)]/50 hover:bg-[color:var(--accent)]/5 transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center text-center opacity-70 hover:opacity-100 min-h-[220px]">
           <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 text-slate-500 dark:text-[#888] flex items-center justify-center mb-4">
             <Database size={20} />
           </div>
