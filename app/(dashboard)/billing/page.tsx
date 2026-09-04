@@ -30,7 +30,7 @@ export default function BillingPage() {
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
 
   if (loading || wsLoading || !wsData) {
-    return <div className="animate-pulse bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl h-64 w-full"></div>;
+    return <div className="animate-pulse glass-card rounded-xl h-64 w-full"></div>;
   }
 
   const { workspace, plan: currentPlan } = wsData;
@@ -179,12 +179,12 @@ export default function BillingPage() {
                 isPro 
                   ? 'bg-gradient-to-br from-cyan-900/30 to-blue-900/20 border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] hover:shadow-[0_0_40px_rgba(6,182,212,0.25)] hover:-translate-y-2 ring-1 ring-cyan-500/20' 
                   : isCurrent 
-                    ? 'bg-white dark:bg-[#0F172A] border-sky-600 dark:border-[#00E5FF] shadow-lg shadow-[#00E5FF]/10' 
+                    ? 'bg-white dark:bg-[#0F172A] border-[color:var(--accent)] shadow-lg shadow-[color:var(--accent)]/10' 
                     : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
               }`}
             >
               {isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00E5FF] text-slate-900 dark:text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider z-10">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-slate-900 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider z-10">
                   Current Plan
                 </div>
               )}
@@ -225,7 +225,7 @@ export default function BillingPage() {
                   ? 'bg-transparent border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-200 dark:bg-white/5 cursor-default' 
                   : isPro
                     ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)]'
-                    : 'bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-slate-900 dark:text-white border border-transparent'
+                    : 'bg-[color:var(--accent)] hover:opacity-90 text-slate-900 border border-transparent shadow-[0_0_15px_rgba(0,229,255,0.25)]'
               } disabled:opacity-70`}>
                 {checkoutPlanId === plan.id && <Loader2 size={14} className="animate-spin" />}
                 {isCurrent ? 'Manage Plan' : plan.name === 'Custom' ? 'Contact Us' : 'Upgrade'}
@@ -235,9 +235,9 @@ export default function BillingPage() {
         })}
       </div>
       
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
+      <div className="glass-card card-hover rounded-xl p-6">
         <h4 className="text-slate-900 dark:text-white font-semibold text-base flex items-center gap-2 mb-6">
-          <Zap className="text-sky-600 dark:text-[#00E5FF] w-5 h-5" />
+          <Zap className="text-[color:var(--accent)] w-5 h-5" />
           Execution Limits & Usage
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -260,7 +260,7 @@ export default function BillingPage() {
               <span className="text-slate-500 dark:text-[#888]">{(workspace?.usage?.voiceMinutes || 0)} / {currentPlan?.limit_voice_minutes?.toLocaleString() ?? '∞'}</span>
             </div>
             <div className="h-2.5 w-full bg-slate-100 dark:bg-[#020617] rounded-full overflow-hidden border border-slate-200 dark:border-white/5 relative">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-sky-500 to-[#00E5FF] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,229,255,0.4)]" style={{ width: `${currentPlan?.limit_voice_minutes ? Math.min(((workspace?.usage?.voiceMinutes || 0) / currentPlan.limit_voice_minutes) * 100, 100) : 0}%` }}></div>
+              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-sky-500 to-[color:var(--accent)] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,229,255,0.4)]" style={{ width: `${currentPlan?.limit_voice_minutes ? Math.min(((workspace?.usage?.voiceMinutes || 0) / currentPlan.limit_voice_minutes) * 100, 100) : 0}%` }}></div>
             </div>
             <p className="text-xs text-slate-500 dark:text-[#888]">Outbound and inbound limits.</p>
           </div>
@@ -289,7 +289,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 flex items-center justify-between hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300">
+      <div className="glass-card card-hover rounded-xl p-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/5 rounded-lg flex items-center justify-center">
             <CreditCard className="text-slate-500 dark:text-[#888]" size={20} />
@@ -299,7 +299,7 @@ export default function BillingPage() {
             <p className="text-[13px] text-slate-500 dark:text-[#888] mt-0.5">Visa ending in 4242 &bull; Expires 04/28</p>
           </div>
         </div>
-        <button className="text-[13px] font-medium text-sky-600 dark:text-[#00E5FF] hover:text-sky-600 dark:text-[#00E5FF]/80">Update Method</button>
+        <button className="text-[13px] font-medium text-[color:var(--accent)] hover:opacity-80">Update Method</button>
       </div>
     </div>
   );

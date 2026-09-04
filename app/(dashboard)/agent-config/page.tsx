@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getAgentConfig, updateAgentConfig } from "@/lib/actions/agent-config-actions";
+import { Select } from "@/components/ui/Select";
 import { scanWebsite } from "@/lib/actions/website-scan-actions";
 import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
 import { VOICE_OPTIONS } from "@/lib/voice-options";
@@ -347,20 +348,15 @@ export default function AgentConfigPage() {
               </div>
 
               <div className="space-y-2 max-w-sm">
-                <label htmlFor="preferred_voice_id" className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500 dark:text-[#888]">
+                <label className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500 dark:text-[#888]">
                   <Volume2 size={14} /> Voice
                 </label>
-                <select
-                  id="preferred_voice_id"
-                  name="preferred_voice_id"
+                <input type="hidden" name="preferred_voice_id" value={form.preferred_voice_id} />
+                <Select
                   value={form.preferred_voice_id}
-                  onChange={(e) => setForm({ ...form, preferred_voice_id: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
-                >
-                  {VOICE_OPTIONS.map((v) => (
-                    <option key={v.id} value={v.id}>{v.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setForm({ ...form, preferred_voice_id: val })}
+                  options={VOICE_OPTIONS.map((v) => ({ value: v.id, label: v.name }))}
+                />
                 <p className="text-xs text-slate-400 dark:text-[#666]">
                   {VOICE_OPTIONS.find((v) => v.id === form.preferred_voice_id)?.description}
                 </p>

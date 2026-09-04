@@ -51,30 +51,30 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-2 bg-sky-600 text-white hover:bg-sky-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-2 bg-[color:var(--accent)] text-slate-900 hover:opacity-90 text-sm font-medium px-4 py-2 rounded-lg transition-all shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)]">
             <UserPlus size={16} /> Add Lead
           </button>
-          <button className="flex items-center gap-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-900 dark:text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button className="flex items-center gap-2 glass-card card-hover text-slate-900 dark:text-white text-sm font-medium px-4 py-2 rounded-lg">
             <Download size={16} /> Export
           </button>
         </div>
       </div>
 
       {showAdd && (
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-5 mb-6">
+        <div className="glass-card rounded-xl p-5 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Add New Contact</h3>
           <form onSubmit={handleAddLead} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-[#888] mb-1">Full Name *</label>
-              <input required value={newLead.name} onChange={e => setNewLead({...newLead, name: e.target.value})} className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white" />
+              <input required value={newLead.name} onChange={e => setNewLead({...newLead, name: e.target.value})} className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] text-slate-900 dark:text-white" />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-[#888] mb-1">Phone Number *</label>
-              <input required value={newLead.phone} onChange={e => setNewLead({...newLead, phone: e.target.value})} className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white" />
+              <input required value={newLead.phone} onChange={e => setNewLead({...newLead, phone: e.target.value})} className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] text-slate-900 dark:text-white" />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-[#888] mb-1">Company</label>
-              <input value={newLead.company} onChange={e => setNewLead({...newLead, company: e.target.value})} className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white" />
+              <input value={newLead.company} onChange={e => setNewLead({...newLead, company: e.target.value})} className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] text-slate-900 dark:text-white" />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-[#888] mb-1">Consent Source *</label>
@@ -97,14 +97,14 @@ export default function LeadsPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden flex flex-col">
+      <div className="glass-card rounded-xl overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-[#888]" size={16} />
             <input 
               type="text" 
               placeholder="Search leads..." 
-              className="bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 w-[300px] transition-all"
+              className="bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] w-[300px] transition-all"
             />
           </div>
         </div>
@@ -125,8 +125,15 @@ export default function LeadsPage() {
                 <tr key={lead.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer group">
                   <td className="px-5 py-4 font-mono text-xs">{lead.id}</td>
                   <td className="px-5 py-4">
-                    <div className="font-medium text-slate-900 dark:text-white">{lead.name}</div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[color:var(--accent)]/10 text-[color:var(--accent)] flex items-center justify-center text-[11px] font-bold shrink-0">
+                        {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                      </div>
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">{lead.name}</div>
                     <div className="text-[12px] text-slate-500 dark:text-[#888]">{lead.company}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-5 py-4 text-slate-900 dark:text-slate-300">
                     {lead.phone}

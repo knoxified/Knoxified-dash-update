@@ -84,7 +84,7 @@ export default function CampaignsPage() {
         </div>
         <button 
           onClick={handleNewCampaignClick}
-          className="flex items-center gap-2 bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-slate-900 dark:text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-lg shadow-[#00E5FF]/20"
+          className="flex items-center gap-2 bg-[color:var(--accent)] hover:opacity-90 text-slate-900 text-sm font-medium px-4 py-2 rounded-lg transition-all shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)]"
         >
           <Plus size={18} /> New Campaign
         </button>
@@ -92,7 +92,7 @@ export default function CampaignsPage() {
 
       {showComplianceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0F172A] backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-lg shadow-2xl shadow-black/40 overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-slate-200 dark:border-white/5">
               <div className="w-12 h-12 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle size={24} />
@@ -131,7 +131,7 @@ export default function CampaignsPage() {
 
       {showNewCampaign && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0F172A] backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-2xl shadow-2xl shadow-black/40 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/5">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Create New Campaign</h2>
               <button onClick={() => setShowNewCampaign(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -223,7 +223,7 @@ export default function CampaignsPage() {
               <button onClick={() => setShowNewCampaign(false)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-[#888] hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
                 Cancel
               </button>
-              <button onClick={handleCreateCampaign} className="px-4 py-2 text-sm font-medium bg-[#00E5FF] text-slate-900 rounded-lg hover:bg-[#00E5FF]/90 transition-colors">
+              <button onClick={handleCreateCampaign} className="px-4 py-2 text-sm font-medium bg-[color:var(--accent)] text-slate-900 rounded-lg hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,229,255,0.25)]">
                 Create Campaign
               </button>
             </div>
@@ -231,10 +231,10 @@ export default function CampaignsPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden flex flex-col">
+      <div className="glass-card rounded-xl overflow-hidden flex flex-col">
         <div className="p-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
           <div className="flex gap-4">
-            <button className="text-sm font-semibold text-slate-900 dark:text-white border-b-2 border-sky-600 dark:border-[#00E5FF] pb-1">All Campaigns</button>
+            <button className="text-sm font-semibold text-slate-900 dark:text-white border-b-2 border-[color:var(--accent)] pb-1">All Campaigns</button>
             <button className="text-sm font-medium text-slate-500 dark:text-[#888] hover:text-slate-700 dark:text-[#EDEDED] transition-colors pb-1 border-b-2 border-transparent">Active & Scheduled</button>
             <button className="text-sm font-medium text-slate-500 dark:text-[#888] hover:text-slate-700 dark:text-[#EDEDED] transition-colors pb-1 border-b-2 border-transparent">Drafts</button>
           </div>
@@ -261,7 +261,7 @@ export default function CampaignsPage() {
                         {camp.type === 'Email' ? <Mail size={16} className="text-slate-500 dark:text-[#888]" /> : 
                          camp.type === 'SMS' ? <MessageSquare size={16} className="text-slate-500 dark:text-[#888]" /> : 
                          camp.type === 'Voice + SMS' ? <Phone size={16} className="text-slate-500 dark:text-[#888]" /> : 
-                         <FastForward size={16} className="text-sky-600 dark:text-[#00E5FF]" />}
+                         <FastForward size={16} className="text-[color:var(--accent)]" />}
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-white text-[14px] mb-0.5">{camp.name}</p>
@@ -278,7 +278,7 @@ export default function CampaignsPage() {
                        <span className="text-[12px] font-medium">{camp.progress}%</span>
                     </div>
                     <div className="w-full bg-slate-50 dark:bg-[#020617] rounded-full h-1.5 overflow-hidden">
-                      <div className={`h-full rounded-full ${camp.status === 'Active' ? 'bg-[#00E5FF]' : camp.status === 'Completed' ? 'bg-white/40' : 'bg-transparent'}`} style={{ width: `${camp.progress}%` }}></div>
+                      <div className={`h-full rounded-full ${camp.status === 'Active' ? 'bg-[color:var(--accent)] shadow-[0_0_8px_rgba(0,229,255,0.6)]' : camp.status === 'Completed' ? 'bg-white/40' : 'bg-transparent'}`} style={{ width: `${camp.progress}%` }}></div>
                     </div>
                   </td>
                   <td className="px-6 py-5 font-medium text-slate-700 dark:text-[#EDEDED]">{camp.sent > 0 ? camp.sent.toLocaleString() : '-'}</td>
@@ -294,7 +294,7 @@ export default function CampaignsPage() {
                         </button>
                       )}
                       {camp.status === 'Draft' && (
-                        <button className="p-1.5 rounded bg-sky-100 dark:bg-[#00E5FF]/10 text-sky-600 dark:text-[#00E5FF] hover:bg-sky-200 dark:bg-[#00E5FF]/20 border border-sky-300 dark:border-[#00E5FF]/20 transition-colors">
+                        <button className="p-1.5 rounded bg-[color:var(--accent)]/10 text-[color:var(--accent)] hover:bg-[color:var(--accent)]/20 border border-[color:var(--accent)]/20 transition-colors">
                           <Play size={14} />
                         </button>
                       )}

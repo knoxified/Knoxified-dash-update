@@ -2,6 +2,7 @@
 
 import { Select } from "@/components/ui/Select";
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Cpu, MoreVertical, Play, Settings2, ShieldCheck, SquareTerminal, Home, Building, HeartPulse, Users, Shield, Truck, ShoppingCart, Video, Scale, Hammer, Sun, ShoppingBag, Stethoscope, Briefcase, Droplet, Thermometer, Utensils, Dumbbell, Car, RefreshCcw, ArrowRight, Activity, DollarSign, Target, CalendarCheck, Search } from "lucide-react";
 import { useSystems } from "@/lib/services/hooks";
 import Link from "next/link";
@@ -148,40 +149,50 @@ export default function SystemsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {sortedSystems.map((sys) => {
+        {sortedSystems.map((sys, idx) => {
           const isActive = sys.status !== 'Offline';
           const isActivating = activating === sys.id;
           const isSelected = selected.includes(sys.id);
           
           return (
-            <div 
-              key={sys.id} 
+            <motion.div
+              key={sys.id}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.4, delay: (idx % 6) * 0.06 }}
               onClick={() => router.push(`/systems/${sys.id}`)}
-              className={`relative overflow-hidden bg-white dark:bg-[#0F172A] border rounded-xl p-6 flex flex-col group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-pointer ${isActive ? 'border-sky-300 dark:border-[#00E5FF]/20 hover:border-sky-600 dark:border-[#00E5FF]/40 shadow-[#00E5FF]/5' : 'border-slate-200 dark:border-white/5 hover:border-slate-300 dark:border-white/10'} ${isSelected ? 'ring-1 ring-[#00E5FF]/50 border-sky-400 dark:border-[#00E5FF]/50' : ''}`}
+              className={`relative overflow-hidden rounded-2xl p-6 flex flex-col group backdrop-blur-md border transition-all duration-300 cursor-pointer transform-gpu hover:-translate-y-1 ${
+                isActive
+                  ? 'bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30 border-sky-200 dark:border-[color:var(--accent)]/30 shadow-[0_0_25px_rgba(0,229,255,0.08)] hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60 hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]'
+                  : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
+              } ${isSelected ? 'ring-1 ring-[color:var(--accent)]/50 border-sky-400 dark:border-[color:var(--accent)]/50' : ''}`}
             >
               <div 
                 className={`absolute top-4 right-4 z-20 cursor-pointer ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
                 onClick={(e) => toggleSelect(e, sys.id)}
               >
-                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-[#00E5FF] border-sky-600 dark:border-[#00E5FF]' : 'border-[#888] bg-slate-50 dark:bg-[#020617] hover:border-white'}`}>
+                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-[color:var(--accent)] border-[color:var(--accent)]' : 'border-[#888] bg-slate-50 dark:bg-[#020617] hover:border-white'}`}>
                   {isSelected && <svg viewBox="0 0 24 24" fill="none" className="w-3 h-3 text-[#020617]"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </div>
               </div>
 
               {isActive && (
-                <div className="absolute top-0 right-0 w-64 h-64 bg-sky-100 dark:bg-[#00E5FF]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-500 opacity-50 group-hover:opacity-100"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-100"></div>
               )}
               <div className="flex items-start justify-between mb-5 relative z-10 pr-6">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${
-                    isActive ? "bg-slate-50 dark:bg-[#020617] text-sky-600 dark:text-[#00E5FF] border-slate-300 dark:border-white/10" : "bg-slate-50 dark:bg-[#020617] text-slate-400 dark:text-[#666] border-slate-200 dark:border-white/5"
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                    isActive
+                      ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] group-hover:bg-[color:var(--accent)] group-hover:text-slate-900 group-hover:shadow-[0_0_18px_rgba(0,229,255,0.5)]"
+                      : "bg-slate-100 dark:bg-[#020617] text-slate-400 dark:text-[#666] border border-slate-200 dark:border-white/5"
                   }`}>
                     {getIcon(sys.iconName)}
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">{sys.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#10B981]' : isActivating ? 'bg-amber-400 dark:bg-[#F59E0B] animate-pulse' : 'bg-[#444]'}`}></span>
+                      <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.7)]' : isActivating ? 'bg-amber-400 dark:bg-[#F59E0B] animate-pulse' : 'bg-[#444]'}`}></span>
                       <span className={`text-[12px] font-medium ${isActive ? 'text-emerald-600 dark:text-[#10B981]' : isActivating ? 'text-amber-500 dark:text-[#F59E0B]' : 'text-slate-400 dark:text-[#666]'}`}>
                         {isActive ? sys.status : isActivating ? 'Deploying...' : 'Offline'}
                       </span>
@@ -191,7 +202,7 @@ export default function SystemsPage() {
                 {isActive && (
                   <div className="text-right">
                     <p className="text-[12px] text-emerald-600 dark:text-[#10B981] font-medium mb-1">Revenue Impact</p>
-                    <p className="text-[24px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">{formatCurrency(sys.revenueImpact)}</p>
+                    <p className="text-[24px] font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent tracking-tight leading-none">{formatCurrency(sys.revenueImpact)}</p>
                   </div>
                 )}
               </div>
@@ -201,17 +212,17 @@ export default function SystemsPage() {
               </p>
               
               {isActive && sys.metrics && (
-                <div className="grid grid-cols-3 gap-2 mb-6 bg-slate-50 dark:bg-[#020617] rounded-lg p-4 border border-slate-200 dark:border-white/5">
+                <div className="grid grid-cols-3 gap-2 mb-6 bg-slate-50/80 dark:bg-[#020617]/80 backdrop-blur-sm rounded-lg p-4 border border-slate-200 dark:border-white/5">
                    <div>
-                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><Activity size={12}/> {sys.metrics.label1}</p>
+                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><Activity size={12} className="text-[color:var(--accent)]"/> {sys.metrics.label1}</p>
                      <p className="text-[15px] text-slate-900 dark:text-white font-medium">{sys.metrics.value1}</p>
                    </div>
                    <div>
-                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><Target size={12}/> {sys.metrics.label2}</p>
+                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><Target size={12} className="text-[color:var(--accent)]"/> {sys.metrics.label2}</p>
                      <p className="text-[15px] text-slate-900 dark:text-white font-medium">{sys.metrics.value2}</p>
                    </div>
                    <div>
-                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><CalendarCheck size={12}/> {sys.metrics.label3}</p>
+                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><CalendarCheck size={12} className="text-[color:var(--accent)]"/> {sys.metrics.label3}</p>
                      <p className="text-[15px] text-slate-900 dark:text-white font-medium">{sys.metrics.value3}</p>
                    </div>
                 </div>
@@ -227,7 +238,7 @@ export default function SystemsPage() {
                         ? 'bg-transparent text-red-500 dark:text-[#EF4444] hover:bg-red-100 dark:bg-[#EF4444]/10 border border-[#EF4444]' 
                         : isActivating
                         ? 'bg-amber-100 dark:bg-[#F59E0B]/10 text-amber-500 dark:text-[#F59E0B] border border-[#F59E0B]/20 opacity-80 cursor-not-allowed'
-                        : 'bg-[#00E5FF] text-slate-900 dark:text-white hover:bg-[#00E5FF]/90 shadow-sm border border-transparent'
+                        : 'bg-[color:var(--accent)] text-slate-900 hover:opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.3)] border border-transparent'
                     }`}>
                     {isActive ? (
                       <>Deactivate System</>
@@ -238,11 +249,11 @@ export default function SystemsPage() {
                     )}
                   </button>
                 </div>
-                <div className="flex items-center gap-1 text-[13px] text-sky-600 dark:text-[#00E5FF] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 text-[13px] text-[color:var(--accent)] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                   View Analytics <ArrowRight size={14} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           )
         })}
       </div>
