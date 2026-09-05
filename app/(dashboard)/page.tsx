@@ -198,7 +198,7 @@ export default function DashboardOverview() {
 
   if (!metrics || !logs || !systems || !automations) return null;
 
-  const activeSystemsList = systems.filter(s => s.status !== 'Offline').map(s => ({ ...s, opType: 'system' as const }));
+  const activeSystemsList = systems.filter(s => s.isEnabled).map(s => ({ ...s, status: 'Active' as const, opType: 'system' as const }));
   const activeAutomationsList = automations.filter(a => a.enabled).map(a => ({ ...a, status: 'Active', opType: 'automation' as const }));
   const activeOperations = [...activeSystemsList, ...activeAutomationsList];
   
@@ -563,13 +563,15 @@ export default function DashboardOverview() {
                     </div>
                   </div>
 
-                  {/* Primary metric */}
+                  {/* Primary info */}
                   <div className="mb-5 relative z-10">
                     {op.opType === 'system' ? (
                       <>
-                        <p className="text-[11px] text-emerald-500 font-bold mb-1 uppercase tracking-wider">Revenue Impact</p>
-                        <p className="text-[30px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-none" style={{ fontFeatureSettings: '"tnum"' }}>
-                          {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format((op as any).revenueImpact || 0)}
+                        <p className="text-[11px] font-bold mb-1 uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+                          {(op as any).tier === 'enterprise' ? 'Enterprise Tier' : (op as any).tier === 'custom' ? 'Custom' : 'Pro Tier'}
+                        </p>
+                        <p className="text-[13px] text-slate-500 dark:text-white/50 leading-relaxed line-clamp-2">
+                          {(op as any).description}
                         </p>
                       </>
                     ) : (
@@ -580,8 +582,11 @@ export default function DashboardOverview() {
                     )}
                   </div>
 
-                  {/* Metrics grid */}
-                  <div className={`grid ${op.opType === 'system' ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mb-4 relative z-10 border-t border-slate-100/80 dark:border-white/[0.04] pt-4`}>
+                  {/* Metrics grid -- automations only; systems don't have per-item
+                      telemetry to show honestly, so the description above stands
+                      in for that space instead of fabricated numbers. */}
+                  {op.opType !== 'system' && (
+                  <div className="grid grid-cols-2 gap-3 mb-4 relative z-10 border-t border-slate-100/80 dark:border-white/[0.04] pt-4">
                      <div>
                        <p className="text-[11px] text-slate-400 dark:text-white/25 font-medium mb-0.5">{op.metrics?.label1}</p>
                        <p className="text-sm text-slate-800 dark:text-white/80 font-semibold">{op.metrics?.value1}</p>
@@ -590,16 +595,11 @@ export default function DashboardOverview() {
                        <p className="text-[11px] text-slate-400 dark:text-white/25 font-medium mb-0.5">{op.metrics?.label2}</p>
                        <p className="text-sm text-slate-800 dark:text-white/80 font-semibold">{op.metrics?.value2}</p>
                      </div>
-                     {op.opType === 'system' && (
-                       <div>
-                         <p className="text-[11px] text-slate-400 dark:text-white/25 font-medium mb-0.5">{(op as any).metrics?.label3}</p>
-                         <p className="text-sm text-slate-800 dark:text-white/80 font-semibold">{(op as any).metrics?.value3}</p>
-                       </div>
-                     )}
                   </div>
+                  )}
                 </div>
 
-                {(op as any).currentActivity && (
+                {op.opType !== 'system' && (op as any).currentActivity && (
                   <div className="mt-auto rounded-xl px-3 py-2.5 text-[12px] text-slate-600 dark:text-white/60 flex items-center gap-2 relative z-10 border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
                     <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent-glow)' }} />
                     <span className="truncate">{(op as any).currentActivity}</span>

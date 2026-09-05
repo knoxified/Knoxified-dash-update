@@ -7,24 +7,63 @@ export async function getRealSystems() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  // Fetch automations for user
-  const { data: userAutomations } = await supabase
-    .from('user_automations')
-    .select(`
-      id,
-      is_enabled,
-      settings,
-      created_at,
-      automation_id,
-      automation_catalog (
-        name,
-        description,
-        key
-      )
-    `)
-    .eq('user_id', user.id);
+  const [{ data: catalog }, { data: activations }] = await Promise.all([
+    supabase
+      .from('systems_catalog')
+      .select('id, name, tier, description, icon_name, complexity')
+      .order('tier', { ascending: true }),
+    supabase
+      .from('user_systems')
+      .select('system_id, is_enabled, activated_at')
+      .eq('user_id', user.id),
+  ]);
 
-  return userAutomations || [];
+  const activationBySystemId = new Map((activations || []).map((a) => [a.system_id, a]));
+
+  return (catalog || []).map((s) => {
+    const activation = activationBySystemId.get(s.id);
+    return {
+      id: s.id,
+      name: s.name,
+      tier: s.tier,
+      description: s.description,
+      iconName: s.icon_name,
+      complexity: s.complexity,
+      isEnabled: Boolean(activation?.is_enabled),
+      activatedAt: activation?.activated_at || null,
+    };
+  });
+}
+
+export async function toggleSystemActivation(systemId: string, enable: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('credits_locked')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (enable && userRow?.credits_locked) {
+    return { error: "locked" };
+  }
+
+  const { error } = await supabase
+    .from('user_systems')
+    .upsert(
+      {
+        user_id: user.id,
+        system_id: systemId,
+        is_enabled: enable,
+        activated_at: enable ? new Date().toISOString() : null,
+      },
+      { onConflict: 'user_id,system_id' }
+    );
+
+  if (error) return { error: error.message };
+  return { success: true };
 }
 
 export async function getDashboardStats(dateRange: string = "7d") {

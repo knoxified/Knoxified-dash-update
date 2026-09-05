@@ -3,6 +3,7 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { Header } from '@/components/Header';
 import { CommandMenu } from '@/components/CommandMenu';
 import { InactivityLogout } from '@/components/InactivityLogout';
+import { DashboardTour } from '@/components/DashboardTour';
 import { createClient } from '@/lib/supabase/server';
 import { Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -28,6 +29,7 @@ export default async function DashboardLayout({
     <>
       <InactivityLogout />
       <CommandMenu />
+      <DashboardTour />
       <Sidebar />
       <main className="md:pl-60 min-h-screen flex flex-col">
         <Header />

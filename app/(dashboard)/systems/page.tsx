@@ -1,14 +1,15 @@
 "use client";
 
 import { Select } from "@/components/ui/Select";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { motion } from "motion/react";
-import { Cpu, MoreVertical, Play, Settings2, ShieldCheck, SquareTerminal, Home, Building, HeartPulse, Users, Shield, Truck, ShoppingCart, Video, Scale, Hammer, Sun, ShoppingBag, Stethoscope, Briefcase, Droplet, Thermometer, Utensils, Dumbbell, Car, RefreshCcw, ArrowRight, Activity, DollarSign, Target, CalendarCheck, Search } from "lucide-react";
+import { toast } from "sonner";
+import { Cpu, Play, Home, Building, HeartPulse, Users, Shield, Truck, ShoppingCart, Video, Scale, Hammer, Sun, ShoppingBag, Stethoscope, Briefcase, Droplet, Thermometer, Utensils, Dumbbell, Car, RefreshCcw, ArrowRight, Search } from "lucide-react";
 import { useSystems } from "@/lib/services/hooks";
-import Link from "next/link";
+import { toggleSystemActivation } from "@/lib/actions/dashboard-actions";
 import { useRouter } from "next/navigation";
 
-const getIcon = (name?: string, defaultIcon?: React.ReactNode) => {
+const getIcon = (name?: string) => {
   switch (name) {
     case "Home": return <Home size={20} />;
     case "Building": return <Building size={20} />;
@@ -29,108 +30,97 @@ const getIcon = (name?: string, defaultIcon?: React.ReactNode) => {
     case "Utensils": return <Utensils size={20} />;
     case "Dumbbell": return <Dumbbell size={20} />;
     case "Car": return <Car size={20} />;
-    default: return defaultIcon || <Cpu size={20} />;
+    default: return <Cpu size={20} />;
   }
 };
 
+const TIER_LABELS: Record<string, string> = { pro: "Pro Tier", enterprise: "Enterprise Tier", custom: "Custom" };
+
+function timeAgo(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days < 1) return "today";
+  if (days === 1) return "1 day ago";
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months > 1 ? "s" : ""} ago`;
+}
+
 export default function SystemsPage() {
   const { data: systems, loading, setData } = useSystems();
-  const [activating, setActivating] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<"revenue" | "name" | "active">("revenue");
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [sortBy, setSortBy] = useState<"tier" | "name" | "active">("tier");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
-  const [selectMode, setSelectMode] = useState(false);
   const router = useRouter();
 
   if (loading) {
-     return <div className="animate-pulse bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl h-64 w-full"></div>;
+    return <div className="animate-pulse glass-card rounded-xl h-64 w-full"></div>;
   }
 
-  const toggleActivation = (e: React.MouseEvent, id: string, currentStatus: string) => {
+  const handleToggle = (e: React.MouseEvent, id: string, currentlyEnabled: boolean) => {
     e.stopPropagation();
-    if (currentStatus === 'Active' || currentStatus === 'Peak Performance' || currentStatus === 'Needs Review') {
-      setData(prev => prev.map(s => s.id === id ? { ...s, status: 'Offline' } : s));
-      return;
-    }
-    
-    setActivating(id);
-    setTimeout(() => {
-      setData(prev => prev.map(s => s.id === id ? { ...s, status: 'Active' } : s));
-      setActivating(null);
-    }, 1500);
-  };
-  
-  const formatCurrency = (value?: number) => {
-    if (!value) return "$0";
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
-  };
-
-  const toggleSelect = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
-
-  const handleBulkAction = (activate: boolean) => {
-    setData(prev => prev.map(s => {
-      if (selected.includes(s.id)) {
-        return { ...s, status: activate ? 'Active' : 'Offline' };
+    setPendingId(id);
+    startTransition(async () => {
+      const result = await toggleSystemActivation(id, !currentlyEnabled);
+      setPendingId(null);
+      if (result?.error === "locked") {
+        toast.error("This account is locked to browsing only. Upgrade to a paid plan to activate systems.");
+        return;
       }
-      return s;
-    }));
-    setSelected([]);
-    setSelectMode(false);
+      if (result?.error) {
+        toast.error("Couldn't update that system: " + result.error);
+        return;
+      }
+      setData((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? { ...s, isEnabled: !currentlyEnabled, activatedAt: !currentlyEnabled ? new Date().toISOString() : null }
+            : s
+        )
+      );
+    });
   };
 
-  const filteredSystems = systems.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredSystems = systems.filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
+  const tierOrder: Record<string, number> = { pro: 0, enterprise: 1, custom: 2 };
   const sortedSystems = [...filteredSystems].sort((a, b) => {
     switch (sortBy) {
-      case "revenue":
-        return (b.revenueImpact || 0) - (a.revenueImpact || 0);
       case "name":
         return a.name.localeCompare(b.name);
-      case "active":
-        const aActive = a.status !== "Offline" ? 1 : 0;
-        const bActive = b.status !== "Offline" ? 1 : 0;
+      case "active": {
+        const aActive = a.isEnabled ? 1 : 0;
+        const bActive = b.isEnabled ? 1 : 0;
         if (aActive !== bActive) return bActive - aActive;
-        return (b.revenueImpact || 0) - (a.revenueImpact || 0);
+        return a.name.localeCompare(b.name);
+      }
+      case "tier":
       default:
-        return 0;
+        return (tierOrder[a.tier] ?? 9) - (tierOrder[b.tier] ?? 9);
     }
   });
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {selected.length > 0 && (
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-md p-3 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3">
-            <span className="text-slate-900 dark:text-white text-sm font-medium">{selected.length} systems selected</span>
-            <button onClick={() => { setSelected([]); setSelectMode(false); }} className="text-slate-500 dark:text-[#888] text-xs hover:text-slate-900 dark:text-white transition-colors">Clear selection</button>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => handleBulkAction(true)} className="bg-sky-100 dark:bg-[#00E5FF]/10 text-sky-600 dark:text-[#00E5FF] hover:bg-sky-200 dark:bg-[#00E5FF]/20 border border-sky-300 dark:border-[#00E5FF]/20 px-3 py-1.5 rounded text-xs font-medium transition-colors">Deploy Selected</button>
-            <button onClick={() => handleBulkAction(false)} className="bg-red-100 dark:bg-[#EF4444]/10 text-red-500 dark:text-[#EF4444] hover:bg-[#EF4444]/20 border border-[#EF4444]/20 px-3 py-1.5 rounded text-xs font-medium transition-colors">Deactivate Selected</button>
-          </div>
-        </div>
-      )}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">
             Systems Portfolio
           </h1>
           <p className="text-slate-500 dark:text-[#888] text-sm">
-            View performance and manage your active AI workforce.
+            Activate the industry systems that match your business. Each one gives your voice agent industry-specific knowledge and tone.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search systems..." 
+            <input
+              type="text"
+              placeholder="Search systems..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:border-sky-400 dark:border-[#00E5FF]/50 transition-colors shadow-sm placeholder:text-slate-400 dark:placeholder:text-[#666]"
+              className="w-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:border-[color:var(--accent)] transition-colors shadow-sm placeholder:text-slate-400 dark:placeholder:text-[#666]"
             />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto z-10">
@@ -138,34 +128,24 @@ export default function SystemsPage() {
             <div className="w-40">
               <Select
                 value={sortBy}
-                onChange={(val) => setSortBy(val as 'revenue' | 'name' | 'active')}
+                onChange={(val) => setSortBy(val as "tier" | "name" | "active")}
                 options={[
-                  { value: "revenue", label: "Revenue Impact" },
+                  { value: "tier", label: "Tier" },
                   { value: "name", label: "Name (A-Z)" },
-                  { value: "active", label: "Most Active" }
+                  { value: "active", label: "Active First" },
                 ]}
               />
             </div>
-            <button
-              onClick={() => { setSelectMode(m => !m); if (selectMode) setSelected([]); }}
-              className={`shrink-0 text-xs font-medium px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
-                selectMode
-                  ? 'bg-[color:var(--accent)]/15 text-[color:var(--accent)] border-[color:var(--accent)]/30'
-                  : 'bg-white dark:bg-[#0F172A] text-slate-500 dark:text-[#888] border-slate-200 dark:border-white/5 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {selectMode ? 'Cancel' : 'Select'}
-            </button>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {sortedSystems.map((sys, idx) => {
-          const isActive = sys.status !== 'Offline';
-          const isActivating = activating === sys.id;
-          const isSelected = selected.includes(sys.id);
-          
+          const isActive = sys.isEnabled;
+          const isRowPending = isPending && pendingId === sys.id;
+          const isCustom = sys.tier === "custom";
+
           return (
             <motion.div
               key={sys.id}
@@ -173,102 +153,94 @@ export default function SystemsPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.4, delay: (idx % 6) * 0.06 }}
-              onClick={() => selectMode ? toggleSelect({ stopPropagation: () => {} } as React.MouseEvent, sys.id) : router.push(`/systems/${sys.id}`)}
+              onClick={() => router.push(`/systems/${sys.id}`)}
               className={`relative overflow-hidden rounded-2xl p-8 flex flex-col group backdrop-blur-md border transition-all duration-300 cursor-pointer transform-gpu hover:-translate-y-1 ${
                 isActive
-                  ? 'bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30 border-sky-200 dark:border-[color:var(--accent)]/30 shadow-[0_0_25px_rgba(0,229,255,0.08)] hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60 hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]'
-                  : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
-              } ${isSelected ? 'ring-1 ring-[color:var(--accent)]/50 border-sky-400 dark:border-[color:var(--accent)]/50' : ''}`}
+                  ? "bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30 border-sky-200 dark:border-[color:var(--accent)]/30 shadow-[0_0_25px_rgba(0,229,255,0.08)] hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60 hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]"
+                  : "bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
+              }`}
             >
-              {selectMode && (
-                <div 
-                  className="absolute top-4 right-4 z-20 cursor-pointer"
-                  onClick={(e) => toggleSelect(e, sys.id)}
-                >
-                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-[color:var(--accent)] border-[color:var(--accent)]' : 'border-[#888] bg-slate-50 dark:bg-[#020617] hover:border-white'}`}>
-                    {isSelected && <svg viewBox="0 0 24 24" fill="none" className="w-3 h-3 text-[#020617]"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                  </div>
-                </div>
-              )}
-
               {isActive && (
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-100"></div>
               )}
-              <div className="flex items-start justify-between mb-5 relative z-10 pr-6">
+              <div className="flex items-start justify-between mb-5 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                    isActive
-                      ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] group-hover:bg-[color:var(--accent)] group-hover:text-slate-900 group-hover:shadow-[0_0_18px_rgba(0,229,255,0.5)]"
-                      : "bg-slate-100 dark:bg-[#020617] text-slate-400 dark:text-[#666] border border-slate-200 dark:border-white/5"
-                  }`}>
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                      isActive
+                        ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] group-hover:bg-[color:var(--accent)] group-hover:text-slate-900 group-hover:shadow-[0_0_18px_rgba(0,229,255,0.5)]"
+                        : "bg-slate-100 dark:bg-[#020617] text-slate-400 dark:text-[#666] border border-slate-200 dark:border-white/5"
+                    }`}
+                  >
                     {getIcon(sys.iconName)}
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{sys.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.7)]' : isActivating ? 'bg-amber-400 dark:bg-[#F59E0B] animate-pulse' : 'bg-[#444]'}`}></span>
-                      <span className={`text-[12px] font-medium ${isActive ? 'text-emerald-600 dark:text-[#10B981]' : isActivating ? 'text-amber-500 dark:text-[#F59E0B]' : 'text-slate-400 dark:text-[#666]'}`}>
-                        {isActive ? sys.status : isActivating ? 'Deploying...' : 'Offline'}
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span
+                        className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
+                          isCustom
+                            ? "bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-500/20"
+                            : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent"
+                        }`}
+                      >
+                        {TIER_LABELS[sys.tier] || sys.tier}
                       </span>
+                      {isActive && (
+                        <span className="flex items-center gap-1 text-[12px] font-medium text-emerald-600 dark:text-[#10B981]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.7)]"></span>
+                          Active{sys.activatedAt ? ` since ${timeAgo(sys.activatedAt)}` : ""}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
-                {isActive && (
-                  <div className="text-right">
-                    <p className="text-[12px] text-emerald-600 dark:text-[#10B981] font-medium mb-1">Revenue Impact</p>
-                    <p className="text-[24px] font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent tracking-tight leading-none">{formatCurrency(sys.revenueImpact)}</p>
-                  </div>
-                )}
               </div>
-              
-              <p className="text-slate-500 dark:text-[#888] text-[14px] mb-6 flex-1 pr-4 leading-relaxed">
+
+              <p className="text-slate-500 dark:text-[#888] text-[14px] mb-6 flex-1 leading-relaxed">
                 {sys.description}
               </p>
-              
-              {isActive && sys.metrics && (
-                <div className="grid grid-cols-3 gap-2 mb-6 bg-slate-50/80 dark:bg-[#020617]/80 backdrop-blur-sm rounded-lg p-4 border border-slate-200 dark:border-white/5">
-                   <div>
-                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><Activity size={12} className="text-[color:var(--accent)]"/> {sys.metrics.label1}</p>
-                     <p className="text-[15px] text-slate-900 dark:text-white font-medium">{sys.metrics.value1}</p>
-                   </div>
-                   <div>
-                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><Target size={12} className="text-[color:var(--accent)]"/> {sys.metrics.label2}</p>
-                     <p className="text-[15px] text-slate-900 dark:text-white font-medium">{sys.metrics.value2}</p>
-                   </div>
-                   <div>
-                     <p className="text-[12px] text-slate-500 dark:text-[#888] font-medium flex items-center gap-1.5 mb-1.5"><CalendarCheck size={12} className="text-[color:var(--accent)]"/> {sys.metrics.label3}</p>
-                     <p className="text-[15px] text-slate-900 dark:text-white font-medium">{sys.metrics.value3}</p>
-                   </div>
-                </div>
-              )}
 
               <div className="flex items-center justify-between pt-5 border-t border-slate-200 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={(e) => toggleActivation(e, sys.id, sys.status)}
-                    disabled={isActivating}
+                {isCustom ? (
+                  <a
+                    href="mailto:hello@knoxified.org?subject=Custom%20Agent%20System"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-md bg-amber-500 text-slate-900 hover:opacity-90 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                  >
+                    Talk to Us
+                  </a>
+                ) : (
+                  <button
+                    onClick={(e) => handleToggle(e, sys.id, isActive)}
+                    disabled={isRowPending}
                     className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-md transition-all ${
-                      isActive 
-                        ? 'bg-transparent text-red-500 dark:text-[#EF4444] hover:bg-red-100 dark:bg-[#EF4444]/10 border border-[#EF4444]' 
-                        : isActivating
-                        ? 'bg-amber-100 dark:bg-[#F59E0B]/10 text-amber-500 dark:text-[#F59E0B] border border-[#F59E0B]/20 opacity-80 cursor-not-allowed'
-                        : 'bg-[color:var(--accent)] text-slate-900 hover:opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.3)] border border-transparent'
-                    }`}>
+                      isActive
+                        ? "bg-transparent text-red-500 dark:text-[#EF4444] hover:bg-red-100 dark:bg-[#EF4444]/10 border border-[#EF4444]"
+                        : isRowPending
+                        ? "bg-amber-100 dark:bg-[#F59E0B]/10 text-amber-500 dark:text-[#F59E0B] border border-[#F59E0B]/20 opacity-80 cursor-not-allowed"
+                        : "bg-[color:var(--accent)] text-slate-900 hover:opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.3)] border border-transparent"
+                    }`}
+                  >
                     {isActive ? (
                       <>Deactivate System</>
-                    ) : isActivating ? (
-                      <><RefreshCcw size={14} className="animate-spin" /> Deploying...</>
+                    ) : isRowPending ? (
+                      <>
+                        <RefreshCcw size={14} className="animate-spin" /> Activating...
+                      </>
                     ) : (
-                      <><Play size={14} /> Deploy System</>
+                      <>
+                        <Play size={14} /> Activate System
+                      </>
                     )}
                   </button>
-                </div>
+                )}
                 <div className="flex items-center gap-1 text-[13px] text-[color:var(--accent)] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  View Analytics <ArrowRight size={14} />
+                  Learn more <ArrowRight size={14} />
                 </div>
               </div>
             </motion.div>
-          )
+          );
         })}
       </div>
     </div>

@@ -77,23 +77,11 @@ export interface Workspace {
 export class DataService {
   static async getSystems(): Promise<System[]> {
     try {
-            const realSys = await getRealSystems();
-      if (realSys && realSys.length > 0) {
-        return realSys.map((s: any) => ({
-          id: s.id,
-          name: s.automation_catalog?.name || 'System',
-          status: s.is_enabled ? 'Active' : 'Offline',
-          revenueImpact: 0,
-          currentActivity: s.automation_catalog?.description || 'Active automation',
-          tier: 'Pro',
-          description: s.automation_catalog?.description || 'Automated System'
-        }));
-      }
+      return await getRealSystems();
     } catch (e) {
-      console.error("Could not fetch real systems, falling back to static:", e);
+      console.error("Could not fetch systems catalog:", e);
+      return [];
     }
-    const { SYSTEMS } = await import('@/data/systems');
-    return SYSTEMS;
   }
 
   static async getAutomations(): Promise<Automation[]> {
