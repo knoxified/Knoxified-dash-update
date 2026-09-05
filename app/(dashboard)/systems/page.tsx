@@ -36,6 +36,63 @@ const getIcon = (name?: string) => {
 
 const TIER_LABELS: Record<string, string> = { pro: "Pro Tier", enterprise: "Enterprise Tier", custom: "Custom" };
 
+// Color psychology, matching the marketing site: cyan reads as trust/tech
+// (Pro, the everyday workhorse tier), indigo/violet reads as premium and
+// sophisticated (Enterprise, the bigger commitment), amber reads as
+// exclusive/high-value (Custom, the bespoke tier). One flat hue for every
+// system regardless of tier is what made this page feel monotone.
+const TIER_THEME: Record<string, {
+  activeBg: string; activeBorder: string; activeShadow: string; hoverBorder: string; hoverShadow: string;
+  glowBg: string; iconBg: string; iconText: string; iconHoverBg: string; iconHoverShadow: string;
+  badgeBg: string; badgeText: string; badgeBorder: string; buttonBg: string; buttonShadow: string; linkText: string;
+}> = {
+  pro: {
+    activeBg: "bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30",
+    activeBorder: "border-sky-200 dark:border-[color:var(--accent)]/30",
+    activeShadow: "shadow-[0_0_25px_rgba(0,229,255,0.08)]",
+    hoverBorder: "hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60",
+    hoverShadow: "hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]",
+    glowBg: "bg-[color:var(--accent)]/10",
+    iconBg: "bg-[color:var(--accent)]/10 text-[color:var(--accent)]",
+    iconText: "text-[color:var(--accent)]",
+    iconHoverBg: "group-hover:bg-[color:var(--accent)] group-hover:text-slate-900",
+    iconHoverShadow: "group-hover:shadow-[0_0_18px_rgba(0,229,255,0.5)]",
+    badgeBg: "bg-sky-100 dark:bg-[color:var(--accent)]/10", badgeText: "text-sky-700 dark:text-[color:var(--accent)]", badgeBorder: "border-sky-300 dark:border-[color:var(--accent)]/20",
+    buttonBg: "bg-[color:var(--accent)] text-slate-900", buttonShadow: "shadow-[0_0_15px_rgba(0,229,255,0.3)]",
+    linkText: "text-[color:var(--accent)]",
+  },
+  enterprise: {
+    activeBg: "bg-gradient-to-br from-white to-indigo-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-indigo-950/40",
+    activeBorder: "border-indigo-200 dark:border-indigo-500/30",
+    activeShadow: "shadow-[0_0_25px_rgba(99,102,241,0.1)]",
+    hoverBorder: "hover:border-indigo-400 dark:hover:border-indigo-400/60",
+    hoverShadow: "hover:shadow-[0_0_35px_rgba(99,102,241,0.22)]",
+    glowBg: "bg-indigo-500/10",
+    iconBg: "bg-indigo-500/10 text-indigo-500 dark:text-indigo-400",
+    iconText: "text-indigo-500 dark:text-indigo-400",
+    iconHoverBg: "group-hover:bg-indigo-500 group-hover:text-white",
+    iconHoverShadow: "group-hover:shadow-[0_0_18px_rgba(99,102,241,0.5)]",
+    badgeBg: "bg-indigo-100 dark:bg-indigo-500/10", badgeText: "text-indigo-700 dark:text-indigo-300", badgeBorder: "border-indigo-300 dark:border-indigo-500/30",
+    buttonBg: "bg-indigo-500 text-white", buttonShadow: "shadow-[0_0_15px_rgba(99,102,241,0.35)]",
+    linkText: "text-indigo-500 dark:text-indigo-400",
+  },
+  custom: {
+    activeBg: "bg-gradient-to-br from-white to-amber-50 dark:from-slate-900 dark:to-amber-950/20",
+    activeBorder: "border-amber-300 dark:border-amber-500/40",
+    activeShadow: "shadow-[0_0_25px_rgba(245,158,11,0.12)]",
+    hoverBorder: "hover:border-amber-400 dark:hover:border-amber-400/70",
+    hoverShadow: "hover:shadow-[0_0_35px_rgba(245,158,11,0.28)]",
+    glowBg: "bg-amber-500/10",
+    iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    iconText: "text-amber-600 dark:text-amber-400",
+    iconHoverBg: "group-hover:bg-amber-500 group-hover:text-slate-900",
+    iconHoverShadow: "group-hover:shadow-[0_0_18px_rgba(245,158,11,0.5)]",
+    badgeBg: "bg-amber-100 dark:bg-amber-500/10", badgeText: "text-amber-700 dark:text-amber-400", badgeBorder: "border-amber-300 dark:border-amber-500/30",
+    buttonBg: "bg-amber-500 text-slate-900", buttonShadow: "shadow-[0_0_15px_rgba(245,158,11,0.3)]",
+    linkText: "text-amber-600 dark:text-amber-400",
+  },
+};
+
 function timeAgo(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime();
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -145,6 +202,7 @@ export default function SystemsPage() {
           const isActive = sys.isEnabled;
           const isRowPending = isPending && pendingId === sys.id;
           const isCustom = sys.tier === "custom";
+          const theme = TIER_THEME[sys.tier] || TIER_THEME.pro;
 
           return (
             <motion.div
@@ -156,19 +214,19 @@ export default function SystemsPage() {
               onClick={() => router.push(`/systems/${sys.id}`)}
               className={`relative overflow-hidden rounded-2xl p-8 flex flex-col group backdrop-blur-md border transition-all duration-300 cursor-pointer transform-gpu hover:-translate-y-1 ${
                 isActive
-                  ? "bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30 border-sky-200 dark:border-[color:var(--accent)]/30 shadow-[0_0_25px_rgba(0,229,255,0.08)] hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60 hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]"
+                  ? `${theme.activeBg} ${theme.activeBorder} ${theme.activeShadow} ${theme.hoverBorder} ${theme.hoverShadow}`
                   : "bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
               }`}
             >
               {isActive && (
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-100"></div>
+                <div className={`absolute top-0 right-0 w-64 h-64 ${theme.glowBg} rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-100`}></div>
               )}
               <div className="flex items-start justify-between mb-5 relative z-10">
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                       isActive
-                        ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] group-hover:bg-[color:var(--accent)] group-hover:text-slate-900 group-hover:shadow-[0_0_18px_rgba(0,229,255,0.5)]"
+                        ? `${theme.iconBg} ${theme.iconHoverBg} ${theme.iconHoverShadow}`
                         : "bg-slate-100 dark:bg-[#020617] text-slate-400 dark:text-[#666] border border-slate-200 dark:border-white/5"
                     }`}
                   >
@@ -178,11 +236,7 @@ export default function SystemsPage() {
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{sys.name}</h3>
                     <div className="flex items-center gap-2 mt-1.5">
                       <span
-                        className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
-                          isCustom
-                            ? "bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-500/20"
-                            : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent"
-                        }`}
+                        className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}
                       >
                         {TIER_LABELS[sys.tier] || sys.tier}
                       </span>
@@ -206,7 +260,7 @@ export default function SystemsPage() {
                   <a
                     href="mailto:hello@knoxified.org?subject=Custom%20Agent%20System"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-md bg-amber-500 text-slate-900 hover:opacity-90 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-md ${theme.buttonBg} hover:opacity-90 transition-all ${theme.buttonShadow}`}
                   >
                     Talk to Us
                   </a>
@@ -219,7 +273,7 @@ export default function SystemsPage() {
                         ? "bg-transparent text-red-500 dark:text-[#EF4444] hover:bg-red-100 dark:bg-[#EF4444]/10 border border-[#EF4444]"
                         : isRowPending
                         ? "bg-amber-100 dark:bg-[#F59E0B]/10 text-amber-500 dark:text-[#F59E0B] border border-[#F59E0B]/20 opacity-80 cursor-not-allowed"
-                        : "bg-[color:var(--accent)] text-slate-900 hover:opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.3)] border border-transparent"
+                        : `${theme.buttonBg} hover:opacity-90 ${theme.buttonShadow} border border-transparent`
                     }`}
                   >
                     {isActive ? (
@@ -235,7 +289,7 @@ export default function SystemsPage() {
                     )}
                   </button>
                 )}
-                <div className="flex items-center gap-1 text-[13px] text-[color:var(--accent)] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={`flex items-center gap-1 text-[13px] ${theme.linkText} font-medium opacity-0 group-hover:opacity-100 transition-opacity`}>
                   Learn more <ArrowRight size={14} />
                 </div>
               </div>

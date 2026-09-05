@@ -4,6 +4,12 @@ import { useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, BrainCircuit, Play, Settings, X, ShieldCheck, RefreshCcw, Volume2 } from "lucide-react";
+
+const TIER_ACCENT: Record<string, { icon: string; iconActive: string; badge: string; button: string }> = {
+  pro: { icon: "text-slate-400 dark:text-[#666]", iconActive: "bg-[color:var(--accent)]/10 text-[color:var(--accent)] border-[color:var(--accent)]/30", badge: "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888]", button: "bg-[color:var(--accent)] text-slate-900 shadow-[0_0_15px_rgba(0,229,255,0.3)]" },
+  enterprise: { icon: "text-slate-400 dark:text-[#666]", iconActive: "bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border-indigo-500/30", badge: "bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300", button: "bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.35)]" },
+  custom: { icon: "text-slate-400 dark:text-[#666]", iconActive: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30", badge: "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400", button: "bg-amber-500 text-slate-900 shadow-[0_0_15px_rgba(245,158,11,0.3)]" },
+};
 import { useSystems } from "@/lib/services/hooks";
 import { toggleSystemActivation } from "@/lib/actions/dashboard-actions";
 
@@ -46,6 +52,7 @@ export default function SystemDetailPage() {
 
   const isActive = system.isEnabled;
   const isCustom = system.tier === "custom";
+  const accent = TIER_ACCENT[system.tier] || TIER_ACCENT.pro;
 
   const handleToggle = () => {
     startTransition(async () => {
@@ -84,13 +91,13 @@ export default function SystemDetailPage() {
         </nav>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center border ${isActive ? 'bg-[color:var(--accent)]/10 text-[color:var(--accent)] border-[color:var(--accent)]/30' : 'bg-slate-50 dark:bg-[#020617] text-slate-400 dark:text-[#666] border-slate-200 dark:border-white/5'}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center border ${isActive ? accent.iconActive : 'bg-slate-50 dark:bg-[#020617] text-slate-400 dark:text-[#666] border-slate-200 dark:border-white/5'}`}>
               <BrainCircuit size={28} />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{system.name}</h1>
               <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent">
+                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border border-transparent ${accent.badge}`}>
                   {TIER_LABELS[system.tier] || system.tier}
                 </span>
                 {isActive && (
@@ -113,7 +120,7 @@ export default function SystemDetailPage() {
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${
                   isActive
                     ? 'bg-transparent text-red-500 dark:text-[#EF4444] hover:bg-red-100 dark:bg-[#EF4444]/10 border border-[#EF4444]'
-                    : 'bg-[color:var(--accent)] text-slate-900 hover:opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.3)]'
+                    : `${accent.button} hover:opacity-90`
                 }`}
               >
                 {isPending ? <RefreshCcw size={16} className="animate-spin" /> : <Play size={16} />}
@@ -202,7 +209,7 @@ export default function SystemDetailPage() {
             <button
               onClick={handleToggle}
               disabled={isPending}
-              className="px-5 py-2.5 bg-[color:var(--accent)] text-slate-900 text-sm font-semibold rounded-lg transition-all hover:opacity-90 flex items-center gap-2 shadow-[0_0_15px_rgba(0,229,255,0.3)]"
+              className={`px-5 py-2.5 text-sm font-semibold rounded-lg transition-all hover:opacity-90 flex items-center gap-2 ${accent.button}`}
             >
               {isPending ? <RefreshCcw size={16} className="animate-spin" /> : <Play size={16} />}
               Activate System

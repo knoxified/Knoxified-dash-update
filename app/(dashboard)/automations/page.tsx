@@ -8,6 +8,23 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { AUTOMATIONS, AUTOMATION_CATALOG_KEYS } from "@/data/automations";
 
+// Color psychology per category, instead of one flat cyan for every card
+// regardless of what it does: Sales=emerald (growth/money), Marketing=violet
+// (creativity), Support=cyan (trust/calm, the brand default), Operations=sky
+// (efficiency), Finance=amber (value), HR=rose (human warmth), Legal=indigo
+// (formality), Admin=slate (neutral/utility).
+const CATEGORY_THEME: Record<string, { icon: string; glow: string; border: string; badge: string; shadow: string }> = {
+  Sales: { icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400", glow: "bg-emerald-500/10", border: "hover:border-emerald-400/60", badge: "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400", shadow: "group-hover:shadow-[0_0_18px_rgba(16,185,129,0.4)]" },
+  Marketing: { icon: "bg-violet-500/10 text-violet-600 dark:text-violet-400", glow: "bg-violet-500/10", border: "hover:border-violet-400/60", badge: "bg-violet-100 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400", shadow: "group-hover:shadow-[0_0_18px_rgba(139,92,246,0.4)]" },
+  Support: { icon: "bg-[color:var(--accent)]/10 text-[color:var(--accent)]", glow: "bg-[color:var(--accent)]/10", border: "hover:border-[color:var(--accent)]/60", badge: "bg-sky-100 dark:bg-[color:var(--accent)]/10 text-sky-700 dark:text-[color:var(--accent)]", shadow: "group-hover:shadow-[0_0_18px_rgba(0,229,255,0.4)]" },
+  Operations: { icon: "bg-sky-500/10 text-sky-600 dark:text-sky-400", glow: "bg-sky-500/10", border: "hover:border-sky-400/60", badge: "bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400", shadow: "group-hover:shadow-[0_0_18px_rgba(56,189,248,0.4)]" },
+  Finance: { icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400", glow: "bg-amber-500/10", border: "hover:border-amber-400/60", badge: "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400", shadow: "group-hover:shadow-[0_0_18px_rgba(245,158,11,0.4)]" },
+  HR: { icon: "bg-rose-500/10 text-rose-600 dark:text-rose-400", glow: "bg-rose-500/10", border: "hover:border-rose-400/60", badge: "bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400", shadow: "group-hover:shadow-[0_0_18px_rgba(244,63,94,0.4)]" },
+  Legal: { icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400", glow: "bg-indigo-500/10", border: "hover:border-indigo-400/60", badge: "bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400", shadow: "group-hover:shadow-[0_0_18px_rgba(99,102,241,0.4)]" },
+  Admin: { icon: "bg-slate-500/10 text-slate-600 dark:text-slate-400", glow: "bg-slate-500/10", border: "hover:border-slate-400/60", badge: "bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-400", shadow: "group-hover:shadow-[0_0_18px_rgba(100,116,139,0.4)]" },
+};
+const DEFAULT_CATEGORY_THEME = CATEGORY_THEME.Support;
+
 export default function AutomationsPage() {
   const router = useRouter();
   const [automations, setAutomations] = useState<any[]>([]);
@@ -401,6 +418,7 @@ export default function AutomationsPage() {
           const hasEmojiMatch = /\p{Emoji}/u.test(possibleEmoji);
           const icon = hasEmojiMatch ? possibleEmoji : "⚡";
           const title = hasEmojiMatch ? nameParts.slice(0, -1).join(" ") : aut.name;
+          const catTheme = CATEGORY_THEME[aut.category] || DEFAULT_CATEGORY_THEME;
 
           return (
             <motion.div
@@ -411,24 +429,29 @@ export default function AutomationsPage() {
               onClick={() => router.push(`/automations/${aut.id}`)}
               className={`relative overflow-hidden rounded-2xl p-8 flex flex-col group cursor-pointer backdrop-blur-md border transition-all duration-300 transform-gpu hover:-translate-y-1 ${
                 aut.enabled
-                  ? 'bg-gradient-to-br from-white to-sky-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-cyan-950/30 border-sky-200 dark:border-[color:var(--accent)]/30 shadow-[0_0_25px_rgba(0,229,255,0.08)] hover:border-sky-400 dark:hover:border-[color:var(--accent)]/60 hover:shadow-[0_0_35px_rgba(0,229,255,0.18)]'
+                  ? `bg-gradient-to-br from-white to-slate-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-[#0F172A] border-slate-200 dark:border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.06)] ${catTheme.border}`
                   : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
               }`}
             >
               {aut.enabled && (
-                <div className="absolute top-0 right-0 w-56 h-56 bg-[color:var(--accent)]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className={`absolute top-0 right-0 w-56 h-56 ${catTheme.glow} rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity duration-500`}></div>
               )}
 
               <div className="relative z-10 flex items-start justify-between mb-5">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-full bg-[color:var(--accent)]/10 flex items-center justify-center text-2xl group-hover:shadow-[0_0_18px_rgba(0,229,255,0.4)] transition-shadow">
+                  <div className={`w-12 h-12 rounded-full ${catTheme.icon} flex items-center justify-center text-2xl ${catTheme.shadow} transition-shadow`}>
                     {icon}
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">{title}</h3>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${aut.enabled ? 'bg-emerald-100 dark:bg-[#10B981]/10 text-emerald-600 dark:text-[#10B981] border-emerald-300 dark:border-[#10B981]/20' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent'}`}>
-                      {aut.enabled ? 'Running' : 'Paused'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${aut.enabled ? 'bg-emerald-100 dark:bg-[#10B981]/10 text-emerald-600 dark:text-[#10B981] border-emerald-300 dark:border-[#10B981]/20' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent'}`}>
+                        {aut.enabled ? 'Running' : 'Paused'}
+                      </span>
+                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border border-transparent ${catTheme.badge}`}>
+                        {aut.category}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 

@@ -74,26 +74,26 @@ export function Sidebar() {
       <div className="flex-1 py-2 px-2.5 flex flex-col gap-5 overflow-y-auto">
         <div>
           <div className="flex flex-col gap-0.5">
-            <NavItem href="/" icon={<LayoutDashboard size={14} />} label="Overview" pathname={pathname} />
-            <NavItem href="/metrics" icon={<BarChart3 size={14} />} label="Analytics" pathname={pathname} />
+            <NavItem href="/" icon={<LayoutDashboard size={14} />} label="Overview" pathname={pathname} tourId="overview" />
+            <NavItem href="/metrics" icon={<BarChart3 size={14} />} label="Analytics" pathname={pathname} tourId="metrics" />
           </div>
         </div>
 
         <div>
           <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Intelligence</p>
           <div className="flex flex-col gap-0.5">
-            <NavItem href="/systems" icon={<Server size={14} />} label="Systems" pathname={pathname} />
-            <NavItem href="/automations" icon={<Zap size={14} />} label="Automations" pathname={pathname} />
-            <NavItem href="/agent-config" icon={<Settings size={14} />} label="Agent Config" pathname={pathname} />
+            <NavItem href="/systems" icon={<Server size={14} />} label="Systems" pathname={pathname} tourId="systems" />
+            <NavItem href="/automations" icon={<Zap size={14} />} label="Automations" pathname={pathname} tourId="automations" />
+            <NavItem href="/agent-config" icon={<Settings size={14} />} label="Agent Config" pathname={pathname} tourId="agent-config" />
           </div>
         </div>
 
         <div>
           <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Operations</p>
           <div className="flex flex-col gap-0.5">
-            <NavItem href="/leads" icon={<Users size={14} />} label="Leads" pathname={pathname} />
-            <NavItem href="/campaigns" icon={<Megaphone size={14} />} label="Campaigns" pathname={pathname} />
-            <NavItem href="/conversations" icon={<MessageSquare size={14} />} label="Inbox" pathname={pathname} />
+            <NavItem href="/leads" icon={<Users size={14} />} label="Leads" pathname={pathname} tourId="leads" />
+            <NavItem href="/campaigns" icon={<Megaphone size={14} />} label="Campaigns" pathname={pathname} tourId="campaigns" />
+            <NavItem href="/conversations" icon={<MessageSquare size={14} />} label="Inbox" pathname={pathname} tourId="conversations" />
           </div>
         </div>
 
@@ -101,10 +101,10 @@ export function Sidebar() {
           <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Infrastructure</p>
           <div className="flex flex-col gap-0.5">
             <NavItem href="/deployments" icon={<Layers size={14} />} label="Deployments" pathname={pathname} />
-            <NavItem href="/billing" icon={<CreditCard size={14} />} label="Billing" pathname={pathname} />
+            <NavItem href="/billing" icon={<CreditCard size={14} />} label="Billing" pathname={pathname} tourId="billing" />
             <NavItem href="/integrations" icon={<Plug size={14} />} label="Integrations" pathname={pathname} />
             <NavItem href="/compliance" icon={<ShieldCheck size={14} />} label="Compliance" pathname={pathname} />
-            <NavItem href="/settings" icon={<Settings size={14} />} label="Settings" pathname={pathname} />
+            <NavItem href="/settings" icon={<Settings size={14} />} label="Settings" pathname={pathname} tourId="settings" />
           </div>
         </div>
       </div>
@@ -182,11 +182,12 @@ export function Sidebar() {
   );
 }
 
-function NavItem({ href, icon, label, pathname }: { href: string; icon: ReactNode; label: string; pathname: string }) {
+function NavItem({ href, icon, label, pathname, tourId }: { href: string; icon: ReactNode; label: string; pathname: string; tourId?: string }) {
   const active = pathname === href || (href !== '/' && pathname.startsWith(href));
   return (
     <Link
       href={href}
+      data-tour={tourId}
       className={`relative flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg transition-all duration-200 text-[13px] font-medium ${
         active
           ? "text-white"
