@@ -30,11 +30,14 @@ const STEPS: Step[] = [
 
 interface Rect { top: number; left: number; width: number; height: number; }
 
+const MOBILE_BREAKPOINT = 768; // matches Tailwind's md: breakpoint, where Sidebar hides in favor of MobileHeader
+
 export function DashboardTour() {
   const router = useRouter();
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     getTourStatus().then(({ completed }) => {
@@ -43,6 +46,11 @@ export function DashboardTour() {
   }, []);
 
   const measure = useCallback(() => {
+    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+      setRect(null);
+      return;
+    }
     const step = STEPS[stepIndex];
     const el = document.querySelector(`[data-tour="${step.tourId}"]`);
     if (el) {
@@ -115,14 +123,23 @@ export function DashboardTour() {
         )}
         {!rect && <div className="absolute inset-0 bg-slate-900/78" />}
 
-        {/* Tooltip callout */}
+        {/* Tooltip callout -- pinned bottom-sheet style on mobile (no
+            sidebar to anchor to there), positioned popover on desktop */}
         <motion.div
           key={"tooltip-" + stepIndex}
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={isMobile ? { opacity: 0, y: 20 } : { opacity: 0, x: -8 }}
+          animate={isMobile ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }}
           transition={{ duration: 0.25, delay: 0.1 }}
-          className="absolute glass-card rounded-xl p-5 w-72 shadow-2xl shadow-black/40 pointer-events-auto"
-          style={{ top: tooltipTop, left: Math.min(tooltipLeft, (typeof window !== "undefined" ? window.innerWidth : 1200) - 300) }}
+          className={
+            isMobile
+              ? "fixed left-0 right-0 bottom-0 glass-card rounded-t-2xl p-5 pb-8 shadow-2xl shadow-black/40 pointer-events-auto"
+              : "absolute glass-card rounded-xl p-5 w-72 shadow-2xl shadow-black/40 pointer-events-auto"
+          }
+          style={
+            isMobile
+              ? undefined
+              : { top: tooltipTop, left: Math.min(tooltipLeft, (typeof window !== "undefined" ? window.innerWidth : 1200) - 300) }
+          }
         >
           <button
             onClick={finish}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, BrainCircuit, Play, Settings, X, ShieldCheck, RefreshCcw, Volume2 } from "lucide-react";
@@ -12,6 +12,8 @@ const TIER_ACCENT: Record<string, { icon: string; iconActive: string; badge: str
 };
 import { useSystems } from "@/lib/services/hooks";
 import { toggleSystemActivation } from "@/lib/actions/dashboard-actions";
+import { getAgentIdentity } from "@/lib/actions/agent-identity-actions";
+import { AgentAvatar } from "@/components/AgentAvatar";
 
 const TIER_LABELS: Record<string, string> = { pro: "Pro Tier", enterprise: "Enterprise Tier", custom: "Custom" };
 
@@ -32,6 +34,11 @@ export default function SystemDetailPage() {
   const [showConfig, setShowConfig] = useState(false);
   const [recordingEnabled, setRecordingEnabled] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [identity, setIdentity] = useState({ agentNickname: "Alex", agentAvatar: "bot", organizationName: "" });
+
+  useEffect(() => {
+    getAgentIdentity().then(setIdentity);
+  }, []);
 
   if (loading) {
     return <div className="animate-pulse glass-card rounded-xl h-[400px] w-full"></div>;
@@ -186,8 +193,12 @@ export default function SystemDetailPage() {
           <h3 className="text-slate-900 dark:text-white font-semibold text-base flex items-center gap-2 mb-2">
             <Volume2 size={18} className="text-[color:var(--accent)]" /> Voice Agent Tuning
           </h3>
+          <div className="flex items-center gap-3 mb-3">
+            <AgentAvatar avatarKey={identity.agentAvatar} size="sm" />
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">{identity.agentNickname}</p>
+          </div>
           <p className="text-slate-500 dark:text-[#888] text-sm leading-relaxed">
-            Your voice agent now speaks with {system.name.toLowerCase()}-specific knowledge and tone on every call, in
+            {identity.agentNickname} now speaks with {system.name.toLowerCase()}-specific knowledge and tone on every call, in
             addition to your Business Memory from Agent Config. Real call activity for this system shows up in{" "}
             <button onClick={() => router.push('/conversations')} className="text-[color:var(--accent)] hover:underline font-medium">Conversations</button>.
           </p>

@@ -163,6 +163,22 @@ export function useWorkspace() {
   return { data, loading };
 }
 
+export function useAgentIdentity() {
+  const [data, setData] = useState({ agentNickname: "Alex", agentAvatar: "bot", organizationName: "" });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    import("@/lib/actions/agent-identity-actions").then(({ getAgentIdentity }) => {
+      getAgentIdentity().then((identity) => {
+        setData(identity);
+        setLoading(false);
+      });
+    });
+  }, []);
+
+  return { data, loading };
+}
+
 export function usePlans() {
   const [data, setData] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);

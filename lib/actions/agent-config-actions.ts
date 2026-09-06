@@ -17,7 +17,7 @@ export async function getAgentConfig() {
   
   const res = await supabase
     .from("agent_configs")
-    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt")
+    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt, agent_nickname, agent_avatar")
     .eq("user_id", user.id)
     .maybeSingle();
     
@@ -65,6 +65,8 @@ export async function updateAgentConfig(formData: FormData) {
   const agent_persona = formData.get("agent_persona") as string;
   const agent_greeting = formData.get("agent_greeting") as string;
   const organization_name = formData.get("organization_name") as string;
+  const agent_nickname = (formData.get("agent_nickname") as string) || "Alex";
+  const agent_avatar = (formData.get("agent_avatar") as string) || "bot";
   const business_hours = formData.get("business_hours") as string;
   const temperatureStr = formData.get("temperature") as string;
   const memory_context = (formData.get("memory_context") as string) || null;
@@ -95,6 +97,8 @@ export async function updateAgentConfig(formData: FormData) {
     temperature,
     memory_context,
     custom_system_prompt,
+    agent_nickname,
+    agent_avatar,
     updated_at: new Date().toISOString(),
   };
 

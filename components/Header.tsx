@@ -4,10 +4,12 @@ import { Bell, Search, Plus, Wifi } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { toast } from "sonner";
-import { useWorkspace } from "@/lib/services/hooks";
+import { useWorkspace, useAgentIdentity } from "@/lib/services/hooks";
+import { AgentAvatar } from "./AgentAvatar";
 
 export function Header() {
   const { data: workspace, loading: workspaceLoading } = useWorkspace();
+  const { data: identity } = useAgentIdentity();
 
   const planName = workspace?.plan?.name || "—";
   const creditsUsed = workspace?.workspace?.usage?.credits ?? 0;
@@ -19,16 +21,17 @@ export function Header() {
     <header className="hidden md:flex h-[60px] items-center px-6 border-b border-slate-200/60 dark:border-white/[0.04] sticky top-0 z-30 transition-all"
       style={{ background: 'light-dark(rgba(255,255,255,0.85), rgba(6,13,25,0.85))', backdropFilter: 'blur(24px) saturate(180%)' }}
     >
-      {/* Left: Systems online indicator */}
-      <div className="flex items-center gap-2.5">
+      {/* Left: Agent identity -- persistent everywhere, not just Agent Config */}
+      <Link href="/agent-config" className="flex items-center gap-2 group">
+        <AgentAvatar avatarKey={identity.agentAvatar} size="sm" />
         <div className="flex items-center gap-1.5">
-          <span className="relative flex h-2 w-2">
+          <span className="text-[13px] font-semibold text-slate-800 dark:text-white/90 group-hover:opacity-80 transition-opacity">{identity.agentNickname}</span>
+          <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" style={{ boxShadow: '0 0 6px rgba(16,185,129,0.8)' }}></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" style={{ boxShadow: '0 0 6px rgba(16,185,129,0.8)' }}></span>
           </span>
-          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tracking-wide">All Systems Online</span>
         </div>
-      </div>
+      </Link>
 
       <div className="flex-1" />
 

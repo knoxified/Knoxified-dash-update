@@ -6,8 +6,11 @@ import { getAgentConfig, updateAgentConfig } from "@/lib/actions/agent-config-ac
 import { Select } from "@/components/ui/Select";
 import { scanWebsite } from "@/lib/actions/website-scan-actions";
 import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
+import { previewAgentVoice } from "@/lib/actions/voice-preview-actions";
 import { VOICE_OPTIONS } from "@/lib/voice-options";
-import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded } from "lucide-react";
+import { AVATAR_OPTIONS } from "@/lib/avatar-options";
+import { AgentAvatar } from "@/components/AgentAvatar";
+import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause } from "lucide-react";
 
 export default function AgentConfigPage() {
   const [isPending, startTransition] = useTransition();
@@ -62,7 +65,12 @@ export default function AgentConfigPage() {
     temperature: "0.7",
     preferred_voice_id: VOICE_OPTIONS[0].id,
     memory_context: "",
+    agent_nickname: "Alex",
+    agent_avatar: AVATAR_OPTIONS[0].key,
   });
+
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
 
   const [scanUrl, setScanUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -86,6 +94,8 @@ export default function AgentConfigPage() {
           temperature: agentConfig?.temperature?.toString() || "0.7",
           preferred_voice_id: voiceSettings?.preferred_voice_id || VOICE_OPTIONS[0].id,
           memory_context: agentConfig?.memory_context || "",
+          agent_nickname: agentConfig?.agent_nickname || "Alex",
+          agent_avatar: agentConfig?.agent_avatar || AVATAR_OPTIONS[0].key,
         });
         if (organizationWebsite) setScanUrl(organizationWebsite);
       }
@@ -167,6 +177,36 @@ export default function AgentConfigPage() {
         toast.error(result.error);
       } else {
         toast.success("Agent configuration saved successfully.");
+      }
+    });
+  };
+
+  const handlePreviewVoice = () => {
+    setIsPreviewing(true);
+    startTransition(async () => {
+      // Save first so the preview always reflects what's actually on screen
+      // right now, not whatever was last saved -- otherwise picking a new
+      // avatar/name/voice and hitting Preview could play the OLD identity,
+      // which would be a confusing, broken-feeling first impression.
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => formData.set(key, value));
+      const saveResult = await updateAgentConfig(formData);
+      if (saveResult?.error) {
+        toast.error("Couldn't save before previewing: " + saveResult.error);
+        setIsPreviewing(false);
+        return;
+      }
+
+      const result = await previewAgentVoice();
+      setIsPreviewing(false);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      if (result.audioDataUrl) {
+        const audio = new Audio(result.audioDataUrl);
+        setPreviewAudio(audio);
+        audio.play();
       }
     });
   };
@@ -261,7 +301,70 @@ export default function AgentConfigPage() {
       <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 md:p-8">
         {activeTab === "settings" ? (
         <form onSubmit={handleSubmit} className="space-y-8">
-          
+
+          <div className="space-y-5 pb-2">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <Bot size={16} className="text-[color:var(--accent)]" /> Agent Identity
+            </h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 glass-card rounded-xl p-5">
+              <AgentAvatar avatarKey={form.agent_avatar} size="lg" />
+              <div className="flex-1 w-full">
+                <p className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                  {form.agent_nickname || "Your Agent"}
+                </p>
+                <p className="text-[13px] text-slate-500 dark:text-[#888] mb-3">
+                  &ldquo;Hi, this is {form.agent_nickname || "your assistant"} from {form.organization_name || "your business"}. How can I help you today?&rdquo;
+                </p>
+                <button
+                  type="button"
+                  onClick={handlePreviewVoice}
+                  disabled={isPreviewing || isPending}
+                  className="flex items-center gap-2 text-xs font-semibold bg-[color:var(--accent)] text-slate-900 px-3 py-1.5 rounded-lg hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,229,255,0.25)] disabled:opacity-60"
+                >
+                  {isPreviewing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+                  {isPreviewing ? "Generating..." : "Preview Voice"}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="agent_nickname" className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
+                  Agent Name
+                </label>
+                <input
+                  id="agent_nickname"
+                  name="agent_nickname"
+                  type="text"
+                  value={form.agent_nickname}
+                  onChange={(e) => setForm({ ...form, agent_nickname: e.target.value })}
+                  placeholder="e.g. Alice, Calista, Richard"
+                  maxLength={40}
+                  className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] transition-shadow"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">Avatar</label>
+                <input type="hidden" name="agent_avatar" value={form.agent_avatar} />
+                <div className="flex flex-wrap gap-2">
+                  {AVATAR_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setForm({ ...form, agent_avatar: opt.key })}
+                      title={opt.label}
+                      className={`rounded-full transition-all ${form.agent_avatar === opt.key ? "ring-2 ring-[color:var(--accent)] ring-offset-2 ring-offset-white dark:ring-offset-[#0F172A]" : "opacity-60 hover:opacity-100"}`}
+                    >
+                      <AgentAvatar avatarKey={opt.key} size="sm" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-slate-200 dark:bg-white/5 w-full"></div>
+
           <div className="space-y-4">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
               <Building size={16} className="text-sky-500" /> Organization Profile
