@@ -1,16 +1,7 @@
-import { Bot, Headphones, Sparkles, UserCircle, Smile, Shield, Star, Zap } from "lucide-react";
-import { getAvatarOption } from "@/lib/avatar-options";
+"use client";
 
-const ICONS: Record<string, React.ElementType> = {
-  bot: Bot,
-  headset: Headphones,
-  sparkles: Sparkles,
-  "user-circle": UserCircle,
-  smile: Smile,
-  shield: Shield,
-  star: Star,
-  zap: Zap,
-};
+import { useMemo } from "react";
+import { renderAvatarSvg } from "@/lib/avatar-options";
 
 export function AgentAvatar({
   avatarKey,
@@ -21,14 +12,15 @@ export function AgentAvatar({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const option = getAvatarOption(avatarKey);
-  const Icon = ICONS[option.key] || Bot;
-  const dims = size === "sm" ? "w-8 h-8" : size === "lg" ? "w-16 h-16" : "w-12 h-12";
-  const iconSize = size === "sm" ? 16 : size === "lg" ? 32 : 22;
+  const dims = size === "sm" ? 32 : size === "lg" ? 96 : 48;
+  const svg = useMemo(() => renderAvatarSvg(avatarKey, dims), [avatarKey, dims]);
 
   return (
-    <div className={`rounded-full flex items-center justify-center shrink-0 ${dims} ${option.colorClass} ${className}`}>
-      <Icon size={iconSize} />
-    </div>
+    <div
+      className={`rounded-full overflow-hidden shrink-0 bg-slate-100 dark:bg-white/5 ${className}`}
+      style={{ width: dims, height: dims }}
+      // Self-generated SVG (DiceBear), never user-supplied markup -- safe.
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   );
 }
