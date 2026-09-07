@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, BrainCircuit, Play, Settings, X, ShieldCheck, RefreshCcw, Volume2 } from "lucide-react";
+import { ArrowLeft, BrainCircuit, Play, Settings, X, ShieldCheck, RefreshCcw, Volume2, Phone, Brain, Check, AlertTriangle } from "lucide-react";
 
 const TIER_ACCENT: Record<string, { icon: string; iconActive: string; badge: string; button: string }> = {
   pro: { icon: "text-slate-400 dark:text-[#666]", iconActive: "bg-[color:var(--accent)]/10 text-[color:var(--accent)] border-[color:var(--accent)]/30", badge: "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888]", button: "bg-[color:var(--accent)] text-slate-900 shadow-[0_0_15px_rgba(0,229,255,0.3)]" },
@@ -13,6 +13,7 @@ const TIER_ACCENT: Record<string, { icon: string; iconActive: string; badge: str
 import { useSystems } from "@/lib/services/hooks";
 import { toggleSystemActivation } from "@/lib/actions/dashboard-actions";
 import { getAgentIdentity } from "@/lib/actions/agent-identity-actions";
+import { getSystemAutomations, toggleUserAutomation, getAgentReadiness, SystemAutomation } from "@/lib/actions/system-automation-actions";
 import { AgentAvatar } from "@/components/AgentAvatar";
 
 const TIER_LABELS: Record<string, string> = { pro: "Pro Tier", enterprise: "Enterprise Tier", custom: "Custom" };
@@ -35,10 +36,68 @@ export default function SystemDetailPage() {
   const [recordingEnabled, setRecordingEnabled] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [identity, setIdentity] = useState({ agentNickname: "Alex", agentAvatar: "bot", organizationName: "" });
+  const [automations, setAutomations] = useState<SystemAutomation[]>([]);
+  const [automationsLoading, setAutomationsLoading] = useState(true);
+  const [pendingAutomationId, setPendingAutomationId] = useState<string | null>(null);
+  const [readiness, setReadiness] = useState({ hasPhoneNumber: false, hasMemory: false });
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   useEffect(() => {
     getAgentIdentity().then(setIdentity);
+    getAgentReadiness().then(setReadiness);
   }, []);
+
+  useEffect(() => {
+    if (typeof params.id !== "string") return;
+    setAutomationsLoading(true);
+    getSystemAutomations(params.id).then((result) => {
+      setAutomations(result.automations);
+      setAutomationsLoading(false);
+    });
+  }, [params.id]);
+
+  const handlePreviewVoice = () => {
+    setIsPreviewing(true);
+    import("@/lib/actions/voice-preview-actions").then(async ({ previewAgentVoice }) => {
+      const result = await previewAgentVoice();
+      setIsPreviewing(false);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      if (result.audioDataUrl) {
+        new Audio(result.audioDataUrl).play();
+      }
+    });
+  };
+
+  const handleToggleAutomation = (automation: SystemAutomation) => {
+    setPendingAutomationId(automation.id);
+    startTransition(async () => {
+      const result = await toggleUserAutomation(automation.id, automation.key, !automation.isEnabled);
+      setPendingAutomationId(null);
+      if (result?.error === "locked") {
+        toast.error("This account is locked to browsing only. Upgrade to a paid plan to activate automations.");
+        return;
+      }
+      if (result?.error === "slot_limit") {
+        toast.error(`Your plan allows ${result.limit} active automation slot${result.limit === 1 ? "" : "s"} (${result.used} in use). Upgrade to activate more.`);
+        return;
+      }
+      if (result?.error) {
+        toast.error("Couldn't update that automation: " + result.error);
+        return;
+      }
+      setAutomations((prev) => prev.map((a) => (a.id === automation.id ? { ...a, isEnabled: !automation.isEnabled } : a)));
+      // This automation may also belong to other systems (see
+      // toggleUserAutomation) -- refresh the current system's own derived
+      // active/percentage from the source of truth rather than guessing.
+      if (typeof params.id === "string") {
+        const refreshed = await getSystemAutomations(params.id);
+        setAutomations(refreshed.automations);
+      }
+    });
+  };
 
   if (loading) {
     return <div className="animate-pulse glass-card rounded-xl h-[400px] w-full"></div>;
@@ -57,9 +116,18 @@ export default function SystemDetailPage() {
     );
   }
 
-  const isActive = system.isEnabled;
   const isCustom = system.tier === "custom";
+  const isPro = system.tier === "pro";
   const accent = TIER_ACCENT[system.tier] || TIER_ACCENT.pro;
+
+  const enabledAutomationCount = automations.filter((a) => a.isEnabled).length;
+  const totalAutomationCount = automations.length;
+  const activationPercent = totalAutomationCount > 0 ? Math.round((enabledAutomationCount / totalAutomationCount) * 100) : 0;
+  // Pro-tier systems derive "active" from their automations (see
+  // toggleUserAutomation) rather than a manual toggle -- use that as the
+  // source of truth here instead of system.isEnabled, which only refreshes
+  // on a full page reload of useSystems().
+  const isActive = isPro ? activationPercent === 100 && totalAutomationCount > 0 : system.isEnabled;
 
   const handleToggle = () => {
     startTransition(async () => {
@@ -98,21 +166,30 @@ export default function SystemDetailPage() {
         </nav>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center border ${isActive ? accent.iconActive : 'bg-slate-50 dark:bg-[#020617] text-slate-400 dark:text-[#666] border-slate-200 dark:border-white/5'}`}>
-              <BrainCircuit size={28} />
-            </div>
+            {isPro ? (
+              <AgentAvatar avatarKey={identity.agentAvatar} size="lg" />
+            ) : (
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center border ${isActive ? accent.iconActive : 'bg-slate-50 dark:bg-[#020617] text-slate-400 dark:text-[#666] border-slate-200 dark:border-white/5'}`}>
+                <BrainCircuit size={28} />
+              </div>
+            )}
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{system.name}</h1>
               <div className="flex items-center gap-2 mt-1.5">
                 <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border border-transparent ${accent.badge}`}>
                   {TIER_LABELS[system.tier] || system.tier}
                 </span>
-                {isActive && (
+                {isActive ? (
                   <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-[#10B981]">
                     <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
                     Active{system.activatedAt ? ` since ${timeAgo(system.activatedAt)}` : ""}
                   </span>
-                )}
+                ) : isPro && totalAutomationCount > 0 ? (
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    {activationPercent}% Active
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
@@ -120,7 +197,7 @@ export default function SystemDetailPage() {
             <button onClick={() => setShowConfig(true)} className="px-4 py-2 bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
               <Settings size={16} /> Configuration
             </button>
-            {!isCustom && (
+            {!isCustom && !isPro && (
               <button
                 onClick={handleToggle}
                 disabled={isPending}
@@ -188,7 +265,116 @@ export default function SystemDetailPage() {
         <p className="text-slate-500 dark:text-[#888] text-[15px] leading-relaxed">{system.description}</p>
       </div>
 
-      {isActive ? (
+      {isPro ? (
+        <>
+          {/* Voice agent interface -- this agent is inbound-only, it never
+              places outbound calls on its own */}
+          <div className="glass-card rounded-xl p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+              <div className="flex items-center gap-4">
+                <AgentAvatar avatarKey={identity.agentAvatar} size="lg" />
+                <div>
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">{identity.agentNickname}</p>
+                  <p className="text-[13px] text-slate-500 dark:text-[#888]">
+                    {identity.organizationName ? `Answering for ${identity.organizationName}` : "Your voice agent"} &middot; Inbound calls only
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handlePreviewVoice}
+                disabled={isPreviewing}
+                className="flex items-center justify-center gap-2 bg-[color:var(--accent)] text-slate-900 px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 shadow-[0_0_15px_rgba(0,229,255,0.25)] shrink-0"
+              >
+                {isPreviewing ? <RefreshCcw size={16} className="animate-spin" /> : <Volume2 size={16} />}
+                {isPreviewing ? "Generating..." : "Preview Voice"}
+              </button>
+            </div>
+
+            {/* Readiness checklist */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className={`flex items-center gap-3 rounded-lg p-3 border ${readiness.hasPhoneNumber ? "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${readiness.hasPhoneNumber ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>
+                  {readiness.hasPhoneNumber ? <Check size={16} /> : <AlertTriangle size={16} />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-slate-900 dark:text-white">Phone number</p>
+                  {readiness.hasPhoneNumber ? (
+                    <p className="text-[12px] text-emerald-700 dark:text-emerald-400">Forwarding connected</p>
+                  ) : (
+                    <button onClick={() => router.push("/agent-config")} className="text-[12px] text-amber-700 dark:text-amber-400 hover:underline">Not set &mdash; add one</button>
+                  )}
+                </div>
+              </div>
+              <div className={`flex items-center gap-3 rounded-lg p-3 border ${readiness.hasMemory ? "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${readiness.hasMemory ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>
+                  {readiness.hasMemory ? <Check size={16} /> : <AlertTriangle size={16} />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-slate-900 dark:text-white">Business memory</p>
+                  {readiness.hasMemory ? (
+                    <p className="text-[12px] text-emerald-700 dark:text-emerald-400">Set</p>
+                  ) : (
+                    <button onClick={() => router.push("/agent-config")} className="text-[12px] text-amber-700 dark:text-amber-400 hover:underline">Not set &mdash; add one</button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Automations for this system -- ALL of them need to be active
+              for the system itself to count as Active (see
+              toggleUserAutomation), not a single button */}
+          <div className="glass-card rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-slate-900 dark:text-white font-semibold text-base">Automations</h3>
+              {totalAutomationCount > 0 && (
+                <span className="text-[13px] font-medium text-slate-500 dark:text-[#888]">{enabledAutomationCount} of {totalAutomationCount} active</span>
+              )}
+            </div>
+
+            {totalAutomationCount > 0 && (
+              <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden mb-5">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${activationPercent === 100 ? "bg-emerald-500" : "bg-amber-500"}`}
+                  style={{ width: `${activationPercent}%` }}
+                />
+              </div>
+            )}
+
+            {automationsLoading ? (
+              <div className="animate-pulse grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {[...Array(5)].map((_, i) => <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-white/5" />)}
+              </div>
+            ) : automations.length === 0 ? (
+              <p className="text-sm text-slate-400 dark:text-[#666] text-center py-8">
+                Automations for this system haven't been connected yet &mdash; check back soon.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {automations.map((a) => {
+                  const isRowPending = isPending && pendingAutomationId === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => handleToggleAutomation(a)}
+                      disabled={isRowPending}
+                      className={`relative flex flex-col items-center text-center gap-2 rounded-xl p-4 border backdrop-blur-md transition-all disabled:opacity-60 ${
+                        a.isEnabled
+                          ? "bg-gradient-to-br from-white to-emerald-50 dark:from-[#0F172A] dark:to-emerald-950/30 border-emerald-300 dark:border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.12)] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                          : "bg-gradient-to-br from-white to-amber-50/60 dark:from-[#0F172A] dark:to-amber-950/10 border-amber-200 dark:border-amber-500/20 hover:border-amber-400 dark:hover:border-amber-400/50"
+                      }`}
+                    >
+                      <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${a.isEnabled ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]" : "bg-amber-400"}`} />
+                      <span className="text-2xl">{isRowPending ? <RefreshCcw size={22} className="animate-spin mx-auto" /> : a.icon || "⚡"}</span>
+                      <span className="text-[12px] font-semibold text-slate-900 dark:text-white leading-tight">{a.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      ) : isActive ? (
         <div className="glass-card rounded-xl p-6">
           <h3 className="text-slate-900 dark:text-white font-semibold text-base flex items-center gap-2 mb-2">
             <Volume2 size={18} className="text-[color:var(--accent)]" /> Voice Agent Tuning

@@ -264,6 +264,18 @@ export default function SystemsPage() {
                   >
                     Talk to Us
                   </a>
+                ) : sys.tier === "pro" ? (
+                  // Pro-tier "active" is derived from its automations (see
+                  // the system detail page) -- no direct toggle here.
+                  <span
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-md border ${
+                      isActive
+                        ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20"
+                        : `${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`
+                    }`}
+                  >
+                    {isActive ? "All automations active" : "Manage automations \u2192"}
+                  </span>
                 ) : (
                   <button
                     onClick={(e) => handleToggle(e, sys.id, isActive)}
