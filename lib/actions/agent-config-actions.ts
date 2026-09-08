@@ -17,7 +17,7 @@ export async function getAgentConfig() {
   
   const res = await supabase
     .from("agent_configs")
-    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt, agent_nickname, agent_avatar")
+    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt, agent_nickname, agent_avatar, call_recording_enabled")
     .eq("user_id", user.id)
     .maybeSingle();
     
@@ -164,5 +164,34 @@ export async function updateAgentConfig(formData: FormData) {
   }
 
   revalidatePath("/agent-config");
+  return { success: true };
+}
+
+// Call recording is off by default and requires explicit compliance
+// acknowledgment before it can be turned on -- recording a call without
+// disclosing it is illegal in two-party-consent jurisdictions. The
+// disclosure itself (spoken to callers) is separate and handled by
+// voice-agent-beta's buildGreeting(); this just gates the toggle itself.
+export async function toggleCallRecording(enable: boolean, consentAcknowledged: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  if (enable && !consentAcknowledged) {
+    return { error: "Recording must be enabled with compliance acknowledgment." };
+  }
+
+  const updatePayload: any = { call_recording_enabled: enable };
+  if (enable) updatePayload.call_recording_consent_acknowledged_at = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("agent_configs")
+    .update(updatePayload)
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/agent-config");
+  revalidatePath("/conversations");
   return { success: true };
 }

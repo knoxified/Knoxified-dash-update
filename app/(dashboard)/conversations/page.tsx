@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MessageSquare, Phone, Mic, Inbox } from "lucide-react";
-import { getCallTranscripts, type CallTranscript } from "@/lib/actions/conversations-actions";
+import { MessageSquare, Phone, Mic, Inbox, Lock, Volume2 } from "lucide-react";
+import Link from "next/link";
+import { getCallTranscripts, getCallRecordingStatus, type CallTranscript } from "@/lib/actions/conversations-actions";
 
 function formatDuration(secs: number): string {
   const m = Math.floor(secs / 60);
@@ -31,13 +32,18 @@ export default function ConversationsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recordingEnabled, setRecordingEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     async function load() {
-      const { transcripts, error } = await getCallTranscripts();
+      const [{ transcripts, error }, { enabled }] = await Promise.all([
+        getCallTranscripts(),
+        getCallRecordingStatus(),
+      ]);
       setTranscripts(transcripts);
       if (transcripts.length > 0) setSelectedId(transcripts[0].id);
       setError(error);
+      setRecordingEnabled(enabled);
       setLoading(false);
     }
     load();
@@ -58,6 +64,24 @@ export default function ConversationsPage() {
         </div>
       </div>
 
+      {recordingEnabled === false ? (
+        <div className="flex-1 glass-card rounded-xl flex flex-col items-center justify-center text-center px-6 py-16">
+          <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-5">
+            <Lock size={26} />
+          </div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Call recording is off</h2>
+          <p className="text-sm text-slate-500 dark:text-[#888] max-w-md mb-6">
+            Conversations shows the transcript and audio from your agent's calls, which only get saved once call
+            recording is turned on. Off by default, and callers always hear a disclosure before it starts.
+          </p>
+          <Link
+            href="/agent-config"
+            className="px-5 py-2.5 bg-[color:var(--accent)] text-slate-900 text-sm font-semibold rounded-lg transition-all hover:opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.3)]"
+          >
+            Turn on in Agent Config
+          </Link>
+        </div>
+      ) : (
       <div className="flex-1 glass-card rounded-xl overflow-hidden flex flex-col md:flex-row">
         <div className="w-full md:w-80 border-r border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#020617]/50 flex flex-col">
           <div className="p-4 border-b border-slate-200 dark:border-white/5">
@@ -129,6 +153,11 @@ export default function ConversationsPage() {
                     {selected.provider ? ` • via ${selected.provider}` : ""}
                   </p>
                 </div>
+                {selected.recording_url && (
+                  <audio controls src={selected.recording_url} className="h-9 max-w-[220px]">
+                    <Volume2 size={14} />
+                  </audio>
+                )}
               </div>
 
               <div className="flex-1 p-6 overflow-y-auto space-y-6">
@@ -170,6 +199,7 @@ export default function ConversationsPage() {
           )}
         </div>
       </div>
+      )}
 
       {error && (
         <p className="text-xs text-red-500 dark:text-red-400">Couldn&apos;t load conversations: {error}</p>

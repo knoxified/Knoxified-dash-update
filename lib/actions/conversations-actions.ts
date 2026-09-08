@@ -14,8 +14,23 @@ export type CallTranscript = {
   provider: string | null;
   duration_secs: number;
   messages: CallTranscriptMessage[];
+  recording_url: string | null;
   created_at: string;
 };
+
+export async function getCallRecordingStatus(): Promise<{ enabled: boolean }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { enabled: false };
+
+  const { data } = await supabase
+    .from("agent_configs")
+    .select("call_recording_enabled")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return { enabled: Boolean(data?.call_recording_enabled) };
+}
 
 export async function getCallTranscripts(): Promise<{
   transcripts: CallTranscript[];
@@ -30,7 +45,7 @@ export async function getCallTranscripts(): Promise<{
 
   const { data, error } = await supabase
     .from("call_transcripts")
-    .select("id, call_id, caller_number, provider, duration_secs, messages, created_at")
+    .select("id, call_id, caller_number, provider, duration_secs, messages, recording_url, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(100);

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { getAgentConfig, updateAgentConfig } from "@/lib/actions/agent-config-actions";
+import { getAgentConfig, updateAgentConfig, toggleCallRecording } from "@/lib/actions/agent-config-actions";
 import { Select } from "@/components/ui/Select";
 import { scanWebsite } from "@/lib/actions/website-scan-actions";
 import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
@@ -10,7 +10,7 @@ import { previewAgentVoice } from "@/lib/actions/voice-preview-actions";
 import { VOICE_OPTIONS } from "@/lib/voice-options";
 import { AVATAR_OPTIONS } from "@/lib/avatar-options";
 import { AgentAvatar } from "@/components/AgentAvatar";
-import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause } from "lucide-react";
+import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle } from "lucide-react";
 
 export default function AgentConfigPage() {
   const [isPending, startTransition] = useTransition();
@@ -24,24 +24,6 @@ export default function AgentConfigPage() {
   const [scheduleNotes, setScheduleNotes] = useState("");
   const [selectedTranscripts, setSelectedTranscripts] = useState<number[]>([]);
 
-  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
-  const [acceptedTermsCheckbox, setAcceptedTermsCheckbox] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const hasAccepted = localStorage.getItem('acceptedRecordingLaws');
-      if (!hasAccepted) {
-        setTimeout(() => setShowLegalDisclaimer(true), 0);
-      }
-    }
-  }, []);
-
-  const handleAcceptLegal = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('acceptedRecordingLaws', 'true');
-    }
-    setShowLegalDisclaimer(false);
-  };
 
   const handleSelectTranscript = (index: number) => {
     setSelectedTranscripts(prev => 
@@ -80,6 +62,11 @@ export default function AgentConfigPage() {
   const [isNumbersLoading, setIsNumbersLoading] = useState(true);
   const [isAddingNumber, startAddingNumber] = useTransition();
 
+  const [recordingEnabled, setRecordingEnabled] = useState(false);
+  const [showRecordingConsentModal, setShowRecordingConsentModal] = useState(false);
+  const [acceptedTermsCheckbox, setAcceptedTermsCheckbox] = useState(false);
+  const [isTogglingRecording, startRecordingTransition] = useTransition();
+
   useEffect(() => {
     async function loadData() {
       const { agentConfig, voiceSettings, organizationWebsite, error } = await getAgentConfig();
@@ -97,6 +84,7 @@ export default function AgentConfigPage() {
           agent_nickname: agentConfig?.agent_nickname || "Alex",
           agent_avatar: agentConfig?.agent_avatar || AVATAR_OPTIONS[0].key,
         });
+        setRecordingEnabled(Boolean(agentConfig?.call_recording_enabled));
         if (organizationWebsite) setScanUrl(organizationWebsite);
       }
       setLoading(false);
@@ -208,6 +196,36 @@ export default function AgentConfigPage() {
         setPreviewAudio(audio);
         audio.play();
       }
+    });
+  };
+
+  const handleRecordingToggleClick = () => {
+    if (recordingEnabled) {
+      // Turning off never needs consent -- only turning on does.
+      startRecordingTransition(async () => {
+        const result = await toggleCallRecording(false, false);
+        if (result?.error) {
+          toast.error(result.error);
+          return;
+        }
+        setRecordingEnabled(false);
+        toast.success("Call recording turned off.");
+      });
+    } else {
+      setShowRecordingConsentModal(true);
+    }
+  };
+
+  const handleConfirmRecordingConsent = () => {
+    startRecordingTransition(async () => {
+      const result = await toggleCallRecording(true, true);
+      setShowRecordingConsentModal(false);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      setRecordingEnabled(true);
+      toast.success("Call recording turned on. Callers will hear a disclosure at the start of every call.");
     });
   };
 
@@ -540,6 +558,31 @@ export default function AgentConfigPage() {
             </div>
           </div>
 
+          <div className="h-px bg-slate-200 dark:bg-white/5 w-full"></div>
+
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck size={16} className="text-sky-500" /> Call Recording
+            </h2>
+            <div className="flex items-start justify-between gap-4 bg-slate-50 dark:bg-[#020617] rounded-lg p-4 border border-slate-200 dark:border-white/10">
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">Record calls</p>
+                <p className="text-xs text-slate-500 dark:text-[#888] max-w-md">
+                  Off by default. When on, every caller hears a recording disclosure at the end of the greeting before the
+                  conversation continues, and both the transcript and audio appear in Conversations afterward.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRecordingToggleClick}
+                disabled={isTogglingRecording}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 disabled:opacity-50 ${recordingEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/10"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${recordingEnabled ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+          </div>
+
           <div className="pt-4 flex justify-end">
             <button
               type="submit"
@@ -806,7 +849,7 @@ export default function AgentConfigPage() {
         </div>
       )}
 
-      {showLegalDisclaimer && (
+      {showRecordingConsentModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
             <div className="px-6 py-5 border-b border-slate-200 dark:border-white/10 flex items-center gap-3">
@@ -825,7 +868,7 @@ export default function AgentConfigPage() {
             
             <div className="p-6 overflow-y-auto space-y-4 text-sm text-slate-700 dark:text-slate-300 custom-scrollbar">
               <p>
-                Before accessing the Agent Configuration, you must acknowledge the legal framework governing call recording and artificial intelligence interactions in the United States.
+                Before turning on call recording, you must acknowledge the legal framework governing call recording and artificial intelligence interactions in the United States.
               </p>
               
               <h4 className="font-semibold text-slate-900 dark:text-white mt-4">Federal Law (One-Party Consent)</h4>
@@ -845,6 +888,9 @@ export default function AgentConfigPage() {
               <p>
                 The Federal Communications Commission (FCC) and the Federal Trade Commission (FTC) (via the Telemarketing Sales Rule and TCPA) monitor outbound automated communications. Additionally, many state regulations require clear disclosure that the caller is interacting with an Artificial Intelligence or automated system before the call proceeds.
               </p>
+              <p>
+                When you turn this on, Knoxified automatically appends a recording disclosure to the end of your agent's greeting on every call, spoken before the conversation continues -- you don't need to write this yourself.
+              </p>
 
               <div className="bg-slate-50 dark:bg-[#020617] p-4 rounded-lg border border-slate-200 dark:border-white/10 mt-6">
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -861,10 +907,16 @@ export default function AgentConfigPage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex justify-end">
+            <div className="px-6 py-4 bg-slate-50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-3">
+              <button
+                onClick={() => { setShowRecordingConsentModal(false); setAcceptedTermsCheckbox(false); }}
+                className="px-6 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
               <button 
-                disabled={!acceptedTermsCheckbox}
-                onClick={handleAcceptLegal}
+                disabled={!acceptedTermsCheckbox || isTogglingRecording}
+                onClick={() => { handleConfirmRecordingConsent(); setAcceptedTermsCheckbox(false); }}
                 className="px-6 py-2.5 rounded-lg text-sm font-medium bg-sky-600 hover:bg-sky-700 dark:bg-[#00E5FF] dark:hover:bg-[#00E5FF]/90 text-white dark:text-[#020617] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 I Understand & Accept

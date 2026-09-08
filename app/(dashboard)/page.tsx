@@ -1,10 +1,11 @@
 "use client";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell, Settings2, Radio, Mic, PhoneOff, Volume2, Users, Send } from "lucide-react";
+import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell, Settings2, Radio, Mic, PhoneOff, Volume2, Users, Send, Info } from "lucide-react";
 import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, CartesianGrid, Bar } from "recharts";
 import { useDashboardMetrics, useSystemLogs, useSystems, useAutomations } from "@/lib/services/hooks";
+import { getAgentReadiness } from "@/lib/actions/system-automation-actions";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 
@@ -46,6 +47,11 @@ export default function DashboardOverview() {
   const [callError, setCallError] = useState<string | null>(null);
   const [callTranscript, setCallTranscript] = useState<{ role: "user" | "agent"; content: string }[]>([]);
   const [takeoverActive, setTakeoverActive] = useState(false);
+  const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getAgentReadiness().then((r) => setHasPhoneNumber(r.hasPhoneNumber));
+  }, []);
   const [whisperMode, setWhisperMode] = useState(false);
   const [whisperText, setWhisperText] = useState("");
   const voiceMinutesUsed = metrics?.voiceUsage?.used ?? 0;
@@ -331,6 +337,17 @@ export default function DashboardOverview() {
           {callError && (
             <div className="mb-4 text-[12px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2 relative z-10">
               {callError}
+            </div>
+          )}
+
+          {hasPhoneNumber === false && (
+            <div className="mb-4 flex items-start gap-2.5 text-[12px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-3 py-2.5 relative z-10">
+              <Info size={14} className="shrink-0 mt-0.5" />
+              <span>
+                This is a <strong>web call preview</strong> in your browser, not a real phone call. To let real
+                customers call your agent, connect a phone number in{" "}
+                <Link href="/agent-config" className="underline hover:opacity-80 font-medium">Agent Config</Link>.
+              </span>
             </div>
           )}
 
