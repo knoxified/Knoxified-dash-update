@@ -7,6 +7,7 @@ import { Select } from "@/components/ui/Select";
 import { scanWebsite } from "@/lib/actions/website-scan-actions";
 import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
 import { previewAgentVoice } from "@/lib/actions/voice-preview-actions";
+import { triggerDiscountOffer } from "@/lib/actions/discount-actions";
 import { VOICE_OPTIONS } from "@/lib/voice-options";
 import { AVATAR_OPTIONS } from "@/lib/avatar-options";
 import { AgentAvatar } from "@/components/AgentAvatar";
@@ -195,6 +196,9 @@ export default function AgentConfigPage() {
         const audio = new Audio(result.audioDataUrl);
         setPreviewAudio(audio);
         audio.play();
+        // First real "this actually works" moment -- the agreed trigger
+        // point for the 48h Founding Rate window. No-op if already set.
+        triggerDiscountOffer();
       }
     });
   };

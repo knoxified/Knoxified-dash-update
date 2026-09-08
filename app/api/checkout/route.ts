@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { FOUNDING_RATE_PLAN_NAME } from "@/lib/actions/discount-actions";
 
 /**
  * POST /api/checkout
@@ -45,6 +46,29 @@ export async function POST(request: Request) {
       { error: "This plan is not available for self-serve checkout" },
       { status: 400 }
     );
+  }
+
+  // The Founding Rate offer is time-boxed per-user, permanently, once
+  // triggered -- never trust a client-side countdown for this. If the
+  // window's expired (or was never triggered, or already claimed), this
+  // plan simply isn't purchasable for this user, full stop.
+  if (plan.name === FOUNDING_RATE_PLAN_NAME) {
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("discount_offer_expires_at, discount_offer_claimed_at")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const expiresAt = userRow?.discount_offer_expires_at;
+    const alreadyClaimed = Boolean(userRow?.discount_offer_claimed_at);
+    const windowOpen = expiresAt && new Date(expiresAt).getTime() > Date.now();
+
+    if (!windowOpen || alreadyClaimed) {
+      return Response.json(
+        { error: "This offer has expired and can't be reactivated." },
+        { status: 410 }
+      );
+    }
   }
 
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;

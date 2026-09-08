@@ -118,7 +118,11 @@ export async function getRecentActivityLogs() {
 
 export async function getRealPlans() {
   const supabase = await createClient();
-  const { data: plans, error } = await supabase.from('plans').select('*').eq('is_active', true);
+  const { data: plans, error } = await supabase
+    .from('plans')
+    .select('*')
+    .eq('is_active', true)
+    .neq('name', 'Pro Founding Rate');
   if (error) {
     console.error("Error fetching plans:", error);
     return [];

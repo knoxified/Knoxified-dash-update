@@ -80,7 +80,7 @@ export async function POST(request: Request) {
   // tampered or mismatched checkout can't grant a higher plan than paid for.
   const { data: plan } = await supabaseAdmin
     .from("plans")
-    .select("price, currency")
+    .select("price, currency, name")
     .eq("id", planId)
     .single();
 
@@ -93,16 +93,22 @@ export async function POST(request: Request) {
     return new Response("OK", { status: 200 });
   }
 
+  const updatePayload: Record<string, unknown> = {
+    plan_id: planId,
+    // A successful paid upgrade is exactly the nudge the duplicate-account
+    // lock (see /areas or docs on credits_locked) exists to produce --
+    // clear it here rather than requiring a separate manual step.
+    credits_locked: false,
+    credits_locked_reason: null,
+  };
+
+  if (plan.name === "Pro Founding Rate") {
+    updatePayload.discount_offer_claimed_at = new Date().toISOString();
+  }
+
   const { error: updateError } = await supabaseAdmin
     .from("users")
-    .update({
-      plan_id: planId,
-      // A successful paid upgrade is exactly the nudge the duplicate-account
-      // lock (see /areas or docs on credits_locked) exists to produce --
-      // clear it here rather than requiring a separate manual step.
-      credits_locked: false,
-      credits_locked_reason: null,
-    })
+    .update(updatePayload)
     .eq("id", userId);
 
   if (updateError) {

@@ -4,6 +4,7 @@ import { Header } from '@/components/Header';
 import { CommandMenu } from '@/components/CommandMenu';
 import { InactivityLogout } from '@/components/InactivityLogout';
 import { DashboardTour } from '@/components/DashboardTour';
+import { DiscountOfferBanner } from '@/components/DiscountOfferBanner';
 import { createClient } from '@/lib/supabase/server';
 import { Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -45,6 +46,7 @@ export default async function DashboardLayout({
             </p>
           </div>
         )}
+        <DiscountOfferBanner />
         <div className="flex-1 p-5 md:p-8 max-w-[1400px] w-full mx-auto">
           {children}
         </div>
