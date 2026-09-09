@@ -120,7 +120,7 @@ export default function AutomationsPage() {
     }
 
     if (!aut.catalogId) {
-      toast.info("Coming soon! This automation doesn't have a live webhook yet.");
+      toast.info("This automation isn't available to activate yet — check back soon.");
       return;
     }
 
@@ -257,7 +257,7 @@ export default function AutomationsPage() {
     if (!currentUser || !activeAutomation) return;
 
     if (!activeAutomation.catalogId) {
-      toast.info("Coming soon! This automation doesn't have a live webhook yet.");
+      toast.info("This automation isn't available to activate yet — check back soon.");
       return;
     }
     
@@ -308,7 +308,7 @@ export default function AutomationsPage() {
     } catch (err: any) {
       console.error("Error saving settings:", err);
       if (err.code === '23503') {
-        toast.info("Coming soon! This automation doesn't have a live webhook yet.");
+        toast.info("This automation isn't available to activate yet — check back soon.");
       } else {
         toast.error("Failed to save settings. Automation might not be available yet.");
       }
