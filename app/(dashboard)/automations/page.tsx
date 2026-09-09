@@ -64,7 +64,9 @@ export default function AutomationsPage() {
             userAutosRes.data.forEach(ua => userAutomationsMap.set(ua.automation_id, ua));
           }
 
-          if (catalogRes.data) {
+          if (catalogRes.error) {
+            console.error("Could not fetch automation_catalog -- every automation will show as 'Coming soon' until this is fixed", catalogRes.error);
+          } else if (catalogRes.data) {
             catalogRes.data.forEach((c: any) => catalogByKey.set(c.key, c));
           }
 
