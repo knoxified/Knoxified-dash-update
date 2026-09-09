@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { FOUNDING_RATE_PLAN_NAME } from "@/lib/constants/discount";
 
 /**
  * POST /api/webhooks/flutterwave
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
     credits_locked_reason: null,
   };
 
-  if (plan.name === "Pro Founding Rate") {
+  if (plan.name === FOUNDING_RATE_PLAN_NAME) {
     updatePayload.discount_offer_claimed_at = new Date().toISOString();
   }
 

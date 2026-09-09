@@ -1,9 +1,9 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { FOUNDING_RATE_PLAN_NAME } from "@/lib/constants/discount";
 
 const OFFER_WINDOW_HOURS = 48;
-export const FOUNDING_RATE_PLAN_NAME = "Pro Founding Rate";
 
 export async function getFoundingRatePlan() {
   const supabase = await createClient();

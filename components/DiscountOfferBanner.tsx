@@ -107,11 +107,10 @@ export function DiscountOfferBanner() {
               </div>
 
               <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
-                Your Pro rate is locked in
+                Your Pro rate is ready
               </h2>
               <p className="text-[14px] text-slate-500 dark:text-[#888] leading-relaxed mb-5">
-                As a new account, you can claim Pro at a reduced founding rate for the next 48 hours. After that,
-                this offer is gone for good.
+                For a limited time, get Pro at a reduced rate. After the next 48 hours, this offer is gone for good.
               </p>
 
               <div className="flex items-end gap-3 mb-6">
@@ -140,7 +139,7 @@ export function DiscountOfferBanner() {
       {(!showModal || dismissedModal) && (
         <div className="bg-orange-500 px-5 md:px-8 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
           <p className="text-[13px] text-white font-medium">
-            Your Pro founding rate ($397/mo, was $697) expires in{" "}
+            Pro's reduced rate ($397/mo, was $697) expires in{" "}
             <span className="font-bold tabular-nums">{countdown}</span>
           </p>
           <button

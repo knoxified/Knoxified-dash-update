@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { FOUNDING_RATE_PLAN_NAME } from "@/lib/actions/discount-actions";
+import { FOUNDING_RATE_PLAN_NAME } from "@/lib/constants/discount";
 
 /**
  * POST /api/checkout
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         },
         customizations: {
           title: "Knoxified",
-          description: `${plan.name} subscription`,
+          description: `${plan.name === FOUNDING_RATE_PLAN_NAME ? "Pro" : plan.name} subscription`,
         },
         meta: {
           user_id: user.id,

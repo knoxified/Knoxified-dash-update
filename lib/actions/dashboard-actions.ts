@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "../supabase/server";
+import { FOUNDING_RATE_PLAN_NAME } from "../constants/discount";
 
 export async function getRealSystems() {
   const supabase = await createClient();
@@ -122,7 +123,7 @@ export async function getRealPlans() {
     .from('plans')
     .select('*')
     .eq('is_active', true)
-    .neq('name', 'Pro Founding Rate');
+    .neq('name', FOUNDING_RATE_PLAN_NAME);
   if (error) {
     console.error("Error fetching plans:", error);
     return [];
