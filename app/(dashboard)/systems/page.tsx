@@ -4,7 +4,7 @@ import { Select } from "@/components/ui/Select";
 import { useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { Cpu, Play, Home, Building, HeartPulse, Users, Shield, Truck, ShoppingCart, Video, Scale, Hammer, Sun, ShoppingBag, Stethoscope, Briefcase, Droplet, Thermometer, Utensils, Dumbbell, Car, RefreshCcw, ArrowRight, Search } from "lucide-react";
+import { Cpu, Play, Home, Building, HeartPulse, Users, Shield, Truck, ShoppingCart, Video, Scale, Hammer, Sun, ShoppingBag, Stethoscope, Briefcase, Droplet, Thermometer, Utensils, Dumbbell, Car, RefreshCcw, ArrowRight, Search, HeartHandshake } from "lucide-react";
 import { useSystems } from "@/lib/services/hooks";
 import { toggleSystemActivation } from "@/lib/actions/dashboard-actions";
 import { useRouter } from "next/navigation";
@@ -30,6 +30,7 @@ const getIcon = (name?: string) => {
     case "Utensils": return <Utensils size={20} />;
     case "Dumbbell": return <Dumbbell size={20} />;
     case "Car": return <Car size={20} />;
+    case "HeartHandshake": return <HeartHandshake size={20} />;
     default: return <Cpu size={20} />;
   }
 };
