@@ -368,7 +368,7 @@ export default function MailCraftBoard() {
               className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
             />
             <p className="text-xs text-slate-400">
-              Applies to this whole campaign. MailCraft writes the pain point and offer around this industry, not the individual candidate's listed industry (Clay/Apollo data is often too generic to write from directly).
+              Applies to this whole campaign. MailCraft writes the pain point and offer around this industry, not whatever's in the candidate's own Industry field, since that field's reliability depends entirely on wherever the list came from and is often too generic to write from directly.
             </p>
           </div>
 
