@@ -110,6 +110,9 @@ export default function MailCraftBoard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [senderOrgName, setSenderOrgName] = useState("");
+  const [senderOrgIndustry, setSenderOrgIndustry] = useState("");
+  const [targetIndustry, setTargetIndustry] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [results, setResults] = useState<MailCraftResult[]>([]);
@@ -120,7 +123,21 @@ export default function MailCraftBoard() {
   useEffect(() => {
     async function fetchUser() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserId(user.id);
+      if (!user) return;
+      setUserId(user.id);
+      // MailCraft was originally hardcoded to introduce every sender as
+      // "from Knoxified" -- wrong for every actual Knoxified customer
+      // running their own outreach. Pull their real business identity
+      // from user_profiles (already collected at onboarding) instead.
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("organization_name, organization_industry")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) {
+        setSenderOrgName(profile.organization_name || "");
+        setSenderOrgIndustry(profile.organization_industry || "");
+      }
     }
     fetchUser();
   }, [supabase.auth]);
@@ -162,7 +179,13 @@ export default function MailCraftBoard() {
   };
 
   const runOne = async (candidate: Candidate): Promise<MailCraftResult | null> => {
-    const payload = { ...candidate, userId: userId || "ad409f1e-7150-4ed1-a4d1-ab5d523ab265" };
+    const payload = {
+      ...candidate,
+      userId: userId || "ad409f1e-7150-4ed1-a4d1-ab5d523ab265",
+      senderOrganizationName: senderOrgName,
+      senderOrganizationIndustry: senderOrgIndustry,
+      targetIndustry,
+    };
     try {
       const res = await fetch("/api/mailcraft", {
         method: "POST",
@@ -197,7 +220,13 @@ export default function MailCraftBoard() {
   // companyName, email, sequence{...}, emailsGenerated). n8n is the engine
   // here; this just sends the sheet in and renders whatever sheet comes back.
   const runBatch = async (candidates: Candidate[]): Promise<MailCraftResult[]> => {
-    const payload = { candidates, userId: userId || "ad409f1e-7150-4ed1-a4d1-ab5d523ab265" };
+    const payload = {
+      candidates,
+      userId: userId || "ad409f1e-7150-4ed1-a4d1-ab5d523ab265",
+      senderOrganizationName: senderOrgName,
+      senderOrganizationIndustry: senderOrgIndustry,
+      targetIndustry,
+    };
     try {
       const res = await fetch("/api/mailcraft", {
         method: "POST",
@@ -241,6 +270,10 @@ export default function MailCraftBoard() {
   };
 
   const handleGenerate = async () => {
+    if (!targetIndustry.trim()) {
+      toast.error("Enter who you're targeting first (e.g. \"dental practices\", \"home care agencies\") — MailCraft uses this to write relevant emails instead of guessing.");
+      return;
+    }
     if (mode === "single") {
       if (!single.email.trim()) {
         toast.error("Email is required.");
@@ -323,6 +356,21 @@ export default function MailCraftBoard() {
             <BrainCircuit className="w-5 h-5 text-indigo-500" />
             MailCraft
           </h3>
+
+          <div className="mb-4 space-y-1">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Who are you targeting? *
+            </label>
+            <input
+              value={targetIndustry}
+              onChange={(e) => setTargetIndustry(e.target.value)}
+              placeholder="e.g. home care agencies, dental practices, real estate teams"
+              className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+            />
+            <p className="text-xs text-slate-400">
+              Applies to this whole campaign. MailCraft writes the pain point and offer around this industry, not the individual candidate's listed industry (Clay/Apollo data is often too generic to write from directly).
+            </p>
+          </div>
 
           <div className="flex gap-2 mb-6 bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
             <button
