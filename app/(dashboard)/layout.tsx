@@ -5,6 +5,7 @@ import { CommandMenu } from '@/components/CommandMenu';
 import { InactivityLogout } from '@/components/InactivityLogout';
 import { DashboardTour } from '@/components/DashboardTour';
 import { DiscountOfferBanner } from '@/components/DiscountOfferBanner';
+import { SupportChat } from '@/components/SupportChat';
 import { createClient } from '@/lib/supabase/server';
 import { Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -51,6 +52,7 @@ export default async function DashboardLayout({
           {children}
         </div>
       </main>
+      <SupportChat />
     </>
   );
 }
