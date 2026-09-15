@@ -21,7 +21,7 @@ export async function getAgentConfig() {
     .eq("user_id", user.id)
     .maybeSingle();
     
-  if (res.error && res.error.message.includes("does not exist")) {
+  if (res.error && (res.error.message.includes("does not exist") || res.error.message.toLowerCase().includes("could not find"))) {
     const fallbackRes = await supabase
       .from("agent_configs")
       .select("id, organization_name, business_hours, temperature")
@@ -108,7 +108,7 @@ export async function updateAgentConfig(formData: FormData) {
       .update({ ...updatePayload, voice_minute_limit_alert, alert_email })
       .eq("id", existingAgentConfig.id);
       
-    if (res.error && res.error.message.includes("does not exist")) {
+    if (res.error && (res.error.message.includes("does not exist") || res.error.message.toLowerCase().includes("could not find"))) {
       const fallbackRes = await supabase
         .from("agent_configs")
         .update(updatePayload)
@@ -123,7 +123,7 @@ export async function updateAgentConfig(formData: FormData) {
       .from("agent_configs")
       .insert({ ...updatePayload, voice_minute_limit_alert, alert_email });
       
-    if (res.error && res.error.message.includes("does not exist")) {
+    if (res.error && (res.error.message.includes("does not exist") || res.error.message.toLowerCase().includes("could not find"))) {
       const fallbackRes = await supabase
         .from("agent_configs")
         .insert(updatePayload);
