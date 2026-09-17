@@ -175,6 +175,27 @@ export async function isWithinCallingWindow(checkTime: Date = new Date()): Promi
 
 // ---------- Compliance Acknowledgment ----------
 
+export async function getComplianceAcknowledgment() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("compliance_acknowledged_at, compliance_agreed_version, full_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load compliance status: ${error.message}`);
+
+  return {
+    acknowledgedAt: data?.compliance_acknowledged_at || null,
+    agreedVersion: data?.compliance_agreed_version || null,
+    fullName: data?.full_name || null,
+    email: user.email || null,
+  };
+}
+
 export async function submitComplianceAcknowledgment(agreedVersion: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

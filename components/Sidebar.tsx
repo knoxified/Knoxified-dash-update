@@ -102,7 +102,6 @@ export function Sidebar() {
           <div className="flex flex-col gap-0.5">
             <NavItem href="/billing" icon={<CreditCard size={14} />} label="Billing" pathname={pathname} tourId="billing" />
             <NavItem href="/integrations" icon={<Plug size={14} />} label="Integrations" pathname={pathname} />
-            <NavItem href="/compliance" icon={<ShieldCheck size={14} />} label="Compliance" pathname={pathname} />
             <NavItem href="/settings" icon={<Settings size={14} />} label="Settings" pathname={pathname} tourId="settings" />
           </div>
         </div>
