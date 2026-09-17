@@ -1,3 +1,5 @@
+import { requireComplianceAcknowledged } from "@/lib/actions/compliance-actions";
+
 const N8N_BASE_URL = "https://n8n.knoxified.org";
 
 export async function POST(request: Request) {
@@ -6,6 +8,16 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const userId = body?.userId;
+  if (!userId || typeof userId !== "string") {
+    return Response.json({ error: "Missing userId" }, { status: 400 });
+  }
+
+  const compliance = await requireComplianceAcknowledged(userId);
+  if (!compliance.ok) {
+    return Response.json({ error: compliance.error }, { status: 403 });
   }
 
   try {

@@ -13,6 +13,7 @@ import {
   getComplianceAcknowledgment,
   submitComplianceAcknowledgment,
 } from "@/lib/actions/compliance-actions";
+import { CURRENT_POLICY_VERSION } from "@/lib/policy-version";
 
 const ACCENT_COLORS = [
   { hex: '#00E5FF', name: 'Cyan', label: 'Default' },
@@ -22,11 +23,6 @@ const ACCENT_COLORS = [
   { hex: '#F43F5E', name: 'Rose', label: 'Coral' },
   { hex: '#F59E0B', name: 'Amber', label: 'Gold' },
 ];
-
-// Bump this whenever any of the linked policy documents materially change --
-// re-prompts everyone to accept again, and keeps an honest record of which
-// version of the policies each person actually agreed to.
-const CURRENT_POLICY_VERSION = "2026-09-17";
 
 const POLICY_LINKS = [
   { label: "Terms and Conditions", href: "https://knoxified.org/legal/terms" },

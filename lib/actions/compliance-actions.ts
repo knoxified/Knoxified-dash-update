@@ -2,6 +2,37 @@
 
 import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { CURRENT_POLICY_VERSION } from "@/lib/policy-version";
+
+// Server-side gate for anything that places outbound calls or contacts
+// people on the account's behalf (MailCraft, LeadReach, campaigns). This is
+// the enforcement layer -- Settings shows the checkbox, but a client-side
+// check alone can be bypassed from devtools, so anything outbound-capable
+// must call this on the server before actually doing anything, not just
+// trust that the UI blocked the button.
+export async function requireComplianceAcknowledged(userId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { data, error } = await supabaseAdmin
+    .from("user_profiles")
+    .select("compliance_acknowledged_at, compliance_agreed_version")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    // Fail closed -- don't let an outbound action through if we can't
+    // verify acknowledgment status at all.
+    return { ok: false, error: "Couldn't verify compliance status. Please try again." };
+  }
+
+  if (!data?.compliance_acknowledged_at || data.compliance_agreed_version !== CURRENT_POLICY_VERSION) {
+    return {
+      ok: false,
+      error: "You need to accept the current policies before running outbound campaigns. Go to Settings to review and accept them.",
+    };
+  }
+
+  return { ok: true };
+}
+
 
 // ---------- Suppression List ----------
 
