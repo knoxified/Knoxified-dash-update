@@ -14,7 +14,6 @@ const navLinks = [
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/conversations", label: "Inbox", icon: MessageSquare },
-  { href: "/deployments", label: "Deployments", icon: Layers },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/settings", label: "Settings", icon: Settings },

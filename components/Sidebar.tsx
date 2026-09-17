@@ -100,7 +100,6 @@ export function Sidebar() {
         <div>
           <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Infrastructure</p>
           <div className="flex flex-col gap-0.5">
-            <NavItem href="/deployments" icon={<Layers size={14} />} label="Deployments" pathname={pathname} />
             <NavItem href="/billing" icon={<CreditCard size={14} />} label="Billing" pathname={pathname} tourId="billing" />
             <NavItem href="/integrations" icon={<Plug size={14} />} label="Integrations" pathname={pathname} />
             <NavItem href="/compliance" icon={<ShieldCheck size={14} />} label="Compliance" pathname={pathname} />
