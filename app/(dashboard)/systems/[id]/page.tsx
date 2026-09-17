@@ -13,6 +13,7 @@ const TIER_ACCENT: Record<string, { icon: string; iconActive: string; badge: str
 import { useSystems } from "@/lib/services/hooks";
 import { toggleSystemActivation } from "@/lib/actions/dashboard-actions";
 import { getAgentIdentity } from "@/lib/actions/agent-identity-actions";
+import { CallPreviewWidget } from "@/components/CallPreviewWidget";
 import { getSystemAutomations, toggleUserAutomation, getAgentReadiness, SystemAutomation } from "@/lib/actions/system-automation-actions";
 import { AgentAvatar } from "@/components/AgentAvatar";
 
@@ -320,6 +321,13 @@ export default function SystemDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Live, two-way call preview -- distinct from the one-way
+              "Preview Voice" TTS sample above: this is an actual
+              conversation, using this vertical's real tone/temperature via
+              systemTypeOverride, regardless of the account's own
+              configured system_type. */}
+          <CallPreviewWidget previewSystemType={system.id} previewSystemLabel={system.name} />
 
           {/* Automations for this system -- ALL of them need to be active
               for the system itself to count as Active (see
