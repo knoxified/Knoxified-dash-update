@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { BillingIntegrationsTabs } from "@/components/BillingIntegrationsTabs";
 
 function IntegrationsPageInner() {
   const [activeTab, setActiveTab] = useState("oauth");
@@ -107,6 +108,7 @@ function IntegrationsPageInner() {
 
   return (
     <div className="space-y-6 max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <BillingIntegrationsTabs />
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">
           Integrations & Providers

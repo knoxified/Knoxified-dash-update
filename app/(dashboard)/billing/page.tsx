@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CreditCard, Check, Zap, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePlans, useWorkspace } from "@/lib/services/hooks";
+import { BillingIntegrationsTabs } from "@/components/BillingIntegrationsTabs";
 
 // Global glow styles for AI theme
 const GlobalStyles = () => (
@@ -149,6 +150,7 @@ export default function BillingPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <GlobalStyles />
+      <BillingIntegrationsTabs />
 
       {/* Header with glowing title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
