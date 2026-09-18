@@ -6,6 +6,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { toast } from "sonner";
 import { useWorkspace, useAgentIdentity } from "@/lib/services/hooks";
 import { AgentAvatar } from "./AgentAvatar";
+import { ProfileMenu } from "./ProfileMenu";
 
 export function Header() {
   const { data: workspace, loading: workspaceLoading } = useWorkspace();
@@ -88,6 +89,11 @@ export function Header() {
           <span className="absolute inset-0 bg-white/0 group-hover:bg-white/20 transition-all duration-200" />
           <Plus size={15} className="relative z-10 text-slate-900" strokeWidth={2.5} />
         </button>
+
+        {/* Divider */}
+        <div className="h-4 w-[1px] bg-slate-200/80 dark:bg-white/[0.06] mx-1" />
+
+        <ProfileMenu />
       </div>
     </header>
   );

@@ -15,7 +15,6 @@ const navLinks = [
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/conversations", label: "Inbox", icon: MessageSquare },
   { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function MobileHeader() {
@@ -97,6 +96,14 @@ export function MobileHeader() {
 
         {/* Drawer Footer */}
         <div className="p-3 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
+          <Link
+            href="/settings"
+            onClick={() => setDrawerOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-all"
+          >
+            <Settings size={14} />
+            Settings &amp; Compliance
+          </Link>
           <form action={logout}>
             <button type="submit" className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
