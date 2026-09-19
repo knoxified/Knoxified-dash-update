@@ -8,6 +8,7 @@ import { LayoutDashboard, Server, Zap, BarChart3, Settings, CreditCard, Users, M
 
 const navLinks = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/agent-config", label: "Agent Config", icon: Settings },
   { href: "/metrics", label: "Analytics", icon: BarChart3 },
   { href: "/systems", label: "Systems", icon: Server },
   { href: "/automations", label: "Automations", icon: Zap },
