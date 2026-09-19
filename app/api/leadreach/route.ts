@@ -15,10 +15,12 @@ export async function POST(request: Request) {
     return Response.json({ error: "Missing userId" }, { status: 400 });
   }
 
-  const compliance = await requireComplianceAcknowledged(userId);
-  if (!compliance.ok) {
-    return Response.json({ error: compliance.error }, { status: 403 });
-  }
+  // NOT currently enforced as a hard block -- see mailcraft/route.ts for
+  // why. Same reasoning applies here.
+  // const compliance = await requireComplianceAcknowledged(userId);
+  // if (!compliance.ok) {
+  //   return Response.json({ error: compliance.error }, { status: 403 });
+  // }
 
   try {
     // The LeadReach n8n webhook is registered for GET, not POST (confirmed
