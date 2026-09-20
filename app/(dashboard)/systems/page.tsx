@@ -8,6 +8,7 @@ import { Cpu, Play, Home, Building, HeartPulse, Users, Shield, Truck, ShoppingCa
 import { useSystems } from "@/lib/services/hooks";
 import { toggleSystemActivation } from "@/lib/actions/dashboard-actions";
 import { useRouter } from "next/navigation";
+import { getSystemTheme } from "@/lib/system-theme";
 
 const getIcon = (name?: string) => {
   switch (name) {
@@ -204,6 +205,7 @@ export default function SystemsPage() {
           const isRowPending = isPending && pendingId === sys.id;
           const isCustom = sys.tier === "custom";
           const theme = TIER_THEME[sys.tier] || TIER_THEME.pro;
+          const systemTheme = getSystemTheme(sys.id);
 
           return (
             <motion.div
@@ -225,11 +227,10 @@ export default function SystemsPage() {
               <div className="flex items-start justify-between mb-5 relative z-10">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                      isActive
-                        ? `${theme.iconBg} ${theme.iconHoverBg} ${theme.iconHoverShadow}`
-                        : "bg-slate-100 dark:bg-[#020617] text-slate-400 dark:text-[#666] border border-slate-200 dark:border-white/5"
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${systemTheme.iconBg} ${systemTheme.iconText} ${
+                      isActive ? "ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#0F172A]" : "opacity-50"
                     }`}
+                    style={isActive ? { ['--tw-ring-color' as any]: 'currentColor' } : undefined}
                   >
                     {getIcon(sys.iconName)}
                   </div>
