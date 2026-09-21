@@ -10,7 +10,33 @@ import { CURRENT_POLICY_VERSION } from "@/lib/policy-version";
 // check alone can be bypassed from devtools, so anything outbound-capable
 // must call this on the server before actually doing anything, not just
 // trust that the UI blocked the button.
+// Rollout cutoff: the real acknowledgment feature went live 2026-09-17.
+// Every account created before this already used outbound-capable
+// automations with no acknowledgment flow ever having existed -- blocking
+// them retroactively the moment the feature shipped isn't a rollout plan,
+// it's an accidental lockout (this is literally what happened earlier
+// today). Grandfathered accounts skip the check entirely; anything
+// created after this date must acknowledge properly, since for them the
+// feature existed from day one.
+const ENFORCEMENT_STARTS = new Date("2026-09-17T00:00:00Z");
+
 export async function requireComplianceAcknowledged(userId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { data: userRow, error: userError } = await supabaseAdmin
+    .from("users")
+    .select("created_at")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (userError) {
+    return { ok: false, error: "Couldn't verify account status. Please try again." };
+  }
+
+  const createdAt = userRow?.created_at ? new Date(userRow.created_at) : null;
+  const isGrandfathered = createdAt !== null && createdAt < ENFORCEMENT_STARTS;
+  if (isGrandfathered) {
+    return { ok: true };
+  }
+
   const { data, error } = await supabaseAdmin
     .from("user_profiles")
     .select("compliance_acknowledged_at, compliance_agreed_version")

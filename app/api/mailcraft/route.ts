@@ -15,18 +15,12 @@ export async function POST(request: Request) {
     return Response.json({ error: "Missing userId" }, { status: 400 });
   }
 
-  // NOT currently enforced as a hard block -- the real acknowledgment
-  // feature only went live today, so every existing account (including
-  // ones already using this automation successfully) has a null
-  // compliance_acknowledged_at and would be locked out with zero warning
-  // or grace period. Re-enable the block below once there's a real
-  // rollout plan (e.g. grandfathering existing accounts, or a warning
-  // period before enforcement starts) rather than retroactively gating
-  // everyone the moment the check shipped.
-  // const compliance = await requireComplianceAcknowledged(userId);
-  // if (!compliance.ok) {
-  //   return Response.json({ error: compliance.error }, { status: 403 });
-  // }
+  // Grandfathers any account created before the acknowledgment feature
+  // existed -- see requireComplianceAcknowledged for the cutoff logic.
+  const compliance = await requireComplianceAcknowledged(userId);
+  if (!compliance.ok) {
+    return Response.json({ error: compliance.error }, { status: 403 });
+  }
 
   try {
     const res = await fetch(`${N8N_BASE_URL}/webhook/mailcraft`, {
