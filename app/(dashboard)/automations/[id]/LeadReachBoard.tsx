@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Play, Search, ChevronDown, ChevronRight } from "lucide-react";
+import { Play, Search, ChevronDown, ChevronRight, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { pushLeadReachLeads } from "@/lib/actions/leads-actions";
 
 export default function LeadReachBoard() {
   const [formData, setFormData] = useState({
@@ -17,6 +18,8 @@ export default function LeadReachBoard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [results, setResults] = useState<any | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [isPushing, setIsPushing] = useState(false);
+  const [pushed, setPushed] = useState(false);
   const [expandedLead, setExpandedLead] = useState<number | null>(null);
   
   const supabase = createClient();
@@ -31,9 +34,27 @@ export default function LeadReachBoard() {
     fetchUser();
   }, [supabase.auth]);
 
+  const handlePushToLeads = async () => {
+    if (!results?.leads?.length || isPushing || pushed) return;
+    setIsPushing(true);
+    const res = await pushLeadReachLeads(results.leads);
+    setIsPushing(false);
+    if (!res.ok) {
+      toast.error(res.error || "Couldn't push these leads. Try again.");
+      return;
+    }
+    setPushed(true);
+    toast.success(
+      res.inserted > 0
+        ? `${res.inserted} lead${res.inserted === 1 ? "" : "s"} added to your Leads page${res.skipped > 0 ? ` (${res.skipped} already there)` : ""}.`
+        : "All of these were already in your Leads page."
+    );
+  };
+
   const handleRun = async () => {
     setIsSearching(true);
     setResults(null);
+    setPushed(false);
 
     // The structured payload including userId from session
     const payload = {
@@ -232,6 +253,17 @@ export default function LeadReachBoard() {
               <span className="text-xs font-mono bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-500/20">
                 Credits Used: {results.creditsCharged}
               </span>
+              {Array.isArray(results.leads) && results.leads.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePushToLeads}
+                  disabled={isPushing || pushed}
+                  className="flex items-center gap-1.5 text-xs font-medium bg-[color:var(--accent)] text-slate-900 px-3 py-1 rounded-full hover:opacity-90 transition-opacity disabled:opacity-60"
+                >
+                  <UserPlus size={12} />
+                  {pushed ? "Added to Leads" : isPushing ? "Adding..." : `Push ${results.leads.length} to Leads`}
+                </button>
+              )}
             </div>
           )}
         </div>
