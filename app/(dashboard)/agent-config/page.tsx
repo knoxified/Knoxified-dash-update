@@ -335,7 +335,7 @@ export default function AgentConfigPage() {
                   {form.agent_nickname || "Your Agent"}
                 </p>
                 <p className="text-[13px] text-slate-500 dark:text-[#888] mb-3">
-                  &ldquo;Thank you for calling {form.organization_name || "your business"}. This is {form.agent_nickname || "your assistant"}, an AI assistant. How can I help you today?&rdquo;
+                  &ldquo;Hello, this is {form.agent_nickname || "your assistant"}, an AI assistant. How can I help you today?&rdquo;
                 </p>
                 <button
                   type="button"

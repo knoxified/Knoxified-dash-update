@@ -28,6 +28,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   { key: "avatar8", label: "Avatar 8", seed: "knx-notion-8" },
   { key: "avatar9", label: "Avatar 9", seed: "knx-notion-9" },
   { key: "avatar10", label: "Avatar 10", seed: "knx-notion-10" },
+  // Appended (not inserted) so AVATAR_OPTIONS[0], the fallback for accounts with
+  // no avatar set, never changes. Female-presenting.
+  { key: "calista", label: "Calista", seed: "calista" },
 ];
 
 export function getAvatarOption(key: string | null | undefined): AvatarOption {
