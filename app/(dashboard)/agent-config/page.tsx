@@ -335,7 +335,7 @@ export default function AgentConfigPage() {
                   {form.agent_nickname || "Your Agent"}
                 </p>
                 <p className="text-[13px] text-slate-500 dark:text-[#888] mb-3">
-                  &ldquo;Hi, this is {form.agent_nickname || "your assistant"} from {form.organization_name || "your business"}. How can I help you today?&rdquo;
+                  &ldquo;Thank you for calling {form.organization_name || "your business"}. This is {form.agent_nickname || "your assistant"}, an AI assistant. How can I help you today?&rdquo;
                 </p>
                 <button
                   type="button"
@@ -572,7 +572,7 @@ export default function AgentConfigPage() {
               <div>
                 <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">Record calls</p>
                 <p className="text-xs text-slate-500 dark:text-[#888] max-w-md">
-                  Off by default. When on, every caller hears a recording disclosure at the end of the greeting before the
+                  Off by default. When on, every caller hears a short recording notice in the opening line, before the
                   conversation continues, and both the transcript and audio appear in Conversations afterward.
                 </p>
               </div>
@@ -893,7 +893,7 @@ export default function AgentConfigPage() {
                 The Federal Communications Commission (FCC) and the Federal Trade Commission (FTC) (via the Telemarketing Sales Rule and TCPA) monitor outbound automated communications. Additionally, many state regulations require clear disclosure that the caller is interacting with an Artificial Intelligence or automated system before the call proceeds.
               </p>
               <p>
-                When you turn this on, Knoxified automatically appends a recording disclosure to the end of your agent's greeting on every call, spoken before the conversation continues -- you don't need to write this yourself.
+                When you turn this on, Knoxified automatically adds a recording notice to your agent's opening line on every call, spoken before the conversation continues -- you don't need to write this yourself.
               </p>
 
               <div className="bg-slate-50 dark:bg-[#020617] p-4 rounded-lg border border-slate-200 dark:border-white/10 mt-6">
