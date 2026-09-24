@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Activity } from "lucide-react";
 import LeadReachBoard from "./LeadReachBoard";
 import MailCraftBoard from "./MailCraftBoard";
+import FollowFlowBoard from "./FollowFlowBoard";
 import ScheduleManager from "@/components/ScheduleManager";
 import AutomationRunner from "@/components/AutomationRunner";
 
@@ -61,6 +62,8 @@ export default function AutomationDetailsPage() {
         <LeadReachBoard />
       ) : id === "mailcraft" ? (
         <MailCraftBoard />
+      ) : id === "followflow" ? (
+        <FollowFlowBoard />
       ) : id === "appointmate" ? (
         <AppointMateBoard automation={automation} />
       ) : (

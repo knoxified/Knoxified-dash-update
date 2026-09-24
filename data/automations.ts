@@ -31,12 +31,14 @@ export interface Automation {
 export const AUTOMATION_CATALOG_KEYS: Record<string, string> = {
   leadreach: "lead_reach_search",
   mailcraft: "mailcraft_sequence",
+  followflow: "email_sequence_send",
   appointmate: "appointment_booking",
 };
 
 export const AUTOMATIONS: Automation[] = [
   { id: "leadreach", name: "LeadReach 🔍", category: "Sales", description: "Automatically finds and enriches any lead with 12 verified contact fields — name, email, phone, all social handles, LinkedIn URLs, and more.", enabled: false, metrics: { label1: "Leads Enriched", value1: "1,204", label2: "Fields Verified", value2: "14k" } },
   { id: "mailcraft", name: "MailCraft ✍️", category: "Marketing", description: "Takes approved contact context and drafts customer-authorized email follow-ups for team review.", enabled: false, metrics: { label1: "Emails Drafted", value1: "842", label2: "Avg Open Rate", value2: "41%" } },
+  { id: "followflow", name: "FollowFlow 📬", category: "Sales", description: "Sends your 4-email sequences from your own connected mailbox, one every few days, and stops automatically for anyone who unsubscribes or replies.", enabled: false },
   { id: "adpilot", name: "AdPilot 🎯", category: "Marketing", description: "Monitors campaigns, detects waste, suggests optimizations, generates reports, and triggers alerts.", enabled: false,
     formSchema: [ { key: "campaign_id", label: "Campaign ID", type: "text" }, { key: "action", label: "Action", type: "select", options: ["Analyze Waste", "Optimize Bids", "Generate Report"] } ], metrics: { label1: "Ad Waste Saved", value1: "$1.2k", label2: "Alerts Triggered", value2: "14" } },
   { id: "waitlistbot", name: "WaitlistBot 🛎️", category: "Operations", description: "Intelligently manages virtual queues, providing live updates and maximizing table turns.", enabled: false,

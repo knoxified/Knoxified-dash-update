@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { logAuditEvent } from "@/lib/actions/compliance-actions";
 
 export type LeadSource = "inbound_call" | "leadreach" | "manual";
 
@@ -161,4 +162,137 @@ export async function pushLeadReachLeads(
   }
 
   return { ok: true, inserted: fresh.length, skipped };
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const MAX_IMPORT_ROWS = 1000;
+
+// CSV import. The whole file shares ONE documented consent source (chosen by
+// the user in the import dialog), matching the rule that a lead can't be saved
+// without one. Existing leads (same phone or email) are skipped, never
+// overwritten. Rows need at least a valid phone or email.
+export async function importLeads(
+  rows: { name: string; phone: string; email: string; company: string }[],
+  consentSource: string
+): Promise<{ ok: boolean; inserted: number; duplicates: number; invalid: number; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, inserted: 0, duplicates: 0, invalid: 0, error: "Not authenticated" };
+
+  const consent = consentSource?.trim();
+  if (!consent) return { ok: false, inserted: 0, duplicates: 0, invalid: 0, error: "Choose a consent source for this list." };
+  if (!Array.isArray(rows) || rows.length === 0) return { ok: false, inserted: 0, duplicates: 0, invalid: 0, error: "No rows to import." };
+  if (rows.length > MAX_IMPORT_ROWS) {
+    return { ok: false, inserted: 0, duplicates: 0, invalid: 0, error: `Import up to ${MAX_IMPORT_ROWS} leads at a time.` };
+  }
+
+  const { data: existing } = await supabase.from("leads").select("phone, email").eq("user_id", user.id);
+  const seenPhones = new Set((existing || []).map((r) => r.phone).filter(Boolean));
+  const seenEmails = new Set((existing || []).map((r) => r.email?.toLowerCase()).filter(Boolean));
+
+  let invalid = 0;
+  let duplicates = 0;
+  const fresh: Record<string, unknown>[] = [];
+
+  for (const r of rows) {
+    const phone = normalizePhone(r.phone);
+    const email = r.email?.trim().toLowerCase() || null;
+    const validEmail = email && EMAIL_RE.test(email) ? email : null;
+    if (!phone && !validEmail) {
+      invalid++;
+      continue;
+    }
+    if ((phone && seenPhones.has(phone)) || (validEmail && seenEmails.has(validEmail))) {
+      duplicates++;
+      continue;
+    }
+    if (phone) seenPhones.add(phone);
+    if (validEmail) seenEmails.add(validEmail);
+    fresh.push({
+      user_id: user.id,
+      source: "manual",
+      name: r.name?.trim() || null,
+      phone,
+      email: validEmail,
+      company: r.company?.trim() || null,
+      consent_source: consent,
+    });
+  }
+
+  let inserted = 0;
+  for (let i = 0; i < fresh.length; i += 200) {
+    const chunk = fresh.slice(i, i + 200);
+    const { error } = await supabase.from("leads").insert(chunk);
+    if (!error) {
+      inserted += chunk.length;
+      continue;
+    }
+    if (error.code !== "23505") return { ok: false, inserted, duplicates, invalid, error: error.message };
+    // A concurrent duplicate tripped the phone index: retry row by row.
+    for (const row of chunk) {
+      const { error: rowErr } = await supabase.from("leads").insert(row);
+      if (!rowErr) inserted++;
+      else duplicates++;
+    }
+  }
+
+  try {
+    await logAuditEvent("Leads Imported", `${inserted} leads imported from CSV. Consent source: ${consent}.`);
+  } catch {
+    // Audit logging must never fail an import that already succeeded.
+  }
+  return { ok: true, inserted, duplicates, invalid };
+}
+
+export type TimelineItem =
+  | { kind: "call"; at: string; callId: string; durationSecs: number; snippet: string }
+  | { kind: "email"; at: string; subject: string; status: string; step: number };
+
+// Everything that has happened with one lead: their calls (matched by phone
+// number) and every email sent or scheduled to them, newest first.
+export async function getLeadTimeline(leadId: string): Promise<{ items: TimelineItem[]; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { items: [], error: "Not authenticated" };
+
+  const { data: lead } = await supabase.from("leads").select("phone, email").eq("id", leadId).eq("user_id", user.id).maybeSingle();
+  if (!lead) return { items: [], error: "Lead not found" };
+
+  const items: TimelineItem[] = [];
+
+  if (lead.phone) {
+    const { data: calls } = await supabase
+      .from("call_transcripts")
+      .select("call_id, created_at, duration_secs, messages")
+      .eq("user_id", user.id)
+      .eq("caller_number", lead.phone)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    for (const c of calls || []) {
+      const msgs = Array.isArray(c.messages) ? (c.messages as { role?: string; content?: string }[]) : [];
+      const firstCaller = msgs.find((m) => m.role === "user" && m.content?.trim());
+      items.push({
+        kind: "call",
+        at: c.created_at,
+        callId: c.call_id,
+        durationSecs: c.duration_secs || 0,
+        snippet: firstCaller?.content?.trim().slice(0, 140) || "",
+      });
+    }
+  }
+
+  const { data: emails } = await supabase
+    .from("emails")
+    .select("subject, status, step, sent_at, created_at")
+    .eq("user_id", user.id)
+    .eq("lead_id", leadId)
+    .neq("status", "cancelled")
+    .order("created_at", { ascending: false })
+    .limit(30);
+  for (const e of emails || []) {
+    items.push({ kind: "email", at: e.sent_at || e.created_at, subject: e.subject, status: e.status, step: e.step });
+  }
+
+  items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  return { items };
 }

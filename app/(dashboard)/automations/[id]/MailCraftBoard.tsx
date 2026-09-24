@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Mail, Sparkles, BrainCircuit, Upload, FileText, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { saveMailCraftDrafts } from "@/lib/actions/email-actions";
 
 // The real MailCraft webhook contract (per the n8n workflow's "Prospect
 // Variables" node) -- only email is actually required downstream ("Has
@@ -269,6 +270,16 @@ export default function MailCraftBoard() {
     }
   };
 
+  // Every successful generation is stored as drafts so it shows on the Emails
+  // page instead of disappearing when this tab closes.
+  const persistDrafts = async (rows: MailCraftResult[]) => {
+    const good = rows.filter((r) => !r.error && r.sequence?.subjectLine1);
+    if (good.length === 0) return;
+    const res = await saveMailCraftDrafts(good.map((r) => ({ email: r.email, firstName: r.firstName, companyName: r.companyName, sequence: r.sequence as unknown as Record<string, string> })));
+    if (res.error) toast.error("Generated, but couldn't save to your Emails page: " + res.error);
+    else if (res.saved > 0) toast.success(`${res.saved} drafted sequence${res.saved === 1 ? "" : "s"} saved to Emails.`);
+  };
+
   const handleGenerate = async () => {
     if (!targetIndustry.trim()) {
       toast.error("Enter who you're targeting first (e.g. \"dental practices\", \"home care agencies\") — MailCraft uses this to write relevant emails instead of guessing.");
@@ -288,7 +299,10 @@ export default function MailCraftBoard() {
         setResults([result]);
         setProgress({ done: 1, total: 1 });
         if (result.error) toast.error(result.error);
-        else toast.success("Sequence generated.");
+        else {
+          toast.success("Sequence generated.");
+          persistDrafts([result]);
+        }
       }
       return;
     }
@@ -307,6 +321,7 @@ export default function MailCraftBoard() {
     setIsGenerating(false);
     setResults(rows);
     setProgress({ done: rows.length, total: bulkCandidates.length });
+    persistDrafts(rows);
 
     const succeeded = rows.filter(r => !r.error).length;
     if (rows.length === 0) {

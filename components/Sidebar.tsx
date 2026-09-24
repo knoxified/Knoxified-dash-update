@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Server, Zap, BarChart3, Settings, 
   CreditCard, Users, Megaphone, MessageSquare, BookOpen, Layers, Plug, ShieldCheck,
-  ChevronRight
-} from "lucide-react";
+  ChevronRight, Mail } from "lucide-react";
 import { ReactNode } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { logout } from "@/lib/actions/auth-actions";
@@ -93,6 +92,7 @@ export function Sidebar() {
           <div className="flex flex-col gap-0.5">
             <NavItem href="/leads" icon={<Users size={14} />} label="Leads" pathname={pathname} tourId="leads" />
             <NavItem href="/campaigns" icon={<Megaphone size={14} />} label="Campaigns" pathname={pathname} tourId="campaigns" />
+            <NavItem href="/emails" icon={<Mail size={14} />} label="Emails" pathname={pathname} tourId="emails" />
             <NavItem href="/conversations" icon={<MessageSquare size={14} />} label="Inbox" pathname={pathname} tourId="conversations" />
           </div>
         </div>

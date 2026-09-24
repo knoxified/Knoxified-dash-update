@@ -1,9 +1,12 @@
 "use client";
 import { Select } from "@/components/ui/Select";
 import React, { useEffect, useMemo, useState } from "react";
-import { Download, Search, UserPlus, PhoneIncoming } from "lucide-react";
+import { Download, Search, UserPlus, PhoneIncoming, Upload, X, Mail, Phone } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { getLeads, addLead, type Lead, type LeadSource } from "@/lib/actions/leads-actions";
+import { getLeads, addLead, importLeads, getLeadTimeline, type Lead, type LeadSource, type TimelineItem } from "@/lib/actions/leads-actions";
+import { parseCsv, detectColumns, rowsToLeads, type ColumnMap } from "@/lib/csv";
+import CampaignLauncher from "@/components/CampaignLauncher";
 
 type Tab = "all" | LeadSource;
 
@@ -33,6 +36,24 @@ export default function LeadsPage() {
   const [query, setQuery] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
+
+  // Selection + campaign launcher
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [launcherOpen, setLauncherOpen] = useState(false);
+
+  // CSV import
+  const [importOpen, setImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState("");
+  const [importHeaders, setImportHeaders] = useState<string[]>([]);
+  const [importData, setImportData] = useState<string[][]>([]);
+  const [importMap, setImportMap] = useState<ColumnMap>({});
+  const [importConsent, setImportConsent] = useState("");
+  const [importing, setImporting] = useState(false);
+
+  // Lead detail drawer
+  const [drawerLead, setDrawerLead] = useState<Lead | null>(null);
+  const [timeline, setTimeline] = useState<TimelineItem[] | null>(null);
 
   const [newLead, setNewLead] = useState({ name: "", phone: "", company: "", consentSource: "" });
 
@@ -73,6 +94,84 @@ export default function LeadsPage() {
     setNewLead({ name: "", phone: "", company: "", consentSource: "" });
     toast.success("Lead added with documented consent.");
     refresh();
+  };
+
+  const resetImport = () => {
+    setImportOpen(false);
+    setImportFile("");
+    setImportHeaders([]);
+    setImportData([]);
+    setImportMap({});
+    setImportConsent("");
+  };
+
+  const handleFilePicked = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("That file is too large. Keep it under 2 MB.");
+      return;
+    }
+    const rows = parseCsv(await file.text());
+    if (rows.length < 2) {
+      toast.error("That file needs a header row and at least one lead.");
+      return;
+    }
+    setImportFile(file.name);
+    setImportHeaders(rows[0]);
+    setImportData(rows.slice(1));
+    setImportMap(detectColumns(rows[0]));
+  };
+
+  const setMapping = (field: "name" | "phone" | "email" | "company", value: string) => {
+    setImportMap((prev) => {
+      const next: ColumnMap = { ...prev };
+      if (value === "") delete next[field];
+      else next[field] = Number(value);
+      if (field === "name") {
+        delete next.firstName;
+        delete next.lastName;
+      }
+      return next;
+    });
+  };
+
+  const importPreview = useMemo(() => rowsToLeads(importData, importMap), [importData, importMap]);
+  const importUsable = importPreview.filter((r) => r.phone || r.email).length;
+
+  const handleImport = async () => {
+    if (!importConsent) {
+      toast.error("Choose a consent source for this list.");
+      return;
+    }
+    setImporting(true);
+    const res = await importLeads(importPreview, importConsent);
+    setImporting(false);
+    if (!res.ok) {
+      toast.error(res.error || "Import failed.");
+      return;
+    }
+    toast.success(
+      `${res.inserted} lead${res.inserted === 1 ? "" : "s"} imported` +
+        (res.duplicates ? `, ${res.duplicates} already in your list` : "") +
+        (res.invalid ? `, ${res.invalid} skipped (no valid phone or email)` : "") +
+        "."
+    );
+    resetImport();
+    refresh();
+  };
+
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const openLead = (lead: Lead) => {
+    setDrawerLead(lead);
+    setTimeline(null);
+    getLeadTimeline(lead.id).then((res) => setTimeline(res.items));
   };
 
   const counts = useMemo(() => {
@@ -125,6 +224,9 @@ export default function LeadsPage() {
         <div className="flex items-center gap-3">
           <button onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-2 bg-[color:var(--accent)] text-slate-900 hover:opacity-90 text-sm font-medium px-4 py-2 rounded-lg transition-all shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)]">
             <UserPlus size={16} /> Add Lead
+          </button>
+          <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 glass-card card-hover text-slate-900 dark:text-white text-sm font-medium px-4 py-2 rounded-lg">
+            <Upload size={16} /> Import CSV
           </button>
           <button onClick={handleExport} className="flex items-center gap-2 glass-card card-hover text-slate-900 dark:text-white text-sm font-medium px-4 py-2 rounded-lg">
             <Download size={16} /> Export
@@ -222,6 +324,20 @@ export default function LeadsPage() {
             <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
               <thead className="bg-slate-50 dark:bg-white/[0.02] text-xs uppercase font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/5">
                 <tr>
+                  <th className="pl-5 pr-0 py-4 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all leads in this view"
+                      checked={visible.length > 0 && visible.every((l) => selected.has(l.id))}
+                      onChange={(e) =>
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          visible.forEach((l) => (e.target.checked ? next.add(l.id) : next.delete(l.id)));
+                          return next;
+                        })
+                      }
+                    />
+                  </th>
                   <th className="px-5 py-4">Lead Info</th>
                   <th className="px-5 py-4">Phone</th>
                   <th className="px-5 py-4">Source</th>
@@ -237,8 +353,11 @@ export default function LeadsPage() {
                     : "?";
                   return (
                     <tr key={lead.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group">
+                      <td className="pl-5 pr-0 py-4 w-8">
+                        <input type="checkbox" aria-label={`Select ${displayName}`} checked={selected.has(lead.id)} onChange={() => toggleSelected(lead.id)} />
+                      </td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-2.5">
+                        <button type="button" onClick={() => openLead(lead)} className="flex items-center gap-2.5 text-left">
                           <div className="w-8 h-8 rounded-full bg-[color:var(--accent)]/10 text-[color:var(--accent)] flex items-center justify-center text-[11px] font-bold shrink-0">
                             {initials}
                           </div>
@@ -246,7 +365,7 @@ export default function LeadsPage() {
                             <div className="font-medium text-slate-900 dark:text-white">{displayName}</div>
                             <div className="text-[12px] text-slate-500 dark:text-[#888]">{lead.company || lead.email || ""}</div>
                           </div>
-                        </div>
+                        </button>
                       </td>
                       <td className="px-5 py-4 text-slate-900 dark:text-slate-300">{lead.phone || "—"}</td>
                       <td className="px-5 py-4">
@@ -275,6 +394,178 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
+
+      {selected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full pl-5 pr-2 py-2 shadow-2xl">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <button onClick={() => setLauncherOpen(true)} className="flex items-center gap-1.5 bg-[color:var(--accent)] text-slate-900 text-sm font-semibold rounded-full px-4 py-1.5 hover:opacity-90">
+            <Mail size={14} /> Start email sequence
+          </button>
+          <button onClick={() => setSelected(new Set())} className="text-xs opacity-70 hover:opacity-100 pr-2">Clear</button>
+        </div>
+      )}
+
+      <CampaignLauncher
+        open={launcherOpen}
+        onClose={() => setLauncherOpen(false)}
+        mode="leads"
+        leadIds={Array.from(selected)}
+        audienceLabel={`${selected.size} selected lead${selected.size === 1 ? "" : "s"}`}
+        onLaunched={() => {
+          setSelected(new Set());
+          router.push("/campaigns");
+        }}
+      />
+
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/5">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Import leads from CSV</h2>
+              <button onClick={resetImport} className="text-slate-500 hover:text-slate-900 dark:hover:text-white" aria-label="Close"><X size={20} /></button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-5 flex-1">
+              {importData.length === 0 ? (
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 dark:border-white/10 rounded-xl p-10 cursor-pointer hover:border-[color:var(--accent)] transition-colors text-center">
+                  <Upload size={26} className="text-[color:var(--accent)]" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-white">Choose a CSV file</span>
+                  <span className="text-xs text-slate-500 dark:text-[#888]">Export from Excel or Google Sheets. Needs a header row. Up to 1,000 leads.</span>
+                  <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => handleFilePicked(e.target.files?.[0])} />
+                </label>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <strong>{importFile}</strong>: {importData.length} rows, {importUsable} with a phone or email.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {([
+                      ["name", "Name"],
+                      ["phone", "Phone"],
+                      ["email", "Email"],
+                      ["company", "Company"],
+                    ] as const).map(([field, label]) => (
+                      <div key={field}>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{label} column</label>
+                        <Select
+                          value={importMap[field] !== undefined ? String(importMap[field]) : importMap.firstName !== undefined && field === "name" ? "first-last" : ""}
+                          onChange={(v) => setMapping(field, v === "first-last" ? "" : v)}
+                          options={[
+                            { value: "", label: "Not in my file" },
+                            ...(importMap.firstName !== undefined && field === "name" ? [{ value: "first-last", label: "First + last name columns" }] : []),
+                            ...importHeaders.map((h, i) => ({ value: String(i), label: h || `Column ${i + 1}` })),
+                          ]}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-lg border border-slate-200 dark:border-white/5 overflow-x-auto">
+                    <table className="w-full text-xs text-left text-slate-600 dark:text-slate-400">
+                      <thead className="bg-slate-50 dark:bg-white/[0.02] uppercase text-slate-500">
+                        <tr><th className="px-3 py-2">Name</th><th className="px-3 py-2">Phone</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Company</th></tr>
+                      </thead>
+                      <tbody>
+                        {importPreview.slice(0, 3).map((r, i) => (
+                          <tr key={i} className="border-t border-slate-200 dark:border-white/5">
+                            <td className="px-3 py-2">{r.name || "—"}</td><td className="px-3 py-2">{r.phone || "—"}</td><td className="px-3 py-2">{r.email || "—"}</td><td className="px-3 py-2">{r.company || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Consent source <span className="text-rose-500">*</span></label>
+                    <Select
+                      value={importConsent}
+                      onChange={setImportConsent}
+                      placeholder="How do these people know you?"
+                      options={[
+                        { value: "Existing Customers (Implied Consent)", label: "Existing Customers (Implied Consent)" },
+                        { value: "Inbound Inquiry / Web Form", label: "Inbound Inquiry / Web Form" },
+                        { value: "Explicit Opt-In List", label: "Explicit Opt-In List" },
+                      ]}
+                    />
+                    <p className="text-[11px] text-slate-500 dark:text-[#888] mt-1">Applies to every lead in this file. Only import people you have a lawful basis to contact.</p>
+                  </div>
+                </>
+              )}
+            </div>
+            {importData.length > 0 && (
+              <div className="p-5 border-t border-slate-200 dark:border-white/5 flex justify-end gap-3">
+                <button onClick={resetImport} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-[#888] hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg">Cancel</button>
+                <button onClick={handleImport} disabled={importing || importUsable === 0} className="px-4 py-2 text-sm font-medium bg-[color:var(--accent)] text-slate-900 rounded-lg hover:opacity-90 disabled:opacity-60">
+                  {importing ? "Importing..." : `Import ${importUsable} lead${importUsable === 1 ? "" : "s"}`}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {drawerLead && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-[2px]" onClick={() => setDrawerLead(null)}>
+          <aside className="w-full max-w-md h-full bg-white dark:bg-[#0F172A] border-l border-slate-200 dark:border-white/10 shadow-2xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-white/5">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{drawerLead.name || (drawerLead.source === "inbound_call" ? "Unknown caller" : drawerLead.email || "Unnamed lead")}</h2>
+                <p className="text-sm text-slate-500 dark:text-[#888]">{drawerLead.company || SOURCE_LABEL[drawerLead.source]}</p>
+              </div>
+              <button onClick={() => setDrawerLead(null)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white" aria-label="Close"><X size={20} /></button>
+            </div>
+            <div className="p-5 space-y-5 text-sm">
+              <div className="space-y-1.5 text-slate-700 dark:text-slate-300">
+                <p><span className="text-slate-500 dark:text-[#888]">Phone:</span> {drawerLead.phone || "—"}</p>
+                <p><span className="text-slate-500 dark:text-[#888]">Email:</span> {drawerLead.email || "—"}</p>
+                <p><span className="text-slate-500 dark:text-[#888]">Source:</span> {SOURCE_LABEL[drawerLead.source]}</p>
+                <p><span className="text-slate-500 dark:text-[#888]">Consent:</span> {drawerLead.consent_source || "No consent on file"}</p>
+              </div>
+              {drawerLead.email && (
+                <button
+                  onClick={() => {
+                    setSelected(new Set([drawerLead.id]));
+                    setDrawerLead(null);
+                    setLauncherOpen(true);
+                  }}
+                  className="flex items-center gap-2 bg-[color:var(--accent)] text-slate-900 text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90"
+                >
+                  <Mail size={15} /> Start email sequence
+                </button>
+              )}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#888] mb-3">Activity</h3>
+                {timeline === null ? (
+                  <p className="text-slate-500 dark:text-[#888]">Loading...</p>
+                ) : timeline.length === 0 ? (
+                  <p className="text-slate-500 dark:text-[#888]">No calls or emails yet.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {timeline.map((t, i) => (
+                      <li key={i} className="flex gap-3">
+                        <div className="w-7 h-7 shrink-0 rounded-full bg-[color:var(--accent)]/10 text-[color:var(--accent)] flex items-center justify-center">
+                          {t.kind === "call" ? <Phone size={13} /> : <Mail size={13} />}
+                        </div>
+                        <div className="min-w-0">
+                          {t.kind === "call" ? (
+                            <>
+                              <p className="text-slate-900 dark:text-white font-medium">Call · {Math.max(1, Math.round(t.durationSecs / 60))} min</p>
+                              {t.snippet && <p className="text-slate-500 dark:text-[#888] truncate">&ldquo;{t.snippet}&rdquo;</p>}
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-slate-900 dark:text-white font-medium truncate">{t.subject}</p>
+                              <p className="text-slate-500 dark:text-[#888]">Email {t.step} · {t.status}</p>
+                            </>
+                          )}
+                          <p className="text-[11px] text-slate-400">{formatDate(t.at)}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
