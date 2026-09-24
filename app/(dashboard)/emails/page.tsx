@@ -34,7 +34,7 @@ export default function EmailsPage() {
   const [emails, setEmails] = useState<EmailRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
+  const [mailboxConnected, setMailboxConnected] = useState<boolean | null>(null);
   const [tab, setTab] = useState<Tab>("drafts");
 
   const [openSeq, setOpenSeq] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export default function EmailsPage() {
       if (cancelled) return;
       setEmails(res.emails);
       setLoadError(res.error);
-      setGoogleConnected(info.googleConnected);
+      setMailboxConnected(info.connectedProviders.length > 0);
       setLoading(false);
     });
     return () => {
@@ -127,11 +127,11 @@ export default function EmailsPage() {
         </p>
       </div>
 
-      {googleConnected === false && (
+      {mailboxConnected === false && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <p>
-            Emails send from your own mailbox. <Link href="/integrations" className="font-semibold underline">Connect Google in Integrations</Link> before launching a sequence.
+            Emails send from your own mailbox. <Link href="/integrations" className="font-semibold underline">Connect Google, Microsoft 365 or Zoho in Integrations</Link> before launching a sequence.
           </p>
         </div>
       )}

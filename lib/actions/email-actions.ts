@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { requireComplianceAcknowledged, logAuditEvent } from "@/lib/actions/compliance-actions";
-import { findUnknownTokens, renderTemplate, firstNameOf, type TemplateEmail } from "@/lib/email-templates";
+import { findUnknownTokens, renderTemplate, firstNameOf, MAIL_PROVIDERS, type MailProvider, type TemplateEmail } from "@/lib/email-templates";
 
 const FOLLOWFLOW_KEY = "email_sequence_send";
 const MAX_RECIPIENTS_PER_LAUNCH = 200;
@@ -68,15 +68,17 @@ async function requireUser() {
 // ---------- Sender readiness ----------
 
 export async function getSenderInfo(): Promise<{
-  googleConnected: boolean;
+  connectedProviders: MailProvider[];
   followFlowSetUp: boolean;
   followFlowEnabled: boolean;
   defaultSenderName: string;
 }> {
   const { supabase, user } = await requireUser();
 
-  const [{ data: integ }, { data: profile }, { data: catalog }] = await Promise.all([
-    supabase.from("integrations").select("status").eq("user_id", user.id).eq("provider", "google").eq("status", "active").limit(1),
+  // Connections live in oauth_connections (written by the auth service), the
+  // same table the Integrations page reads.
+  const [{ data: conns }, { data: profile }, { data: catalog }] = await Promise.all([
+    supabase.from("oauth_connections").select("provider, status").eq("user_id", user.id).in("provider", MAIL_PROVIDERS),
     supabase.from("user_profiles").select("organization_name, full_name").eq("user_id", user.id).maybeSingle(),
     supabase.from("automation_catalog").select("id").eq("key", FOLLOWFLOW_KEY).maybeSingle(),
   ]);
@@ -93,7 +95,9 @@ export async function getSenderInfo(): Promise<{
   }
 
   return {
-    googleConnected: (integ?.length || 0) > 0,
+    connectedProviders: MAIL_PROVIDERS.filter((p) =>
+      (conns || []).some((c) => c.provider === p && (!c.status || c.status === "active"))
+    ),
     followFlowSetUp: !!catalog?.id,
     followFlowEnabled: enabled,
     defaultSenderName: profile?.organization_name || profile?.full_name || "",
@@ -201,6 +205,7 @@ export type LaunchInput = {
   consentSource: string;
   mailingAddress: string;
   senderName: string;
+  provider: MailProvider;
   mode: "leads" | "sequences";
   leadIds?: string[];
   sequenceIds?: string[];
@@ -232,7 +237,10 @@ export async function launchCampaign(
   const sender = await getSenderInfo();
   if (!sender.followFlowSetUp) return { ok: false, error: "FollowFlow isn't set up on this account yet." };
   if (!sender.followFlowEnabled) return { ok: false, error: "Turn on the FollowFlow automation first (Automations page)." };
-  if (!sender.googleConnected) return { ok: false, error: "Connect your Google account in Integrations first. Emails send from your own mailbox." };
+  if (!MAIL_PROVIDERS.includes(input.provider)) return { ok: false, error: "Choose which mailbox to send from." };
+  if (!sender.connectedProviders.includes(input.provider)) {
+    return { ok: false, error: "That mailbox isn't connected. Connect it in Integrations first. Emails send from your own mailbox." };
+  }
 
   // 4. Work out who gets what.
   type Plan = { email: string; leadId: string | null; emails: TemplateEmail[]; draftIds?: string[]; toName: string | null; sequenceId: string | null };
@@ -353,6 +361,7 @@ export async function launchCampaign(
       consent_source: consentSource,
       mailing_address: mailingAddress,
       sender_name: senderName,
+      provider: input.provider,
       source: input.mode === "sequences" ? "mailcraft" : "leads",
       launched_at: new Date().toISOString(),
     })

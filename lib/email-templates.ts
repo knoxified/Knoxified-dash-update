@@ -4,6 +4,16 @@
 
 export type TemplateEmail = { subject: string; body: string };
 
+// Mailboxes a sequence can send from. Must match the providers the auth
+// service (oauth.knoxified.org) supports and campaigns.provider's CHECK.
+export type MailProvider = "google" | "microsoft" | "zoho";
+export const MAIL_PROVIDERS: MailProvider[] = ["google", "microsoft", "zoho"];
+export const MAIL_PROVIDER_LABEL: Record<MailProvider, string> = {
+  google: "Google (Gmail)",
+  microsoft: "Microsoft 365 (Outlook)",
+  zoho: "Zoho Mail",
+};
+
 export const ALLOWED_TOKENS = ["first_name", "company", "sender_name"] as const;
 
 // Deliberately free of made-up statistics or claims: the customer must be able

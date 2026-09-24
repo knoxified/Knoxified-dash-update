@@ -9,7 +9,7 @@ import { CURRENT_POLICY_VERSION } from "@/lib/policy-version";
 
 type State = {
   enabled: boolean;
-  googleConnected: boolean;
+  mailboxConnected: boolean;
   policiesAccepted: boolean;
   activeCampaigns: number;
 };
@@ -27,13 +27,13 @@ export default function FollowFlowBoard() {
         if (cancelled) return;
         setState({
           enabled: info.followFlowEnabled,
-          googleConnected: info.googleConnected,
+          mailboxConnected: info.connectedProviders.length > 0,
           policiesAccepted: !!(ack.acknowledgedAt && ack.agreedVersion === CURRENT_POLICY_VERSION),
           activeCampaigns: camps.campaigns.filter((c) => c.status === "active").length,
         });
       })
       .catch(() => {
-        if (!cancelled) setState({ enabled: false, googleConnected: false, policiesAccepted: false, activeCampaigns: 0 });
+        if (!cancelled) setState({ enabled: false, mailboxConnected: false, policiesAccepted: false, activeCampaigns: 0 });
       });
     return () => {
       cancelled = true;
@@ -42,7 +42,7 @@ export default function FollowFlowBoard() {
 
   const steps = [
     { done: state?.enabled, label: "Switch FollowFlow on", hint: "Use the toggle on the Automations page.", href: "/automations", cta: "Automations" },
-    { done: state?.googleConnected, label: "Connect your Google account", hint: "Emails send from your own mailbox, so replies come straight to you.", href: "/integrations", cta: "Integrations" },
+    { done: state?.mailboxConnected, label: "Connect your email account", hint: "Google, Microsoft 365 or Zoho Mail. Emails send from your own mailbox, so replies come straight to you.", href: "/integrations", cta: "Integrations" },
     { done: state?.policiesAccepted, label: "Accept the outreach policies", hint: "A one-time agreement before your first campaign.", href: "/settings", cta: "Settings" },
   ];
 

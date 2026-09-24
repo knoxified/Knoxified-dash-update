@@ -1,5 +1,5 @@
 "use client";
-import { Box, Lock, LayoutGrid, Slack, Github, Calendar, MessageSquare, Plus, Check, Phone } from "lucide-react";
+import { Box, Lock, LayoutGrid, Slack, Github, Calendar, MessageSquare, Plus, Check, Phone, Mail } from "lucide-react";
 import { motion } from "motion/react";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -86,6 +86,7 @@ function IntegrationsPageInner() {
   const baseOauthIntegrations = [
     { id: "google", name: "Google Workspace", icon: Box, desc: "Connect Gmail, Calendar, and Drive.", brandColor: "text-blue-500" },
     { id: "microsoft", name: "Microsoft 365", icon: LayoutGrid, desc: "Connect Outlook and Teams.", brandColor: "text-sky-500" },
+    { id: "zoho", name: "Zoho Mail", icon: Mail, desc: "Send email sequences from your Zoho Mail account.", brandColor: "text-red-500" },
     { id: "slack", name: "Slack", icon: Slack, desc: "Send notifications and alerts to channels.", brandColor: "text-purple-500" },
     { id: "github", name: "GitHub", icon: Github, desc: "Sync repositories and track issues.", brandColor: "text-slate-900 dark:text-white" },
     { id: "notion", name: "Notion", icon: Calendar, desc: "Sync knowledge base and documents.", brandColor: "text-slate-800 dark:text-slate-200" },

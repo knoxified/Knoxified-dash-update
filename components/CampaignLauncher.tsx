@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { launchCampaign, getSenderInfo } from "@/lib/actions/email-actions";
 import { getComplianceAcknowledgment, submitComplianceAcknowledgment } from "@/lib/actions/compliance-actions";
 import { CURRENT_POLICY_VERSION } from "@/lib/policy-version";
-import { DEFAULT_SEQUENCE, type TemplateEmail } from "@/lib/email-templates";
+import { DEFAULT_SEQUENCE, MAIL_PROVIDER_LABEL, type MailProvider, type TemplateEmail } from "@/lib/email-templates";
 
 type Props = {
   open: boolean;
@@ -32,7 +32,7 @@ const inputCls =
   "w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00E5FF]";
 
 type Readiness = {
-  googleConnected: boolean;
+  connectedProviders: MailProvider[];
   followFlowSetUp: boolean;
   followFlowEnabled: boolean;
   defaultSenderName: string;
@@ -49,6 +49,7 @@ export default function CampaignLauncher({ open, onClose, mode, leadIds, sequenc
   const [senderName, setSenderName] = useState("");
   const [mailingAddress, setMailingAddress] = useState("");
   const [gapDays, setGapDays] = useState("3");
+  const [provider, setProvider] = useState<MailProvider | "">("");
   const [consentSource, setConsentSource] = useState("");
   const [template, setTemplate] = useState<TemplateEmail[]>(DEFAULT_SEQUENCE);
   const [reviewed, setReviewed] = useState(false);
@@ -61,6 +62,7 @@ export default function CampaignLauncher({ open, onClose, mode, leadIds, sequenc
         if (cancelled) return;
         setReadiness(info);
         setSenderName((prev) => prev || info.defaultSenderName);
+        setProvider((prev) => prev || info.connectedProviders[0] || "");
         setNeedsAck(!(ack.acknowledgedAt && ack.agreedVersion === CURRENT_POLICY_VERSION));
         setLoading(false);
       })
@@ -81,8 +83,8 @@ export default function CampaignLauncher({ open, onClose, mode, leadIds, sequenc
       ? { text: "FollowFlow isn't set up on this account yet.", href: null as string | null, cta: "" }
       : readiness && !readiness.followFlowEnabled
         ? { text: "Turn on the FollowFlow automation to send sequences.", href: "/automations", cta: "Open Automations" }
-        : readiness && !readiness.googleConnected
-          ? { text: "Connect your Google account so emails send from your own mailbox.", href: "/integrations", cta: "Open Integrations" }
+        : readiness && readiness.connectedProviders.length === 0
+          ? { text: "Connect a mailbox (Google, Microsoft 365 or Zoho) so emails send from your own account.", href: "/integrations", cta: "Open Integrations" }
           : null;
 
   const handleAcknowledge = async () => {
@@ -96,7 +98,7 @@ export default function CampaignLauncher({ open, onClose, mode, leadIds, sequenc
   };
 
   const handleLaunch = async () => {
-    if (!name.trim() || !senderName.trim() || !mailingAddress.trim() || !consentSource) {
+    if (!name.trim() || !senderName.trim() || !mailingAddress.trim() || !consentSource || !provider) {
       toast.error("Please fill out every required field.");
       return;
     }
@@ -111,6 +113,7 @@ export default function CampaignLauncher({ open, onClose, mode, leadIds, sequenc
       consentSource,
       mailingAddress,
       senderName,
+      provider,
       mode,
       leadIds,
       sequenceIds,
@@ -198,6 +201,19 @@ export default function CampaignLauncher({ open, onClose, mode, leadIds, sequenc
                   <Select value={gapDays} onChange={setGapDays} options={GAP_OPTIONS} />
                 </div>
               </div>
+
+              {readiness && readiness.connectedProviders.length > 1 ? (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Send from</label>
+                  <Select
+                    value={provider}
+                    onChange={(v) => setProvider(v as MailProvider)}
+                    options={readiness.connectedProviders.map((p) => ({ value: p, label: MAIL_PROVIDER_LABEL[p] }))}
+                  />
+                </div>
+              ) : (
+                provider && <p className="text-xs text-slate-500 dark:text-[#888]">Sending from your {MAIL_PROVIDER_LABEL[provider]} account.</p>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
