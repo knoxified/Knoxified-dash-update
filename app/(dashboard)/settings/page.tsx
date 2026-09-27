@@ -1,12 +1,15 @@
 "use client";
 import React, { useState, useEffect, useTransition } from "react";
-import { ShieldAlert, CheckCircle2, Palette, Moon, Sun, Monitor, Check, PhoneOff, Lock, History, FileText, AlertTriangle, Plus, Search, ExternalLink, ShieldCheck } from "lucide-react";
+import { ShieldAlert, CheckCircle2, Palette, Moon, Sun, Monitor, Check, PhoneOff, Lock, History, FileText, AlertTriangle, Plus, Search, ExternalLink, ShieldCheck, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import {
   getSuppressionList,
   addToSuppressionList,
   removeFromSuppressionList,
+  getEmailSuppressionList,
+  addToEmailSuppressionList,
+  removeFromEmailSuppressionList,
   getAuditLogs,
   getDisclosureSettings,
   toggleRecordingDisclosure,
@@ -60,10 +63,13 @@ export default function SettingsPage() {
 
   // Compliance data moved in from the standalone Compliance page
   const [suppressionList, setSuppressionList] = useState<any[]>([]);
+  const [emailSuppressionList, setEmailSuppressionList] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [recordingDisclosure, setRecordingDisclosure] = useState(true);
   const [newPhone, setNewPhone] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [emailSearchQuery, setEmailSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -74,13 +80,15 @@ export default function SettingsPage() {
 
     async function loadData() {
       try {
-        const [suppression, logs, disclosure, compliance] = await Promise.all([
+        const [suppression, emailSuppression, logs, disclosure, compliance] = await Promise.all([
           getSuppressionList(),
+          getEmailSuppressionList(),
           getAuditLogs(),
           getDisclosureSettings(),
           getComplianceAcknowledgment(),
         ]);
         setSuppressionList(suppression);
+        setEmailSuppressionList(emailSuppression);
         setAuditLogs(logs);
         setRecordingDisclosure(disclosure.require_recording_disclosure);
         setAcknowledgedAt(compliance.acknowledgedAt);
@@ -158,6 +166,42 @@ export default function SettingsPage() {
     });
   };
 
+  const handleAddEmailSuppression = (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalizedEmail = newEmail.trim().toLowerCase();
+    if (!normalizedEmail) return;
+    if (emailSuppressionList.some(entry => entry.email?.toLowerCase() === normalizedEmail)) {
+      toast.error(`${normalizedEmail} is already on the email suppression list.`);
+      return;
+    }
+    startTransition(async () => {
+      try {
+        await addToEmailSuppressionList(normalizedEmail, "manual_block");
+        const [emailSuppression, logs] = await Promise.all([getEmailSuppressionList(), getAuditLogs()]);
+        setEmailSuppressionList(emailSuppression);
+        setAuditLogs(logs);
+        setNewEmail("");
+        toast.success("Email added to suppression list");
+      } catch (err: any) {
+        toast.error(`Failed to add email: ${err.message}`);
+      }
+    });
+  };
+
+  const handleRemoveEmailSuppression = (id: string, email: string) => {
+    startTransition(async () => {
+      try {
+        await removeFromEmailSuppressionList(id, email);
+        const [emailSuppression, logs] = await Promise.all([getEmailSuppressionList(), getAuditLogs()]);
+        setEmailSuppressionList(emailSuppression);
+        setAuditLogs(logs);
+        toast.success("Email removed from suppression list");
+      } catch (err: any) {
+        toast.error(`Failed to remove email: ${err.message}`);
+      }
+    });
+  };
+
   const handleToggleDisclosure = (enabled: boolean) => {
     startTransition(async () => {
       try {
@@ -180,6 +224,10 @@ export default function SettingsPage() {
 
   const filteredSuppressionList = suppressionList.filter(entry =>
     entry.phone_number.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredEmailSuppressionList = emailSuppressionList.filter(entry =>
+    entry.email?.toLowerCase().includes(emailSearchQuery.toLowerCase())
   );
 
   const isCurrentVersionAcknowledged = acknowledgedAt && agreedVersion === CURRENT_POLICY_VERSION;
@@ -335,6 +383,60 @@ export default function SettingsPage() {
                   )}
                 </div>
                 <button onClick={() => handleRemoveSuppression(entry.id, entry.phone_number)} disabled={isPending} className="text-xs text-slate-400 dark:text-white/30 hover:text-rose-500 dark:hover:text-rose-400 transition-colors ml-4 shrink-0 font-medium">
+                  Remove
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Email Suppression List — unsubscribes, bounces, and manual blocks for
+          Leads/Campaigns/MailCraft. Same enforcement pattern as the phone
+          suppression list above (email-actions.ts already checks this table
+          before sending); this just gives it a place to be seen and managed
+          instead of being invisible to the account owner. */}
+      <div className="bg-white dark:bg-[#0d1117] border border-slate-200/60 dark:border-white/[0.05] rounded-2xl p-6 md:p-8 card-hover shadow-sm">
+        <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
+          <div>
+            <h2 className="text-[15px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Mail className="w-4 h-4 text-rose-500 dark:text-rose-400" /> Email Suppression List
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-white/40 mt-1">
+              Addresses that have unsubscribed, bounced, or been manually blocked from campaigns and follow-up sequences.
+            </p>
+          </div>
+          <div className="relative shrink-0">
+            <Search className="w-4 h-4 text-slate-400 dark:text-white/30 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input type="text" placeholder="Search emails..." value={emailSearchQuery} onChange={(e) => setEmailSearchQuery(e.target.value)}
+              className="rounded-xl bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 pl-9 pr-3 py-1.5 text-sm text-slate-900 dark:text-white w-56 focus:outline-none focus:border-[color:var(--accent)] transition-colors" />
+          </div>
+        </div>
+        <form onSubmit={handleAddEmailSuppression} className="flex gap-2 mb-4">
+          <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="someone@example.com"
+            className="flex-1 rounded-xl bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[color:var(--accent)] transition-colors" />
+          <button type="submit" disabled={isPending} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-900 flex items-center gap-1 disabled:opacity-50 hover:opacity-90 transition-all" style={{ background: 'var(--accent)', boxShadow: '0 0 15px var(--accent-glow)' }}>
+            <Plus className="w-4 h-4" /> Add
+          </button>
+        </form>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {filteredEmailSuppressionList.length === 0 && (
+            <p className="text-sm text-slate-500 dark:text-white/30">{emailSuppressionList.length === 0 ? "No emails on the suppression list yet." : "No emails match your search."}</p>
+          )}
+          {filteredEmailSuppressionList.map((entry) => {
+            const isUnsubscribe = entry.reason?.toLowerCase().includes("unsubscribe");
+            return (
+              <div key={entry.id} className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-white/[0.02] px-4 py-3 border border-slate-200/80 dark:border-white/5">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <p className="text-sm text-slate-900 dark:text-slate-200 font-medium w-48 shrink-0 truncate">{entry.email}</p>
+                  <p className="text-xs text-slate-500 dark:text-white/30 truncate flex-1">{entry.reason} &middot; {new Date(entry.created_at).toLocaleDateString()}</p>
+                  {isUnsubscribe && (
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/20 px-2 py-1 rounded-full uppercase tracking-wider shrink-0">
+                      <AlertTriangle className="w-3 h-3" /> UNSUB
+                    </span>
+                  )}
+                </div>
+                <button onClick={() => handleRemoveEmailSuppression(entry.id, entry.email)} disabled={isPending} className="text-xs text-slate-400 dark:text-white/30 hover:text-rose-500 dark:hover:text-rose-400 transition-colors ml-4 shrink-0 font-medium">
                   Remove
                 </button>
               </div>

@@ -8,14 +8,27 @@ import { getLeads, addLead, importLeads, getLeadTimeline, type Lead, type LeadSo
 import { parseCsv, detectColumns, rowsToLeads, type ColumnMap } from "@/lib/csv";
 import CampaignLauncher from "@/components/CampaignLauncher";
 
-type Tab = "all" | LeadSource;
+type Tab = "all" | LeadSource | "cold";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "all", label: "All" },
   { key: "inbound_call", label: "Inbound calls" },
   { key: "leadreach", label: "LeadReach" },
   { key: "manual", label: "Added by you" },
+  { key: "cold", label: "Cold" },
 ];
+
+// A lead is "cold" if it hasn't moved to won/lost and nobody has touched it
+// (call or manual contact) in 14+ days -- the thing WinBackBot used to
+// surface manually, now just a standing filter on data that's already here.
+const COLD_AFTER_DAYS = 14;
+function isColdLead(l: Lead): boolean {
+  if (l.status === "won" || l.status === "lost") return false;
+  const reference = l.last_contact_at ?? l.created_at;
+  if (!reference) return false;
+  const ageMs = Date.now() - new Date(reference).getTime();
+  return ageMs > COLD_AFTER_DAYS * 24 * 60 * 60 * 1000;
+}
 
 const SOURCE_LABEL: Record<LeadSource, string> = {
   inbound_call: "Inbound call",
@@ -175,15 +188,19 @@ export default function LeadsPage() {
   };
 
   const counts = useMemo(() => {
-    const c: Record<Tab, number> = { all: leads.length, inbound_call: 0, leadreach: 0, manual: 0 };
-    for (const l of leads) c[l.source]++;
+    const c: Record<Tab, number> = { all: leads.length, inbound_call: 0, leadreach: 0, manual: 0, cold: 0 };
+    for (const l of leads) {
+      c[l.source]++;
+      if (isColdLead(l)) c.cold++;
+    }
     return c;
   }, [leads]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return leads.filter((l) => {
-      if (tab !== "all" && l.source !== tab) return false;
+      if (tab === "cold") { if (!isColdLead(l)) return false; }
+      else if (tab !== "all" && l.source !== tab) return false;
       if (!q) return true;
       return [l.name, l.phone, l.email, l.company].some((v) => v?.toLowerCase().includes(q));
     });
@@ -385,7 +402,16 @@ export default function LeadsPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-right text-slate-500">{formatDate(lead.last_contact_at || lead.created_at)}</td>
+                      <td className="px-5 py-4 text-right text-slate-500">
+                        <div className="flex items-center justify-end gap-2">
+                          {isColdLead(lead) && (
+                            <span className="bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-white/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0">
+                              Cold
+                            </span>
+                          )}
+                          {formatDate(lead.last_contact_at || lead.created_at)}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}

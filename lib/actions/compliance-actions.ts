@@ -132,6 +132,61 @@ export async function removeFromSuppressionList(entryId: string, phoneNumber: st
   revalidatePath("/compliance");
 }
 
+// ---------- Email Suppression List (unsubscribes / bounces / manual blocks) ----------
+// Mirrors the phone suppression list above -- same enforcement pattern
+// (email-actions.ts already checks this table before sending), this just
+// gives it a Settings view so it isn't invisible to the account owner.
+
+export async function getEmailSuppressionList() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("email_suppressions")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Failed to load email suppression list: ${error.message}`);
+  return data;
+}
+
+export async function addToEmailSuppressionList(email: string, reason: string = "manual_block") {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("email_suppressions")
+    .insert({ user_id: user.id, email, reason })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to add email suppression entry: ${error.message}`);
+
+  await logAuditEvent("Manual Email Suppression Added", `Added ${email} to the email suppression list.`);
+  revalidatePath("/compliance");
+  return data;
+}
+
+export async function removeFromEmailSuppressionList(entryId: string, email: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error } = await supabase
+    .from("email_suppressions")
+    .delete()
+    .eq("id", entryId)
+    .eq("user_id", user.id);
+
+  if (error) throw new Error(`Failed to remove email suppression entry: ${error.message}`);
+
+  await logAuditEvent("Email Suppression Removed", `Removed ${email} from the email suppression list.`);
+  revalidatePath("/compliance");
+}
+
 // ---------- Audit Logs (append-only — no update/delete function exists on purpose) ----------
 
 export async function getAuditLogs(limit: number = 50) {
