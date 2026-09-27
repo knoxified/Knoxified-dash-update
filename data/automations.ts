@@ -107,8 +107,6 @@ export const AUTOMATIONS: Automation[] = [
     formSchema: [ { key: "employee_name", label: "Employee Name", type: "text" }, { key: "department", label: "Department", type: "text" }, { key: "start_date", label: "Start Date", type: "date" } ] },
   { id: "invoiceai", name: "InvoiceAI 💰", category: "Finance", description: "Creates and dispatches accurate invoices based on logged hours or completed project milestones.", enabled: false,
     formSchema: [ { key: "client_id", label: "Client ID", type: "text" }, { key: "project_id", label: "Project ID", type: "text" }, { key: "amount", label: "Amount", type: "number" } ] },
-  { id: "leadloom", name: "LeadLoom 🎯", category: "Sales", description: "Routes incoming leads instantly to the correct sales rep based on territory, size, or round-robin rules.", enabled: false,
-    formSchema: [ { key: "lead_email", label: "Lead Email", type: "text" }, { key: "company_size", label: "Company Size", type: "number" }, { key: "industry", label: "Industry", type: "text" } ] },
   { id: "fraudshield", name: "FraudShield 🛑", category: "Finance", description: "Monitors e-commerce transactions and flags highly suspicious orders for manual review.", enabled: false,
     formSchema: [ { key: "transaction_id", label: "Transaction ID", type: "text" }, { key: "amount", label: "Amount", type: "number" }, { key: "ip_address", label: "IP Address", type: "text" } ], metrics: { label1: "Orders Scanned", value1: "8.4k", label2: "Flags Raised", value2: "12" } },
   { id: "casesync", name: "CaseSync ⚖️", category: "Legal", description: "Organizes new legal inquiries by your firm's criteria before they reach attorneys, gathering initial case facts.", enabled: false,
