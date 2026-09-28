@@ -58,8 +58,9 @@ export function CallRoutingEditor() {
           <PhoneForwarded size={16} className="text-sky-500" /> Call Routing
         </h2>
         <p className="text-sm text-slate-500 dark:text-[#888] mt-1">
-          When a caller says one of your keywords, the agent either transfers them to your team or gives a fixed answer.
-          Rules are checked in order, and they take priority over booking and the agent&apos;s normal replies.
+          Optional extras. Your system already handles its own job (like booking) without any rules, and general
+          questions are answered from your Business Summary. Use rules only for exceptions, like sending billing
+          calls to a person. Rules never override what your system handles, and they&apos;re checked in order.
         </p>
         <p className="text-xs text-slate-400 dark:text-white/30 mt-2">
           Live transfers currently work on Telnyx phone calls only. On other call types a transfer rule is skipped and the agent answers normally.
