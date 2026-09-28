@@ -428,8 +428,10 @@ export default function AutomationsPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: (idx % 9) * 0.05 }}
-              onClick={() => router.push(`/automations/${aut.id}`)}
-              className={`relative overflow-hidden rounded-2xl p-8 flex flex-col group cursor-pointer backdrop-blur-md border transition-all duration-300 transform-gpu hover:-translate-y-1 ${
+              onClick={() => aut.catalogId && router.push(`/automations/${aut.id}`)}
+              className={`relative overflow-hidden rounded-2xl p-8 flex flex-col group backdrop-blur-md border transition-all duration-300 transform-gpu ${
+                aut.catalogId ? 'cursor-pointer hover:-translate-y-1' : 'cursor-default opacity-60'
+              } ${
                 aut.enabled
                   ? `bg-gradient-to-br from-white to-slate-50 dark:from-[#0F172A] dark:via-[#0F172A] dark:to-[#0F172A] border-slate-200 dark:border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.06)] ${catTheme.border}`
                   : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
@@ -447,8 +449,8 @@ export default function AutomationsPage() {
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">{title}</h3>
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${aut.enabled ? 'bg-emerald-100 dark:bg-[#10B981]/10 text-emerald-600 dark:text-[#10B981] border-emerald-300 dark:border-[#10B981]/20' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent'}`}>
-                        {aut.enabled ? 'Running' : 'Paused'}
+                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${!aut.catalogId ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-500/20' : aut.enabled ? 'bg-emerald-100 dark:bg-[#10B981]/10 text-emerald-600 dark:text-[#10B981] border-emerald-300 dark:border-[#10B981]/20' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#888] border-slate-200 dark:border-transparent'}`}>
+                        {!aut.catalogId ? 'Coming soon' : aut.enabled ? 'Running' : 'Paused'}
                       </span>
                       <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border border-transparent ${catTheme.badge}`}>
                         {aut.category}
@@ -459,7 +461,8 @@ export default function AutomationsPage() {
                 
                 <button 
                   onClick={(e) => { e.stopPropagation(); toggleAutomation(aut); }}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 ${aut.enabled ? 'bg-[color:var(--accent)] shadow-[0_0_8px_rgba(0,229,255,0.5)]' : 'bg-slate-300 dark:bg-white/10'}`}
+                  disabled={!aut.catalogId}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 disabled:cursor-not-allowed ${aut.enabled ? 'bg-[color:var(--accent)] shadow-[0_0_8px_rgba(0,229,255,0.5)]' : 'bg-slate-300 dark:bg-white/10'}`}
                 >
                   <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${aut.enabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
                 </button>
