@@ -16,7 +16,20 @@ export type RoutingRule = {
 };
 
 const E164 = /^\+[1-9]\d{7,14}$/;
-const MAX_RULES = 10;
+// Accounts with an enabled system get fewer rules (the system already handles
+// its own job; rules are only for exceptions). Starter has no system, so it
+// gets more. Keep in sync with voice-agent-beta's routing.js.
+const MAX_RULES_STARTER = 10;
+const MAX_RULES_WITH_SYSTEM = 3;
+
+async function getMaxRules(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { count } = await supabase
+    .from("user_systems")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_enabled", true);
+  return (count ?? 0) > 0 ? MAX_RULES_WITH_SYSTEM : MAX_RULES_STARTER;
+}
 const MAX_KEYWORDS = 10;
 
 export async function getCallRouting() {
@@ -31,7 +44,9 @@ export async function getCallRouting() {
     .maybeSingle();
 
   if (error) return { error: error.message };
+  const maxRules = await getMaxRules(supabase, user.id);
   return {
+    maxRules,
     rules: (Array.isArray(data?.custom_intents) ? data!.custom_intents : []) as RoutingRule[],
     businessPhone: (data?.business_phone as string | null) ?? "",
   };
@@ -47,8 +62,9 @@ export async function saveCallRouting(input: { rules: RoutingRule[]; businessPho
     return { error: "Transfer number must be in international format, e.g. +12125551234." };
   }
 
-  if (!Array.isArray(input.rules) || input.rules.length > MAX_RULES) {
-    return { error: `You can have at most ${MAX_RULES} routing rules.` };
+  const maxRules = await getMaxRules(supabase, user.id);
+  if (!Array.isArray(input.rules) || input.rules.length > maxRules) {
+    return { error: `Your plan allows at most ${maxRules} routing rules.` };
   }
 
   const clean: RoutingRule[] = [];

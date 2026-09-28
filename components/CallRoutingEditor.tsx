@@ -22,6 +22,7 @@ export function CallRoutingEditor() {
   const [loading, setLoading] = useState(true);
   const [rules, setRules] = useState<Draft[]>([]);
   const [businessPhone, setBusinessPhone] = useState("");
+  const [maxRules, setMaxRules] = useState(10);
 
   useEffect(() => {
     getCallRouting().then((res) => {
@@ -29,6 +30,7 @@ export function CallRoutingEditor() {
       else if ("rules" in res) {
         setRules((res.rules || []).map(toDraft));
         setBusinessPhone(res.businessPhone || "");
+        if (typeof res.maxRules === "number") setMaxRules(res.maxRules);
       }
       setLoading(false);
     });
@@ -66,6 +68,12 @@ export function CallRoutingEditor() {
           Live transfers currently work on Telnyx phone calls only. On other call types a transfer rule is skipped and the agent answers normally.
         </p>
       </div>
+
+      {rules.length > maxRules && (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          Your plan allows {maxRules} rules, so only the first {maxRules} are active. Remove the extras to save.
+        </p>
+      )}
 
       <div className="space-y-2">
         <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
@@ -147,10 +155,10 @@ export function CallRoutingEditor() {
         <button
           type="button"
           onClick={() => setRules((rs) => [...rs, { label: "", keywords: "", action: "transfer", reply: "" }])}
-          disabled={rules.length >= 10 || loading}
+          disabled={rules.length >= maxRules || loading}
           className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-colors"
         >
-          <Plus size={16} /> Add rule
+          <Plus size={16} /> Add rule ({rules.length}/{maxRules})
         </button>
         <button
           type="button"
