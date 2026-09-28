@@ -11,6 +11,7 @@ import { triggerDiscountOffer } from "@/lib/actions/discount-actions";
 import { VOICE_OPTIONS } from "@/lib/voice-options";
 import { AVATAR_OPTIONS } from "@/lib/avatar-options";
 import { AgentAvatar } from "@/components/AgentAvatar";
+import { CallRoutingEditor } from "@/components/CallRoutingEditor";
 import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle } from "lucide-react";
 
 export default function AgentConfigPage() {
@@ -322,6 +323,7 @@ export default function AgentConfigPage() {
 
       <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 rounded-xl p-6 md:p-8">
         {activeTab === "settings" ? (
+        <>
         <form onSubmit={handleSubmit} className="space-y-8">
 
           <div className="space-y-5 pb-2">
@@ -602,6 +604,8 @@ export default function AgentConfigPage() {
             </button>
           </div>
         </form>
+        <CallRoutingEditor />
+        </>
         ) : activeTab === "conversations" ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
