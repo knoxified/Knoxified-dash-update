@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, CartesianGrid, Bar } from "recharts";
 import { useDashboardMetrics, useSystemLogs, useSystems, useAutomations } from "@/lib/services/hooks";
 import { getAgentReadiness } from "@/lib/actions/system-automation-actions";
+import { getWebcallPreviewSystem, setWebcallPreviewSystem } from "@/lib/actions/agent-identity-actions";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 
@@ -52,6 +53,17 @@ export default function DashboardOverview() {
   useEffect(() => {
     getAgentReadiness().then((r) => setHasPhoneNumber(r.hasPhoneNumber));
   }, []);
+  // Webcall system preview: "" = no system (account's own configuration).
+  // Persisted on agent_configs; picking one NEVER activates it.
+  const [previewSystemId, setPreviewSystemId] = useState("");
+  const [lastPreviewedId, setLastPreviewedId] = useState("");
+  useEffect(() => {
+    getWebcallPreviewSystem().then((id) => setPreviewSystemId(id));
+  }, []);
+  function handlePreviewSystemChange(id: string) {
+    setPreviewSystemId(id);
+    setWebcallPreviewSystem(id);
+  }
   const [whisperMode, setWhisperMode] = useState(false);
   const [whisperText, setWhisperText] = useState("");
   const voiceMinutesUsed = metrics?.voiceUsage?.used ?? 0;
@@ -118,7 +130,16 @@ export default function DashboardOverview() {
       // Required before connect() on the v2 SDK.
       await device.register();
 
-      const call = await device.connect({ params: { userId: user.id, mode: "dashboard" } });
+      // Only send the override when the saved id is a real catalog system.
+      const overrideId = systems.some((sys) => sys.id === previewSystemId) ? previewSystemId : "";
+      setLastPreviewedId(overrideId);
+      const call = await device.connect({
+        params: {
+          userId: user.id,
+          mode: "dashboard",
+          ...(overrideId ? { systemTypeOverride: overrideId } : {}),
+        },
+      });
       activeCallRef.current = call;
 
       call.on("accept", () => {
@@ -353,6 +374,15 @@ export default function DashboardOverview() {
 
           {callStatus === "idle" ? (
             <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-4 py-6">
+              <div className="w-full max-w-xs">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-widest mb-1.5 text-center">Try a system</p>
+                <Select
+                  value={previewSystemId}
+                  onChange={handlePreviewSystemChange}
+                  options={[{ value: "", label: "No system (my own setup)" }, ...systems.map((sys) => ({ value: sys.id, label: sys.name }))]}
+                  placeholder="No system (my own setup)"
+                />
+              </div>
               <button
                 onClick={startWebCall}
                 className="relative group/mic"
@@ -364,7 +394,16 @@ export default function DashboardOverview() {
                   <Mic size={22} style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 6px var(--accent-glow))' }} />
                 </div>
               </button>
-              <p className="text-slate-500 dark:text-white/40 text-sm">Tap to test your agent with a web call</p>
+              <p className="text-slate-500 dark:text-white/40 text-sm">
+                {previewSystemId && systems.find((sys) => sys.id === previewSystemId)
+                  ? `Tap to hear your agent as ${systems.find((sys) => sys.id === previewSystemId)?.name}`
+                  : "Tap to test your agent with a web call"}
+              </p>
+              {lastPreviewedId && !systems.find((sys) => sys.id === lastPreviewedId)?.isEnabled && (
+                <Link href={`/systems/${lastPreviewedId}`} className="text-[12px] font-semibold underline hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                  Want {systems.find((sys) => sys.id === lastPreviewedId)?.name} answering your real calls? Activate it
+                </Link>
+              )}
             </div>
           ) : (
           <div className="relative z-10 flex flex-col lg:flex-row gap-4 items-stretch flex-1">
@@ -449,16 +488,18 @@ export default function DashboardOverview() {
                <div className="flex flex-col gap-2 flex-1">
                   <ToggleButton 
                     label="Live Takeover" 
-                    active={takeoverActive} 
-                    onToggle={() => setTakeoverActive(!takeoverActive)}
+                    active={false} 
+                    onToggle={() => {}}
+                    comingSoon
                     activeColor="bg-red-500"
                     activeStyle="bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20"
                     activeTextStyle="text-red-600 dark:text-red-400"
                   />
                   <ToggleButton 
                     label="Whisper Mode" 
-                    active={whisperMode} 
-                    onToggle={() => setWhisperMode(!whisperMode)}
+                    active={false} 
+                    onToggle={() => {}}
+                    comingSoon
                     activeStyle="dark:border-white/10"
                     useAccent
                   />
@@ -481,6 +522,7 @@ export default function DashboardOverview() {
                     label="Do Not Disturb" 
                     active={false} 
                     onToggle={() => {}}
+                    comingSoon
                     activeStyle=""
                   />
                </div>
@@ -710,9 +752,18 @@ interface ToggleButtonProps {
   activeTextStyle?: string;
   activeColor?: string;
   useAccent?: boolean;
+  comingSoon?: boolean;
 }
 
-function ToggleButton({ label, active, onToggle, activeStyle, activeTextStyle, activeColor, useAccent }: ToggleButtonProps) {
+function ToggleButton({ label, active, onToggle, activeStyle, activeTextStyle, activeColor, useAccent, comingSoon }: ToggleButtonProps) {
+  if (comingSoon) {
+    return (
+      <div aria-disabled="true" className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.02] opacity-60 cursor-not-allowed">
+        <span className="text-[12px] font-semibold text-slate-500 dark:text-white/40">{label}</span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/30 bg-slate-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-full">Coming soon</span>
+      </div>
+    );
+  }
   return (
     <button 
       onClick={onToggle} 
