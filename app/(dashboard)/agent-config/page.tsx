@@ -4,6 +4,9 @@ import React, { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getAgentConfig, updateAgentConfig, toggleCallRecording } from "@/lib/actions/agent-config-actions";
 import { Select } from "@/components/ui/Select";
+import { getWebcallPreviewSystem, setWebcallPreviewSystem } from "@/lib/actions/agent-identity-actions";
+import { useSystems } from "@/lib/services/hooks";
+import Link from "next/link";
 import { scanWebsite } from "@/lib/actions/website-scan-actions";
 import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
 import { previewAgentVoice } from "@/lib/actions/voice-preview-actions";
@@ -15,6 +18,22 @@ import { CallRoutingEditor } from "@/components/CallRoutingEditor";
 import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle } from "lucide-react";
 
 export default function AgentConfigPage() {
+  const { data: catalogSystems } = useSystems();
+  const [webcallPreviewSystem, setWebcallPreviewSystemState] = useState("");
+  useEffect(() => {
+    getWebcallPreviewSystem().then((id) => setWebcallPreviewSystemState(id));
+  }, []);
+  async function handleWebcallPreviewChange(id: string) {
+    const previous = webcallPreviewSystem;
+    setWebcallPreviewSystemState(id);
+    const res = await setWebcallPreviewSystem(id);
+    if (!res.ok) {
+      setWebcallPreviewSystemState(previous);
+      toast.error("Couldn't save your webcall preview system. Try again.");
+    } else {
+      toast.success("Webcall preview system saved");
+    }
+  }
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"settings" | "conversations" | "numbers">("settings");
@@ -384,6 +403,26 @@ export default function AgentConfigPage() {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-slate-200 dark:bg-white/5 w-full"></div>
+
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <Volume2 size={16} className="text-sky-500" /> Webcall Preview System
+            </h2>
+            <p className="text-[13px] text-slate-500 dark:text-[#888]">
+              Choose which industry system your dashboard webcall previews use, so you can hear how a conversation would sound in that industry&apos;s tone and word choice. This only affects webcall previews. It does not change how your real calls are answered. To use a system on real inbound or outbound calls, activate it from{" "}
+              <Link href="/systems" className="underline hover:opacity-80" style={{ color: 'var(--accent)' }}>Systems</Link>.
+            </p>
+            <div className="max-w-sm">
+              <Select
+                value={webcallPreviewSystem}
+                onChange={handleWebcallPreviewChange}
+                options={[{ value: "", label: "No system (my own setup)" }, ...catalogSystems.map((sys) => ({ value: sys.id, label: sys.name }))]}
+                placeholder="No system (my own setup)"
+              />
             </div>
           </div>
 
