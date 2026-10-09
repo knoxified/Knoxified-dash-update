@@ -62,6 +62,11 @@ export function SystemPicker({ value, onChange, systems, className = "" }: Syste
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
+    // Scrolling the list itself must not close it; only page/ancestor scroll should.
+    function onScroll(e: Event) {
+      if (panelRef.current && e.target instanceof Node && panelRef.current.contains(e.target)) return;
+      setOpen(false);
+    }
     function onDown(e: MouseEvent) {
       const t = e.target as Node;
       if (buttonRef.current?.contains(t) || panelRef.current?.contains(t)) return;
@@ -69,11 +74,11 @@ export function SystemPicker({ value, onChange, systems, className = "" }: Syste
     }
     document.addEventListener("mousedown", onDown);
     window.addEventListener("resize", close);
-    window.addEventListener("scroll", close, true);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("mousedown", onDown);
       window.removeEventListener("resize", close);
-      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [open]);
 
@@ -130,7 +135,7 @@ export function SystemPicker({ value, onChange, systems, className = "" }: Syste
               boxShadow: "0 16px 48px rgba(0,0,0,0.18), 0 0 0 1px var(--border)",
             }}
           >
-            <ul className="overflow-y-auto p-1.5 space-y-0.5" style={{ maxHeight: pos.maxHeight }}>
+            <ul className="overflow-y-auto overscroll-contain p-1.5 space-y-0.5" style={{ maxHeight: pos.maxHeight }}>
               <li
                 onClick={() => pick("")}
                 className={`${itemBase} ${effectiveValue === "" ? "" : "text-slate-600 dark:text-white/55 hover:bg-slate-50 dark:hover:bg-white/[0.05]"}`}
