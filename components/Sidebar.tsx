@@ -23,8 +23,6 @@ export function Sidebar() {
   const creditsPct = creditsLimit && creditsLimit > 0 ? Math.min((creditsUsed / creditsLimit) * 100, 100) : 0;
   const isNearLimit = creditsPct > 80;
 
-  const userEmail = workspace?.workspace?.name || "";
-  const userInitials = userEmail ? userEmail.slice(0, 2).toUpperCase() : "—";
 
   return (
     <aside className="fixed inset-y-0 left-0 w-60 hidden md:flex flex-col h-screen overflow-y-auto z-40 border-r border-slate-200/60 dark:border-white/[0.04]"
@@ -154,20 +152,7 @@ export function Sidebar() {
 
       {/* User Footer */}
       <div className="p-2.5 border-t border-slate-200/60 dark:border-white/[0.04]">
-        <div className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-all cursor-pointer group">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-900 text-[10px] font-extrabold shrink-0 transition-all"
-            style={{ background: 'var(--accent)', boxShadow: '0 0 12px var(--accent-glow)' }}
-          >
-            {userInitials}
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="text-[12px] font-semibold text-slate-700 dark:text-white/80 truncate group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{userEmail || "Loading..."}</p>
-            <p className="text-[10px] text-slate-400 dark:text-white/25 truncate">{planName}</p>
-          </div>
-          <Settings size={12} className="text-slate-300 dark:text-white/20 group-hover:text-slate-500 dark:group-hover:text-white/50 transition-colors" />
-        </div>
-        
-        <form action={logout} className="mt-1">
+        <form action={logout}>
           <button type="submit" className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all font-semibold">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             Sign Out
