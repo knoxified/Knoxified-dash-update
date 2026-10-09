@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, 
 import { useDashboardMetrics, useSystemLogs, useSystems, useAutomations } from "@/lib/services/hooks";
 import { getAgentReadiness } from "@/lib/actions/system-automation-actions";
 import { getWebcallPreviewSystem, setWebcallPreviewSystem } from "@/lib/actions/agent-identity-actions";
+import { SystemPicker, orderedPickerSystems } from "@/components/ui/SystemPicker";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 
@@ -131,7 +132,7 @@ export default function DashboardOverview() {
       await device.register();
 
       // Only send the override when the saved id is a real catalog system.
-      const overrideId = systems.some((sys) => sys.id === previewSystemId) ? previewSystemId : "";
+      const overrideId = orderedPickerSystems(systems).some((sys) => sys.id === previewSystemId) ? previewSystemId : "";
       setLastPreviewedId(overrideId);
       const call = await device.connect({
         params: {
@@ -376,12 +377,7 @@ export default function DashboardOverview() {
             <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-4 py-6">
               <div className="w-full max-w-xs">
                 <p className="text-[10px] font-bold text-slate-400 dark:text-white/25 uppercase tracking-widest mb-1.5 text-center">Try a system</p>
-                <Select
-                  value={previewSystemId}
-                  onChange={handlePreviewSystemChange}
-                  options={[{ value: "", label: "No system (my own setup)" }, ...systems.map((sys) => ({ value: sys.id, label: sys.name }))]}
-                  placeholder="No system (my own setup)"
-                />
+                <SystemPicker value={previewSystemId} onChange={handlePreviewSystemChange} systems={systems} />
               </div>
               <button
                 onClick={startWebCall}

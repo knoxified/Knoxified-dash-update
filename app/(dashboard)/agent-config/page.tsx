@@ -6,6 +6,7 @@ import { getAgentConfig, updateAgentConfig, toggleCallRecording } from "@/lib/ac
 import { Select } from "@/components/ui/Select";
 import { getWebcallPreviewSystem, setWebcallPreviewSystem } from "@/lib/actions/agent-identity-actions";
 import { useSystems } from "@/lib/services/hooks";
+import { SystemPicker } from "@/components/ui/SystemPicker";
 import Link from "next/link";
 import { scanWebsite } from "@/lib/actions/website-scan-actions";
 import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
@@ -417,12 +418,7 @@ export default function AgentConfigPage() {
               <Link href="/systems" className="underline hover:opacity-80" style={{ color: 'var(--accent)' }}>Systems</Link>.
             </p>
             <div className="max-w-sm">
-              <Select
-                value={webcallPreviewSystem}
-                onChange={handleWebcallPreviewChange}
-                options={[{ value: "", label: "No system (my own setup)" }, ...catalogSystems.map((sys) => ({ value: sys.id, label: sys.name }))]}
-                placeholder="No system (my own setup)"
-              />
+              <SystemPicker value={webcallPreviewSystem} onChange={handleWebcallPreviewChange} systems={catalogSystems} />
             </div>
           </div>
 
