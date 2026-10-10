@@ -87,9 +87,10 @@ export function useDashboardMetrics(dateRange: string = "7d") {
         // Calculate current usage by summing minutes_used from public.voice_usage
         const { data: voiceUsage } = await supabase
           .from('voice_usage')
-          .select('minutes_used')
+          .select('minutes_used, seconds_used')
           .eq('user_id', user.id);
-        const totalVoice = voiceUsage?.reduce((acc: number, row: any) => acc + (row.minutes_used || 0), 0) || 0;
+        // Stored as exact seconds; show whole minutes only (rows from before the switch fall back to minutes * 60).
+  const totalVoice = Math.floor((voiceUsage?.reduce((acc: number, row: any) => acc + (row.seconds_used > 0 ? row.seconds_used : (row.minutes_used || 0) * 60), 0) || 0) / 60);
 
         // Calculate current usage by summing run_units from public.automation_runs
         const { data: autoRuns } = await supabase
