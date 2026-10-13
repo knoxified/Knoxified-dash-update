@@ -12,20 +12,6 @@ const VOICE_HOST = process.env.NEXT_PUBLIC_VOICE_STREAM_HOST || "https://voice.k
 export const USE_DIRECT_WEBCALL = process.env.NEXT_PUBLIC_WEBCALL_MODE !== "twilio";
 
 const MULAW_BIAS = 0x84;
-const MULAW_CLIP = 32635;
-
-function linearToMulaw(sample: number): number {
-  const sign = (sample >> 8) & 0x80;
-  if (sign) sample = -sample;
-  if (sample > MULAW_CLIP) sample = MULAW_CLIP;
-  sample += MULAW_BIAS;
-  let exponent = 7;
-  for (let mask = 0x4000; (sample & mask) === 0 && exponent > 0; exponent--, mask >>= 1) {
-    /* find the highest set bit */
-  }
-  const mantissa = (sample >> (exponent + 3)) & 0x0f;
-  return ~(sign | (exponent << 4) | mantissa) & 0xff;
-}
 
 function mulawToLinear(byte: number): number {
   const u = ~byte & 0xff;
@@ -36,17 +22,17 @@ function mulawToLinear(byte: number): number {
   return sign ? -sample : sample;
 }
 
-// Runs on the audio thread: averages the mic signal down to 8 kHz and hands
-// back 20 ms (160-sample) Int16 frames.
+// Runs on the audio thread: averages the mic signal down to 16 kHz and hands
+// back 20 ms (320-sample) Int16 frames.
 const WORKLET_SOURCE = `
 class CaptureProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.ratio = sampleRate / 8000;
+    this.ratio = sampleRate / 16000;
     this.phase = 0;
     this.acc = 0;
     this.count = 0;
-    this.frame = new Int16Array(160);
+    this.frame = new Int16Array(320);
     this.filled = 0;
   }
   process(inputs) {
@@ -62,7 +48,7 @@ class CaptureProcessor extends AudioWorkletProcessor {
         this.acc = 0;
         this.count = 0;
         this.frame[this.filled++] = (v * 32767) | 0;
-        if (this.filled === 160) {
+        if (this.filled === 320) {
           this.port.postMessage(this.frame.slice());
           this.filled = 0;
         }
@@ -211,13 +197,16 @@ export async function startDirectWebCall(opts: DirectCallOptions): Promise<Direc
     } catch { /* ignore non-JSON frames */ }
   };
 
-  ws.send(JSON.stringify({ event: "start", streamSid, start: { streamSid, callSid: callId, customParameters: {} } }));
+  ws.send(JSON.stringify({
+    event: "start",
+    streamSid,
+    // 16 kHz linear PCM from the mic: far better recognition than 8 kHz mu-law.
+    start: { streamSid, callSid: callId, customParameters: {}, mediaFormat: { encoding: "audio/l16", sampleRate: 16000, channels: 1 } },
+  }));
 
   capture.port.onmessage = (event: MessageEvent<Int16Array>) => {
     if (stopped || ws.readyState !== WebSocket.OPEN) return;
-    const pcm = event.data;
-    const bytes = new Uint8Array(pcm.length);
-    for (let i = 0; i < pcm.length; i++) bytes[i] = linearToMulaw(pcm[i]);
+    const bytes = new Uint8Array(event.data.buffer, event.data.byteOffset, event.data.byteLength);
     let bin = "";
     for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
     ws.send(JSON.stringify({ event: "media", streamSid, media: { track: "inbound", payload: btoa(bin) } }));
