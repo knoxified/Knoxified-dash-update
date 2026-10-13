@@ -8,6 +8,7 @@ import { useDashboardMetrics, useSystemLogs, useSystems, useAutomations } from "
 import { getAgentReadiness } from "@/lib/actions/system-automation-actions";
 import { getWebcallPreviewSystem, setWebcallPreviewSystem } from "@/lib/actions/agent-identity-actions";
 import { SystemPicker, orderedPickerSystems } from "@/components/ui/SystemPicker";
+import { startDirectWebCall, USE_DIRECT_WEBCALL, type DirectCall } from "@/lib/webcall/directWebCall";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 
@@ -71,6 +72,7 @@ export default function DashboardOverview() {
   const voiceMinutesLimit = metrics?.voiceUsage?.total ?? 0;
   const deviceRef = useRef<any>(null);
   const activeCallRef = useRef<any>(null);
+  const directCallRef = useRef<DirectCall | null>(null);
 
   // Uses Cloudflare service bindings to call voice-agent-beta internally
   async function startWebCall() {
@@ -82,6 +84,21 @@ export default function DashboardOverview() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("You need to be logged in to start a call.");
+      }
+
+      // Browser-direct call: no Twilio. Falls back to the Twilio path only if
+      // NEXT_PUBLIC_WEBCALL_MODE=twilio.
+      if (USE_DIRECT_WEBCALL) {
+        const directOverride = orderedPickerSystems(systems).some((sys) => sys.id === previewSystemId) ? previewSystemId : "";
+        setLastPreviewedId(directOverride);
+        directCallRef.current = await startDirectWebCall({
+          userId: user.id,
+          systemTypeOverride: directOverride,
+          onClosed: () => cleanupCall(),
+          onError: (message) => setCallError(message),
+        });
+        setCallStatus("active");
+        return;
       }
 
       // Readiness check using internal service binding
@@ -167,6 +184,10 @@ export default function DashboardOverview() {
   }
 
   function cleanupCall() {
+    try {
+      directCallRef.current?.stop();
+    } catch { /* already gone */ }
+    directCallRef.current = null;
     try {
       activeCallRef.current?.disconnect();
     } catch { /* already gone */ }

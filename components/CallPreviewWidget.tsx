@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Radio, Mic, PhoneOff, Volume2, Users, Settings2, Info, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { startDirectWebCall, USE_DIRECT_WEBCALL, type DirectCall } from "@/lib/webcall/directWebCall";
 import { getAgentReadiness } from "@/lib/actions/system-automation-actions";
 
 interface CallPreviewWidgetProps {
@@ -24,6 +25,7 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
   const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean | null>(null);
   const deviceRef = useRef<any>(null);
   const activeCallRef = useRef<any>(null);
+  const directCallRef = useRef<DirectCall | null>(null);
 
   useEffect(() => {
     // Phone-number readiness only matters for the account's own real
@@ -43,6 +45,19 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("You need to be logged in to start a call.");
+      }
+
+      // Browser-direct call: no Twilio. Falls back to the Twilio path only if
+      // NEXT_PUBLIC_WEBCALL_MODE=twilio.
+      if (USE_DIRECT_WEBCALL) {
+        directCallRef.current = await startDirectWebCall({
+          userId: user.id,
+          systemTypeOverride: previewSystemType || "",
+          onClosed: () => cleanupCall(),
+          onError: (message) => setCallError(message),
+        });
+        setCallStatus("active");
+        return;
       }
 
       const startRes = await fetch("/api/voice/web-call/start", {
@@ -120,6 +135,10 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
   }
 
   function cleanupCall() {
+    try {
+      directCallRef.current?.stop();
+    } catch { /* already gone */ }
+    directCallRef.current = null;
     try {
       activeCallRef.current?.disconnect();
     } catch { /* already gone */ }
