@@ -194,18 +194,16 @@ function IntegrationsPageInner() {
                 <p className="text-slate-500 dark:text-[#888] text-xs mb-6 flex-1">{app.desc}</p>
                 <button
                  onClick={() => {
-                  if (app.status === 'connected') {
-                    toast.info(`Managing connection to ${app.name}...`);
-                  } else {
-                    initiateOAuthFlow(app.id, app.name);
-                  }
+                  // Connected apps can be re-authorised here (fresh tokens), e.g.
+                  // when a refresh token has expired or been revoked.
+                  initiateOAuthFlow(app.id, app.name);
                 }}
                 className={`w-full py-2 rounded-lg text-sm font-semibold transition-all active:scale-[0.98] ${
                   app.status === 'connected' 
                     ? 'bg-slate-100 dark:bg-[#020617] text-slate-700 dark:text-[#EDEDED] hover:bg-slate-200 dark:hover:bg-white/5 border border-slate-200 dark:border-white/5'
                     : 'bg-[color:var(--accent)] hover:opacity-90 text-slate-900 shadow-[0_0_15px_rgba(0,229,255,0.25)]'
                 }`}>
-                  {app.status === 'connected' ? 'Manage Connection' : 'Connect Account'}
+                  {app.status === 'connected' ? 'Reconnect' : 'Connect Account'}
                 </button>
               </motion.div>
             );
