@@ -157,6 +157,15 @@ export async function startDirectWebCall(opts: DirectCallOptions): Promise<Direc
     if (!userInitiated) opts.onClosed();
   }
 
+  // Barge-in: drop everything queued or playing so the agent stops mid-sentence.
+  function stopPlayback() {
+    for (const node of playing) {
+      try { node.stop(); } catch { /* already stopped */ }
+    }
+    playing.clear();
+    playHead = 0;
+  }
+
   function playMulaw(base64: string) {
     const binary = atob(base64);
     const buffer = ctx.createBuffer(1, binary.length, 8000);
@@ -194,6 +203,7 @@ export async function startDirectWebCall(opts: DirectCallOptions): Promise<Direc
     try {
       const msg = JSON.parse(event.data as string);
       if (msg.event === "media" && msg.media?.payload) playMulaw(msg.media.payload);
+      else if (msg.event === "clear") stopPlayback(); // caller started talking: agent goes quiet
     } catch { /* ignore non-JSON frames */ }
   };
 
