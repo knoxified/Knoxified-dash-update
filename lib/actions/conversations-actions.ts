@@ -15,6 +15,8 @@ export type CallTranscript = {
   duration_secs: number;
   messages: CallTranscriptMessage[];
   recording_url: string | null;
+  summary: string | null;
+  outcome: "booked" | "answered" | "escalated" | "abandoned" | null;
   created_at: string;
 };
 
@@ -45,7 +47,7 @@ export async function getCallTranscripts(): Promise<{
 
   const { data, error } = await supabase
     .from("call_transcripts")
-    .select("id, call_id, caller_number, provider, duration_secs, messages, recording_url, created_at")
+    .select("id, call_id, caller_number, provider, duration_secs, messages, recording_url, summary, outcome, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(100);

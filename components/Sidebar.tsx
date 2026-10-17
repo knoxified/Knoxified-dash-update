@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Server, Zap, BarChart3, Settings, 
   CreditCard, Users, Megaphone, MessageSquare, BookOpen, Layers, Plug, ShieldCheck,
-  ChevronRight, Mail } from "lucide-react";
+  ChevronRight, Mail, HelpCircle } from "lucide-react";
 import { ReactNode } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { logout } from "@/lib/actions/auth-actions";
@@ -92,6 +92,7 @@ export function Sidebar() {
             <NavItem href="/campaigns" icon={<Megaphone size={14} />} label="Campaigns" pathname={pathname} tourId="campaigns" />
             <NavItem href="/emails" icon={<Mail size={14} />} label="Emails" pathname={pathname} tourId="emails" />
             <NavItem href="/conversations" icon={<MessageSquare size={14} />} label="Inbox" pathname={pathname} tourId="conversations" />
+            <NavItem href="/questions" icon={<HelpCircle size={14} />} label="Questions" pathname={pathname} tourId="questions" />
           </div>
         </div>
 

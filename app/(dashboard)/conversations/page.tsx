@@ -22,7 +22,15 @@ function formatRelativeTime(iso: string): string {
   return `${diffDay}d ago`;
 }
 
+const OUTCOME_STYLE: Record<string, { label: string; cls: string }> = {
+  booked: { label: "Booked", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" },
+  answered: { label: "Answered", cls: "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-[#aaa]" },
+  escalated: { label: "Needs you", cls: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" },
+  abandoned: { label: "Hung up", cls: "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-[#777]" },
+};
+
 function previewFor(t: CallTranscript): string {
+  if (t.summary) return t.summary;
   const firstUserMsg = t.messages.find((m) => m.role === "user");
   return firstUserMsg?.content || "No speech captured for this call.";
 }
@@ -129,6 +137,11 @@ export default function ConversationsPage() {
                   </span>
                 </div>
                 <p className="text-[12px] text-slate-500 dark:text-[#888] truncate">{previewFor(t)}</p>
+                {t.outcome && OUTCOME_STYLE[t.outcome] && (
+                  <span className={`inline-block mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${OUTCOME_STYLE[t.outcome].cls}`}>
+                    {OUTCOME_STYLE[t.outcome].label}
+                  </span>
+                )}
               </div>
             ))}
           </div>
