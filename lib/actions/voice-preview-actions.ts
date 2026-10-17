@@ -2,7 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function previewAgentVoice(): Promise<{ audioDataUrl?: string; error?: string }> {
+// Plays the agent's greeting. With voiceId/agentName it previews that voice
+// and the name currently typed on screen WITHOUT saving anything, so owners
+// can compare several voices quickly.
+export async function previewAgentVoice(
+  opts: { voiceId?: string; agentName?: string } = {}
+): Promise<{ audioDataUrl?: string; error?: string }> {
   const supabase = await createClient();
   const {
     data: { session },
@@ -20,7 +25,8 @@ export async function previewAgentVoice(): Promise<{ audioDataUrl?: string; erro
   try {
     const res = await fetch(`${voiceAgentUrl}/voice/preview`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ voiceId: opts.voiceId, agentName: opts.agentName }),
       signal: AbortSignal.timeout(15_000),
     });
 

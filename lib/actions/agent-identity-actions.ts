@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { VOICE_OPTIONS } from "@/lib/voice-options";
 
 export async function getAgentIdentity() {
   const supabase = await createClient();
@@ -61,4 +62,19 @@ export async function setWebcallPreviewSystem(systemId: string): Promise<{ ok: b
     .update({ webcall_preview_system: value || null })
     .eq("user_id", user.id);
   return { ok: !error };
+}
+
+// Saves the chosen voice the moment it is picked, so owners never have to
+// scroll down to "Save Configuration" just to keep a voice.
+export async function setPreferredVoice(voiceId: string): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  if (!VOICE_OPTIONS.some((v) => v.id === voiceId)) return { ok: false };
+
+  const { data: row } = await supabase.from("user_voice_settings").select("id").eq("user_id", user.id).maybeSingle();
+  const res = row
+    ? await supabase.from("user_voice_settings").update({ preferred_voice_id: voiceId, updated_at: new Date().toISOString() }).eq("id", row.id)
+    : await supabase.from("user_voice_settings").insert({ user_id: user.id, preferred_voice_id: voiceId });
+  return { ok: !res.error };
 }

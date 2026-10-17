@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getAgentConfig, updateAgentConfig, toggleCallRecording } from "@/lib/actions/agent-config-actions";
 import { Select } from "@/components/ui/Select";
-import { getWebcallPreviewSystem, setWebcallPreviewSystem } from "@/lib/actions/agent-identity-actions";
+import { getWebcallPreviewSystem, setWebcallPreviewSystem, setPreferredVoice } from "@/lib/actions/agent-identity-actions";
 import { useSystems } from "@/lib/services/hooks";
 import { SystemPicker } from "@/components/ui/SystemPicker";
 import Link from "next/link";
-import { scanWebsite } from "@/lib/actions/website-scan-actions";
+import { scanWebsite, saveWebsiteKnowledge, type Faq } from "@/lib/actions/website-scan-actions";
 import { listMyForwardingNumbers, addForwardingNumber, removeForwardingNumber } from "@/lib/actions/phone-mapping-actions";
 import { previewAgentVoice } from "@/lib/actions/voice-preview-actions";
 import { triggerDiscountOffer } from "@/lib/actions/discount-actions";
@@ -16,7 +16,7 @@ import { VOICE_OPTIONS } from "@/lib/voice-options";
 import { AVATAR_OPTIONS } from "@/lib/avatar-options";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { CallRoutingEditor } from "@/components/CallRoutingEditor";
-import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle, Check } from "lucide-react";
 
 export default function AgentConfigPage() {
   const { data: catalogSystems } = useSystems();
@@ -73,11 +73,22 @@ export default function AgentConfigPage() {
     agent_avatar: AVATAR_OPTIONS[0].key,
   });
 
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
+  // Voice picker: tap a voice's play button to hear it (nothing is saved),
+  // tap the card to choose it (saved immediately).
+  const [voiceLoadingId, setVoiceLoadingId] = useState<string | null>(null);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const previewRequest = useRef(0);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [scanUrl, setScanUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
+
+  // Website knowledge: saved to the account by the scan itself, editable afterwards.
+  const [websiteSummary, setWebsiteSummary] = useState("");
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+  const [scannedAt, setScannedAt] = useState<string | null>(null);
+  const [knowledgeDirty, setKnowledgeDirty] = useState(false);
+  const [isSavingKnowledge, setIsSavingKnowledge] = useState(false);
 
   const [phoneNumbers, setPhoneNumbers] = useState<{ id: string; phone_number: string; is_active: boolean }[]>([]);
   const [newNumber, setNewNumber] = useState("");
@@ -107,7 +118,11 @@ export default function AgentConfigPage() {
           agent_avatar: agentConfig?.agent_avatar || AVATAR_OPTIONS[0].key,
         });
         setRecordingEnabled(Boolean(agentConfig?.call_recording_enabled));
-        if (organizationWebsite) setScanUrl(organizationWebsite);
+        setWebsiteSummary(agentConfig?.website_summary || "");
+        setFaqs(Array.isArray(agentConfig?.faqs) ? agentConfig.faqs : []);
+        setScannedAt(agentConfig?.website_scanned_at || null);
+        if (agentConfig?.website_url) setScanUrl(agentConfig.website_url);
+        else if (organizationWebsite) setScanUrl(organizationWebsite);
       }
       setLoading(false);
     }
@@ -135,13 +150,45 @@ export default function AgentConfigPage() {
     setIsScanning(true);
     scanWebsite(scanUrl).then((result) => {
       setIsScanning(false);
-      if (result.error) {
+      if (result.error !== undefined) {
         toast.error(result.error);
-      } else if (result.summary) {
-        setForm((f) => ({ ...f, memory_context: result.summary! }));
-        toast.success("Website scanned — review the summary below and save when ready.");
+        return;
       }
+      // The scan is already saved to the account; just show it.
+      setWebsiteSummary(result.summary);
+      setFaqs(result.faqs);
+      setScannedAt(result.scannedAt);
+      setKnowledgeDirty(false);
+      toast.success(`Read ${result.pagesRead} page${result.pagesRead === 1 ? "" : "s"} and saved. Review the summary and FAQs below.`);
     });
+  };
+
+  const handleSaveKnowledge = async () => {
+    setIsSavingKnowledge(true);
+    const res = await saveWebsiteKnowledge(websiteSummary, faqs);
+    setIsSavingKnowledge(false);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
+    // Rows left half-empty are dropped on save; reflect that on screen.
+    setFaqs((list) => list.filter((f) => f.q.trim() && f.a.trim()));
+    setKnowledgeDirty(false);
+    toast.success("Saved. Your agent will use these on its next call.");
+  };
+
+  const editFaq = (id: string, field: "q" | "a", value: string) => {
+    // An owner edit turns a scanned FAQ into the owner's own, so a rescan never overwrites it.
+    setFaqs((list) => list.map((f) => (f.id === id ? { ...f, [field]: value, source: "manual" } : f)));
+    setKnowledgeDirty(true);
+  };
+  const addFaq = () => {
+    setFaqs((list) => [...list, { id: crypto.randomUUID(), q: "", a: "", source: "manual" }]);
+    setKnowledgeDirty(true);
+  };
+  const removeFaq = (id: string) => {
+    setFaqs((list) => list.filter((f) => f.id !== id));
+    setKnowledgeDirty(true);
   };
 
   const handleAddNumber = () => {
@@ -191,37 +238,41 @@ export default function AgentConfigPage() {
     });
   };
 
-  const handlePreviewVoice = () => {
-    setIsPreviewing(true);
-    startTransition(async () => {
-      // Save first so the preview always reflects what's actually on screen
-      // right now, not whatever was last saved -- otherwise picking a new
-      // avatar/name/voice and hitting Preview could play the OLD identity,
-      // which would be a confusing, broken-feeling first impression.
-      const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => formData.set(key, value));
-      const saveResult = await updateAgentConfig(formData);
-      if (saveResult?.error) {
-        toast.error("Couldn't save before previewing: " + saveResult.error);
-        setIsPreviewing(false);
-        return;
-      }
+  const handlePreviewVoice = async (voiceId: string) => {
+    const request = ++previewRequest.current;
+    previewAudioRef.current?.pause();
+    setPlayingVoiceId(null);
+    setVoiceLoadingId(voiceId);
+    const result = await previewAgentVoice({ voiceId, agentName: form.agent_nickname });
+    if (request !== previewRequest.current) return; // a newer tap took over
+    setVoiceLoadingId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    if (result.audioDataUrl) {
+      const audio = new Audio(result.audioDataUrl);
+      previewAudioRef.current = audio;
+      setPlayingVoiceId(voiceId);
+      audio.onended = () => setPlayingVoiceId((cur) => (cur === voiceId ? null : cur));
+      audio.play();
+      // First real "this actually works" moment -- the agreed trigger
+      // point for the 48h Founding Rate window. No-op if already set.
+      triggerDiscountOffer();
+    }
+  };
 
-      const result = await previewAgentVoice();
-      setIsPreviewing(false);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      if (result.audioDataUrl) {
-        const audio = new Audio(result.audioDataUrl);
-        setPreviewAudio(audio);
-        audio.play();
-        // First real "this actually works" moment -- the agreed trigger
-        // point for the 48h Founding Rate window. No-op if already set.
-        triggerDiscountOffer();
-      }
-    });
+  const handleSelectVoice = async (voiceId: string) => {
+    if (voiceId === form.preferred_voice_id) return;
+    const previous = form.preferred_voice_id;
+    setForm((f) => ({ ...f, preferred_voice_id: voiceId }));
+    const res = await setPreferredVoice(voiceId);
+    if (!res.ok) {
+      setForm((f) => ({ ...f, preferred_voice_id: previous }));
+      toast.error("Couldn't save that voice. Try again.");
+      return;
+    }
+    toast.success("Voice saved");
   };
 
   const handleRecordingToggleClick = () => {
@@ -359,15 +410,48 @@ export default function AgentConfigPage() {
                 <p className="text-[13px] text-slate-500 dark:text-[#888] mb-3">
                   &ldquo;Hello, this is {form.agent_nickname || "your assistant"}, an AI assistant. How can I help you today?&rdquo;
                 </p>
-                <button
-                  type="button"
-                  onClick={handlePreviewVoice}
-                  disabled={isPreviewing || isPending}
-                  className="flex items-center gap-2 text-xs font-semibold bg-[color:var(--accent)] text-slate-900 px-3 py-1.5 rounded-lg hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,229,255,0.25)] disabled:opacity-60"
-                >
-                  {isPreviewing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-                  {isPreviewing ? "Generating..." : "Preview Voice"}
-                </button>
+                <input type="hidden" name="preferred_voice_id" value={form.preferred_voice_id} />
+                <p className="text-[13px] font-medium text-slate-500 dark:text-[#888] mb-2 flex items-center gap-1.5">
+                  <Volume2 size={14} /> Voice
+                  <span className="text-xs font-normal text-slate-400 dark:text-[#666]">Tap ▶ to hear it. Tap the card to use it.</span>
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {VOICE_OPTIONS.map((v) => {
+                    const selected = form.preferred_voice_id === v.id;
+                    const loading = voiceLoadingId === v.id;
+                    const playing = playingVoiceId === v.id;
+                    return (
+                      <div
+                        key={v.id}
+                        onClick={() => handleSelectVoice(v.id)}
+                        className={`flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors ${
+                          selected
+                            ? "border-sky-500 bg-sky-500/10"
+                            : "border-slate-200 dark:border-white/10 hover:border-sky-400/60"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          aria-label={`Preview ${v.name}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreviewVoice(v.id);
+                          }}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent)] text-slate-900 hover:opacity-90 transition-opacity"
+                        >
+                          {loading ? <Loader2 size={14} className="animate-spin" /> : playing ? <Pause size={14} /> : <Play size={14} />}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">{v.name}</p>
+                          {v.description !== "Cartesia voice." && (
+                            <p className="text-xs text-slate-400 dark:text-[#666] truncate">{v.description}</p>
+                          )}
+                        </div>
+                        {selected && <Check size={16} className="text-sky-500 shrink-0" />}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -510,21 +594,6 @@ export default function AgentConfigPage() {
               </div>
 
               <div className="space-y-2 max-w-sm">
-                <label className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500 dark:text-[#888]">
-                  <Volume2 size={14} /> Voice
-                </label>
-                <input type="hidden" name="preferred_voice_id" value={form.preferred_voice_id} />
-                <Select
-                  value={form.preferred_voice_id}
-                  onChange={(val) => setForm({ ...form, preferred_voice_id: val })}
-                  options={VOICE_OPTIONS.map((v) => ({ value: v.id, label: v.name }))}
-                />
-                <p className="text-xs text-slate-400 dark:text-[#666]">
-                  {VOICE_OPTIONS.find((v) => v.id === form.preferred_voice_id)?.description}
-                </p>
-              </div>
-
-              <div className="space-y-2 max-w-sm">
                 <label htmlFor="temperature" className="flex items-center justify-between text-[13px] font-medium text-slate-500 dark:text-[#888]">
                   <span className="flex items-center gap-1.5"><Sliders size={14}/> Temperature (0.0 - 1.0)</span>
                   <span className="text-sky-600 dark:text-sky-400 font-semibold">{form.temperature}</span>
@@ -555,7 +624,7 @@ export default function AgentConfigPage() {
               <Brain size={16} className="text-sky-500" /> Business Memory
             </h2>
             <p className="text-sm text-slate-500 dark:text-[#888]">
-              What your agent knows about your business — services, pricing, policies, anything callers might ask about. Write it yourself, or scan your website to get a starting draft.
+              What your agent knows about your business — services, pricing, policies, anything callers might ask about. Scan your website and your agent learns it, with an FAQ list you can edit.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
@@ -582,20 +651,104 @@ export default function AgentConfigPage() {
               </button>
             </div>
 
+            {scannedAt && (
+              <p className="text-xs text-slate-400 dark:text-[#666]">
+                Last scanned {new Date(scannedAt).toLocaleString()} and saved to your account. Rescanning keeps any FAQs you wrote or edited.
+              </p>
+            )}
+
             <div className="space-y-2">
+              <label htmlFor="website_summary" className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
+                From your website (edit anything that's wrong)
+              </label>
+              <textarea
+                id="website_summary"
+                rows={7}
+                value={websiteSummary}
+                onChange={(e) => {
+                  setWebsiteSummary(e.target.value);
+                  setKnowledgeDirty(true);
+                }}
+                className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow resize-y"
+                placeholder="Scan your website and what your agent learned appears here. You can also write it yourself."
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
+                  FAQs your agent can answer ({faqs.length})
+                </label>
+                <button
+                  type="button"
+                  onClick={addFaq}
+                  className="flex items-center gap-1.5 text-xs font-medium text-sky-600 hover:text-sky-500"
+                >
+                  <Plus size={14} /> Add FAQ
+                </button>
+              </div>
+              {faqs.length === 0 && (
+                <p className="text-xs text-slate-400 dark:text-[#666]">
+                  No FAQs yet. Scan your website to fill these in, or add your own.
+                </p>
+              )}
+              {faqs.map((f) => (
+                <div key={f.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="text"
+                      value={f.q}
+                      onChange={(e) => editFaq(f.id, "q", e.target.value)}
+                      placeholder="Question a caller might ask"
+                      className="flex-1 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm font-medium rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeFaq(f.id)}
+                      aria-label="Delete FAQ"
+                      className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={f.a}
+                    onChange={(e) => editFaq(f.id, "a", e.target.value)}
+                    placeholder="How your agent should answer"
+                    className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 resize-y"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSaveKnowledge}
+                disabled={isSavingKnowledge || !knowledgeDirty}
+                className="flex items-center gap-2 bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isSavingKnowledge ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {isSavingKnowledge ? "Saving..." : "Save website knowledge"}
+              </button>
+              {knowledgeDirty && <span className="text-xs text-amber-500">Unsaved changes</span>}
+            </div>
+
+            <div className="space-y-2 pt-2">
               <label htmlFor="memory_context" className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
-                Business Summary (what the agent should know)
+                Your own notes (anything else the agent should know)
               </label>
               <textarea
                 id="memory_context"
                 name="memory_context"
-                rows={6}
+                rows={4}
                 value={form.memory_context}
                 onChange={(e) => setForm({ ...form, memory_context: e.target.value })}
                 className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow resize-none"
-                placeholder="e.g. We're a family dental practice open Mon-Sat, offering cleanings, whitening, and emergency visits. New patients get a free consultation..."
+                placeholder="e.g. We never discuss prices over the phone. New patients get a free consultation. Closed on public holidays."
               />
-              <p className="text-xs text-slate-400 dark:text-[#666]">A scanned draft won't save until you review it and click Save Configuration below.</p>
+              <p className="text-xs text-slate-400 dark:text-[#666]">Saved with Save Configuration below. Scanning never overwrites these notes.</p>
             </div>
           </div>
 

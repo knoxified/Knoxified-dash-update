@@ -17,7 +17,7 @@ export async function getAgentConfig() {
   
   const res = await supabase
     .from("agent_configs")
-    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt, agent_nickname, agent_avatar, call_recording_enabled")
+    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt, agent_nickname, agent_avatar, call_recording_enabled, website_url, website_summary, website_scanned_at, faqs")
     .eq("user_id", user.id)
     .maybeSingle();
     
