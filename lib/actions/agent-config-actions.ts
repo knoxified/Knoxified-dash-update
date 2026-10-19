@@ -11,28 +11,38 @@ export async function getAgentConfig() {
     return { error: "Not authenticated" };
   }
 
-  // Try to select with new columns. If it fails (columns don't exist yet), fallback.
-  let agentConfig: any = null;
-  let agentError = null;
-  
+  // Read the whole row and pick the fields we show. Naming columns in the
+  // select made one missing optional column (e.g. alert_email) fail the entire
+  // query and silently fall back to four fields, so saved names, notes and the
+  // website scan never appeared on the page. "*" can't fail that way, and only
+  // the picked fields below are sent to the browser.
   const res = await supabase
     .from("agent_configs")
-    .select("id, organization_name, business_hours, temperature, voice_minute_limit_alert, alert_email, memory_context, custom_system_prompt, agent_nickname, agent_avatar, call_recording_enabled, website_url, website_summary, website_scanned_at, faqs")
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
-    
-  if (res.error && (res.error.message.includes("does not exist") || res.error.message.toLowerCase().includes("could not find"))) {
-    const fallbackRes = await supabase
-      .from("agent_configs")
-      .select("id, organization_name, business_hours, temperature")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    agentConfig = fallbackRes.data;
-    agentError = fallbackRes.error;
-  } else {
-    agentConfig = res.data;
-    agentError = res.error;
-  }
+
+  const row: any = res.data;
+  const agentConfig: any = row
+    ? {
+        id: row.id,
+        organization_name: row.organization_name,
+        business_hours: row.business_hours,
+        temperature: row.temperature,
+        voice_minute_limit_alert: row.voice_minute_limit_alert,
+        alert_email: row.alert_email,
+        memory_context: row.memory_context,
+        custom_system_prompt: row.custom_system_prompt,
+        agent_nickname: row.agent_nickname,
+        agent_avatar: row.agent_avatar,
+        call_recording_enabled: row.call_recording_enabled,
+        website_url: row.website_url,
+        website_summary: row.website_summary,
+        website_scanned_at: row.website_scanned_at,
+        faqs: row.faqs,
+      }
+    : null;
+  const agentError = res.error;
 
   const { data: voiceSettings, error: voiceError } = await supabase
     .from("user_voice_settings")
