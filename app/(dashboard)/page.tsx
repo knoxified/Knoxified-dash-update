@@ -12,6 +12,7 @@ import { SystemPicker, orderedPickerSystems } from "@/components/ui/SystemPicker
 import { startDirectWebCall, USE_DIRECT_WEBCALL, type DirectCall } from "@/lib/webcall/directWebCall";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
+import { getDisplayNameAction } from "@/lib/actions/user-actions";
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -41,6 +42,7 @@ export default function DashboardOverview() {
   const [dateRange, setDateRange] = useState("7d");
   const [logFilter, setLogFilter] = useState("All");
   const [isMounted, setIsMounted] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const { data: metrics, loading: metricsLoading } = useDashboardMetrics(dateRange);
   const { data: logs, loading: logsLoading } = useSystemLogs();
   const { data: systems, loading: systemsLoading } = useSystems();
@@ -52,6 +54,10 @@ export default function DashboardOverview() {
   const [callTranscript, setCallTranscript] = useState<{ role: "user" | "agent"; content: string }[]>([]);
   const [takeoverActive, setTakeoverActive] = useState(false);
   const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getDisplayNameAction().then(setDisplayName).catch(() => setDisplayName(null));
+  }, []);
 
   useEffect(() => {
     getAgentReadiness().then((r) => setHasPhoneNumber(r.hasPhoneNumber));
@@ -263,7 +269,7 @@ export default function DashboardOverview() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
-            {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, Knox.
+            {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}{displayName ? `, ${displayName}` : ''}.
           </h1>
           <p className="text-slate-500 dark:text-white/40 text-sm">
             Your agents are running <span className="font-semibold text-slate-700 dark:text-white/70">{activeOperations.length}</span> active pipelines. They&apos;ve secured{' '}
