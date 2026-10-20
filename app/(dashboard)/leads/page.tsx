@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Download, Search, UserPlus, PhoneIncoming, Upload, X, Mail, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { UrgencyBadge } from "@/components/UrgencyBadge";
 import { getLeads, addLead, importLeads, getLeadTimeline, type Lead, type LeadSource, type TimelineItem } from "@/lib/actions/leads-actions";
 import { parseCsv, detectColumns, rowsToLeads, type ColumnMap } from "@/lib/csv";
 import CampaignLauncher from "@/components/CampaignLauncher";
@@ -357,6 +358,10 @@ export default function LeadsPage() {
                   </th>
                   <th className="px-5 py-4">Lead Info</th>
                   <th className="px-5 py-4">Phone</th>
+                  <th className="px-5 py-4">Why they called</th>
+                  <th className="px-5 py-4">Urgency</th>
+                  <th className="px-5 py-4">Tone</th>
+                  <th className="px-5 py-4">Booked</th>
                   <th className="px-5 py-4">Source</th>
                   <th className="px-5 py-4">Consent</th>
                   <th className="px-5 py-4 text-right">Last Activity</th>
@@ -385,6 +390,12 @@ export default function LeadsPage() {
                         </button>
                       </td>
                       <td className="px-5 py-4 text-slate-900 dark:text-slate-300">{lead.phone || "—"}</td>
+                      <td className="px-5 py-4 text-slate-700 dark:text-slate-300 max-w-[200px] truncate" title={lead.last_call_summary || undefined}>{lead.reason || "—"}</td>
+                      <td className="px-5 py-4"><UrgencyBadge urgency={lead.urgency} /></td>
+                      <td className="px-5 py-4 text-[12px] text-slate-700 dark:text-slate-300 capitalize">{lead.caller_tone || "—"}</td>
+                      <td className="px-5 py-4 text-[12px]">
+                        {lead.appointment_booked ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Yes</span> : <span className="text-slate-400">—</span>}
+                      </td>
                       <td className="px-5 py-4">
                         <span className="text-[12px] text-slate-700 dark:text-slate-300">{SOURCE_LABEL[lead.source]}</span>
                         {lead.source === "inbound_call" && lead.call_count > 1 && (

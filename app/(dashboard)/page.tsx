@@ -1,6 +1,7 @@
 "use client";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { CallActivitySummary } from "@/components/CallActivitySummary";
+import { RecentLeads } from "@/components/RecentLeads";
 import { useState, useEffect, useRef } from "react";
 import { ArrowRight, BarChart3, Clock, Cpu, Zap, Mail, MessageSquare, Phone, TrendingUp, ShieldCheck, Activity, CreditCard, AlertTriangle, DollarSign, CalendarCheck, Search, Shield, Target, Building, Users2, Stethoscope, Bell, Settings2, Radio, Mic, PhoneOff, Volume2, Users, Send, Info } from "lucide-react";
 import Link from "next/link";
@@ -322,6 +323,7 @@ export default function DashboardOverview() {
       </div>
 
       <CallActivitySummary />
+      <RecentLeads />
 
       {/* 1) Hero section */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">

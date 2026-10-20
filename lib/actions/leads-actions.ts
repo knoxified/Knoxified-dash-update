@@ -17,10 +17,19 @@ export type Lead = {
   call_count: number;
   last_contact_at: string | null;
   created_at: string;
+  // Filled by the voice agent after each call. Absent until the
+  // 20261020000000_lead_call_details migration has been run.
+  reason?: string | null;
+  urgency?: "low" | "normal" | "high" | "emergency" | null;
+  caller_tone?: string | null;
+  appointment_booked?: boolean;
+  last_call_summary?: string | null;
 };
 
 const LEAD_COLUMNS =
   "id, source, name, phone, email, company, status, consent_source, call_count, last_contact_at, created_at";
+const LEAD_COLUMNS_WITH_CALL_DETAILS =
+  LEAD_COLUMNS + ", reason, urgency, caller_tone, appointment_booked, last_call_summary";
 
 // Keeps digits and a leading "+" only. Deliberately does NOT guess a country
 // code for numbers without one -- a wrong guess would silently mismatch the
@@ -47,15 +56,57 @@ export async function getLeads(): Promise<{ leads: Lead[]; error: string | null 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { leads: [], error: "Not authenticated" };
 
-  const { data, error } = await supabase
+  // Ask for the call-detail columns; if the migration has not been run yet the
+  // query fails on the missing column, so fall back to the original columns
+  // and the page keeps working.
+  let res = await supabase
     .from("leads")
-    .select(LEAD_COLUMNS)
+    .select(LEAD_COLUMNS_WITH_CALL_DETAILS)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(500);
+  if (res.error && /reason|urgency|caller_tone|appointment_booked|last_call_summary|column/i.test(res.error.message)) {
+    res = (await supabase
+      .from("leads")
+      .select(LEAD_COLUMNS)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(500)) as typeof res;
+  }
 
-  if (error) return { leads: [], error: error.message };
-  return { leads: (data || []) as Lead[], error: null };
+  if (res.error) return { leads: [], error: res.error.message };
+  return { leads: (res.data || []) as unknown as Lead[], error: null };
+}
+
+// Newest callers first, for the Home card. Only people who actually called.
+export async function getRecentCallLeads(limit = 5): Promise<{ leads: Lead[]; total: number }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { leads: [], total: 0 };
+
+  const [{ count }, rows] = await Promise.all([
+    supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("source", "inbound_call"),
+    (async () => {
+      const r = await supabase
+        .from("leads")
+        .select(LEAD_COLUMNS_WITH_CALL_DETAILS)
+        .eq("user_id", user.id)
+        .eq("source", "inbound_call")
+        .order("last_contact_at", { ascending: false, nullsFirst: false })
+        .limit(limit);
+      if (!r.error) return r.data;
+      const fallback = await supabase
+        .from("leads")
+        .select(LEAD_COLUMNS)
+        .eq("user_id", user.id)
+        .eq("source", "inbound_call")
+        .order("last_contact_at", { ascending: false, nullsFirst: false })
+        .limit(limit);
+      return fallback.data;
+    })(),
+  ]);
+
+  return { leads: ((rows || []) as unknown as Lead[]), total: count || 0 };
 }
 
 export async function addLead(input: {
