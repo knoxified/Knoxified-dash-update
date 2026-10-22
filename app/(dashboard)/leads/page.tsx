@@ -14,6 +14,7 @@ type Tab = "all" | LeadSource | "cold";
 const TABS: { key: Tab; label: string }[] = [
   { key: "all", label: "All" },
   { key: "inbound_call", label: "Inbound calls" },
+  { key: "web_call", label: "Web calls" },
   { key: "leadreach", label: "LeadReach" },
   { key: "manual", label: "Added by you" },
   { key: "cold", label: "Cold" },
@@ -33,9 +34,17 @@ function isColdLead(l: Lead): boolean {
 
 const SOURCE_LABEL: Record<LeadSource, string> = {
   inbound_call: "Inbound call",
+  web_call: "Web call",
   leadreach: "LeadReach",
   manual: "Added by you",
 };
+
+// 174 -> "2m 54s", 45 -> "45s"
+function formatDuration(secs: number): string {
+  const m = Math.floor(secs / 60);
+  const s = Math.round(secs % 60);
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
 
 function formatDate(iso: string | null) {
   if (!iso) return "";
@@ -189,7 +198,7 @@ export default function LeadsPage() {
   };
 
   const counts = useMemo(() => {
-    const c: Record<Tab, number> = { all: leads.length, inbound_call: 0, leadreach: 0, manual: 0, cold: 0 };
+    const c: Record<Tab, number> = { all: leads.length, inbound_call: 0, web_call: 0, leadreach: 0, manual: 0, cold: 0 };
     for (const l of leads) {
       c[l.source]++;
       if (isColdLead(l)) c.cold++;
@@ -369,7 +378,7 @@ export default function LeadsPage() {
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {visible.map((lead) => {
-                  const displayName = lead.name || (lead.source === "inbound_call" ? "Unknown caller" : lead.email || "Unnamed lead");
+                  const displayName = lead.name || (lead.source === "inbound_call" ? "Unknown caller" : lead.source === "web_call" ? "Web caller" : lead.email || "Unnamed lead");
                   const initials = lead.name
                     ? lead.name.split(" ").map((n) => n[0]).join("").slice(0, 2)
                     : "?";
@@ -389,7 +398,12 @@ export default function LeadsPage() {
                           </div>
                         </button>
                       </td>
-                      <td className="px-5 py-4 text-slate-900 dark:text-slate-300">{lead.phone || "—"}</td>
+                      <td className="px-5 py-4 text-slate-900 dark:text-slate-300">
+                        {lead.phone || lead.callback_phone || "—"}
+                        {lead.follow_up_requested && (
+                          <span title={lead.follow_up_note || "Asked for a follow-up"} className="ml-1.5 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Follow up</span>
+                        )}
+                      </td>
                       <td className="px-5 py-4 text-slate-700 dark:text-slate-300 max-w-[200px] truncate" title={lead.last_call_summary || undefined}>{lead.reason || "—"}</td>
                       <td className="px-5 py-4"><UrgencyBadge urgency={lead.urgency} /></td>
                       <td className="px-5 py-4 text-[12px] text-slate-700 dark:text-slate-300 capitalize">{lead.caller_tone || "—"}</td>
@@ -400,6 +414,11 @@ export default function LeadsPage() {
                         <span className="text-[12px] text-slate-700 dark:text-slate-300">{SOURCE_LABEL[lead.source]}</span>
                         {lead.source === "inbound_call" && lead.call_count > 1 && (
                           <span className="ml-1.5 text-[11px] text-slate-500 dark:text-[#888]">{lead.call_count} calls</span>
+                        )}
+                        {!!lead.last_call_seconds && (
+                          <span className="ml-1.5 text-[11px] text-slate-500 dark:text-[#888]" title={lead.total_call_seconds ? `Total on calls: ${formatDuration(lead.total_call_seconds)}` : undefined}>
+                            {formatDuration(lead.last_call_seconds)}
+                          </span>
                         )}
                       </td>
                       <td className="px-5 py-4">
@@ -543,7 +562,7 @@ export default function LeadsPage() {
           <aside className="w-full max-w-md h-full bg-white dark:bg-[#0F172A] border-l border-slate-200 dark:border-white/10 shadow-2xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-white/5">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{drawerLead.name || (drawerLead.source === "inbound_call" ? "Unknown caller" : drawerLead.email || "Unnamed lead")}</h2>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{drawerLead.name || (drawerLead.source === "inbound_call" ? "Unknown caller" : drawerLead.source === "web_call" ? "Web caller" : drawerLead.email || "Unnamed lead")}</h2>
                 <p className="text-sm text-slate-500 dark:text-[#888]">{drawerLead.company || SOURCE_LABEL[drawerLead.source]}</p>
               </div>
               <button onClick={() => setDrawerLead(null)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white" aria-label="Close"><X size={20} /></button>

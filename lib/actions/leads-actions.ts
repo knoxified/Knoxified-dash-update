@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { logAuditEvent } from "@/lib/actions/compliance-actions";
 
-export type LeadSource = "inbound_call" | "leadreach" | "manual";
+export type LeadSource = "inbound_call" | "leadreach" | "manual" | "web_call";
 
 export type Lead = {
   id: string;
@@ -24,12 +24,20 @@ export type Lead = {
   caller_tone?: string | null;
   appointment_booked?: boolean;
   last_call_summary?: string | null;
+  // Filled once the 20261021000000_web_call_leads migration has been run.
+  last_call_seconds?: number | null;
+  total_call_seconds?: number | null;
+  follow_up_requested?: boolean;
+  follow_up_note?: string | null;
+  callback_phone?: string | null;
 };
 
 const LEAD_COLUMNS =
   "id, source, name, phone, email, company, status, consent_source, call_count, last_contact_at, created_at";
 const LEAD_COLUMNS_WITH_CALL_DETAILS =
   LEAD_COLUMNS + ", reason, urgency, caller_tone, appointment_booked, last_call_summary";
+const LEAD_COLUMNS_FULL =
+  LEAD_COLUMNS_WITH_CALL_DETAILS + ", last_call_seconds, total_call_seconds, follow_up_requested, follow_up_note, callback_phone";
 
 // Keeps digits and a leading "+" only. Deliberately does NOT guess a country
 // code for numbers without one -- a wrong guess would silently mismatch the
@@ -56,53 +64,45 @@ export async function getLeads(): Promise<{ leads: Lead[]; error: string | null 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { leads: [], error: "Not authenticated" };
 
-  // Ask for the call-detail columns; if the migration has not been run yet the
-  // query fails on the missing column, so fall back to the original columns
-  // and the page keeps working.
-  let res = await supabase
-    .from("leads")
-    .select(LEAD_COLUMNS_WITH_CALL_DETAILS)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (res.error && /reason|urgency|caller_tone|appointment_booked|last_call_summary|column/i.test(res.error.message)) {
-    res = (await supabase
+  // Ask for the newest columns first and step back one migration at a time, so the
+  // page keeps working whichever migrations have been run.
+  let res: any = null;
+  for (const cols of [LEAD_COLUMNS_FULL, LEAD_COLUMNS_WITH_CALL_DETAILS, LEAD_COLUMNS]) {
+    res = await supabase
       .from("leads")
-      .select(LEAD_COLUMNS)
+      .select(cols)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(500)) as typeof res;
+      .limit(500);
+    if (!res.error) break;
+    if (!/column|does not exist|could not find/i.test(res.error.message)) break;
   }
 
   if (res.error) return { leads: [], error: res.error.message };
   return { leads: (res.data || []) as unknown as Lead[], error: null };
 }
 
-// Newest callers first, for the Home card. Only people who actually called.
+// Newest callers first, for the Home card. People who phoned in or called from the web.
 export async function getRecentCallLeads(limit = 5): Promise<{ leads: Lead[]; total: number }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { leads: [], total: 0 };
 
+  const CALL_SOURCES = ["inbound_call", "web_call"];
   const [{ count }, rows] = await Promise.all([
-    supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("source", "inbound_call"),
+    supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("source", CALL_SOURCES),
     (async () => {
-      const r = await supabase
-        .from("leads")
-        .select(LEAD_COLUMNS_WITH_CALL_DETAILS)
-        .eq("user_id", user.id)
-        .eq("source", "inbound_call")
-        .order("last_contact_at", { ascending: false, nullsFirst: false })
-        .limit(limit);
-      if (!r.error) return r.data;
-      const fallback = await supabase
-        .from("leads")
-        .select(LEAD_COLUMNS)
-        .eq("user_id", user.id)
-        .eq("source", "inbound_call")
-        .order("last_contact_at", { ascending: false, nullsFirst: false })
-        .limit(limit);
-      return fallback.data;
+      for (const cols of [LEAD_COLUMNS_FULL, LEAD_COLUMNS_WITH_CALL_DETAILS, LEAD_COLUMNS]) {
+        const r = await supabase
+          .from("leads")
+          .select(cols)
+          .eq("user_id", user.id)
+          .in("source", CALL_SOURCES)
+          .order("last_contact_at", { ascending: false, nullsFirst: false })
+          .limit(limit);
+        if (!r.error) return r.data;
+      }
+      return [];
     })(),
   ]);
 
@@ -306,17 +306,22 @@ export async function getLeadTimeline(leadId: string): Promise<{ items: Timeline
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { items: [], error: "Not authenticated" };
 
-  const { data: lead } = await supabase.from("leads").select("phone, email").eq("id", leadId).eq("user_id", user.id).maybeSingle();
+  let leadRes = await supabase.from("leads").select("phone, email, source_call_id").eq("id", leadId).eq("user_id", user.id).maybeSingle();
+  const lead = leadRes.data;
   if (!lead) return { items: [], error: "Lead not found" };
 
   const items: TimelineItem[] = [];
 
-  if (lead.phone) {
-    const { data: calls } = await supabase
+  if (lead.phone || lead.source_call_id) {
+    // Phone leads: every call from that number. Web leads: the one call that made them.
+    const base = supabase
       .from("call_transcripts")
       .select("call_id, created_at, duration_secs, messages")
-      .eq("user_id", user.id)
-      .eq("caller_number", lead.phone)
+      .eq("user_id", user.id);
+    const { data: calls } = await (lead.phone
+      ? base.eq("caller_number", lead.phone)
+      : base.eq("call_id", lead.source_call_id as string)
+    )
       .order("created_at", { ascending: false })
       .limit(20);
     for (const c of calls || []) {
