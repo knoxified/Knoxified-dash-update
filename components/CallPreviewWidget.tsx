@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { startDirectWebCall, USE_DIRECT_WEBCALL, type DirectCall } from "@/lib/webcall/directWebCall";
 import { getAgentReadiness } from "@/lib/actions/system-automation-actions";
+import { useFaviconPulse } from "@/hooks/useFaviconPulse";
 
 interface CallPreviewWidgetProps {
   // When set, the call previews THIS vertical's tone/temperature/industry
@@ -26,6 +27,9 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
   const deviceRef = useRef<any>(null);
   const activeCallRef = useRef<any>(null);
   const directCallRef = useRef<DirectCall | null>(null);
+
+  // Animate the browser-tab favicon and title while a call is live
+  useFaviconPulse(callStatus === 'active');
 
   useEffect(() => {
     // Phone-number readiness only matters for the account's own real
@@ -274,7 +278,11 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
         <div className="w-full lg:w-44 flex flex-col justify-center items-center gap-5 bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-5 shrink-0">
           <div className="relative">
             {callStatus === "active" && (
-              <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: 'var(--accent)' }} />
+              <>
+                <div className="sonar-ring" style={{ borderColor: 'var(--accent)' }} />
+                <div className="sonar-ring sonar-ring-2" style={{ borderColor: 'var(--accent)' }} />
+                <div className="sonar-ring sonar-ring-3" style={{ borderColor: 'var(--accent)' }} />
+              </>
             )}
             <div className="w-16 h-16 rounded-full flex items-center justify-center relative z-10 shadow-xl border-4 border-white dark:border-[#0d1117]"
               style={{ background: 'var(--accent-muted)', boxShadow: '0 0 20px var(--accent-glow)' }}
@@ -284,9 +292,9 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
           </div>
 
           {callStatus === "active" && (
-            <div className="flex items-center gap-[3px] h-6">
-              {[4,8,14,20,14,8,4].map((h, i) => (
-                <div key={i} className="waveform-bar" style={{ height: `${h}px`, animationDelay: `${i * 80}ms` }} />
+            <div className="flex items-end gap-[3px] h-9">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className="waveform-bar" />
               ))}
             </div>
           )}

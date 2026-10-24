@@ -251,16 +251,38 @@ function LoginContent() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full text-slate-900 font-bold py-3 rounded-2xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-                  style={{ 
+                  className={`
+                    relative overflow-hidden w-full text-slate-900 font-bold py-3 rounded-2xl mt-2
+                    flex items-center justify-center gap-2
+                    transition-all duration-150
+                    hover:brightness-110 hover:scale-[1.02] hover:-translate-y-px
+                    active:scale-[0.97] active:translate-y-0 active:brightness-100
+                    disabled:cursor-not-allowed
+                    ${isPending ? 'btn-signing-in' : ''}
+                  `}
+                  style={{
                     background: 'linear-gradient(135deg, #00E5FF 0%, #3b82f6 100%)',
-                    boxShadow: '0 0 24px rgba(0,229,255,0.3), 0 4px 12px rgba(0,0,0,0.3)'
+                    boxShadow: '0 0 24px rgba(0,229,255,0.3), 0 4px 12px rgba(0,0,0,0.3)',
                   }}
                 >
+                  {/* Shimmer sweep while pending */}
+                  {isPending && (
+                    <span
+                      className="login-shimmer absolute inset-0 pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                        width: '45%',
+                      }}
+                    />
+                  )}
+
                   {isPending ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin relative z-10" />
+                      <span className="relative z-10">Signing in…</span>
+                    </>
                   ) : (
-                    "Sign In"
+                    <span className="relative z-10">Sign In</span>
                   )}
                 </button>
               </form>
