@@ -11,6 +11,7 @@ import { getAgentReadiness } from "@/lib/actions/system-automation-actions";
 import { getWebcallPreviewSystem, setWebcallPreviewSystem } from "@/lib/actions/agent-identity-actions";
 import { SystemPicker, orderedPickerSystems } from "@/components/ui/SystemPicker";
 import { startDirectWebCall, USE_DIRECT_WEBCALL, type DirectCall } from "@/lib/webcall/directWebCall";
+import { useFaviconPulse } from "@/hooks/useFaviconPulse";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 import { getDisplayNameAction } from "@/lib/actions/user-actions";
@@ -81,6 +82,14 @@ export default function DashboardOverview() {
   const deviceRef = useRef<any>(null);
   const activeCallRef = useRef<any>(null);
   const directCallRef = useRef<DirectCall | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+
+  useFaviconPulse(callStatus === 'active');
+
+  // Auto-scroll transcript to bottom whenever a new line arrives
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [callTranscript]);
 
   // Uses Cloudflare service bindings to call voice-agent-beta internally
   async function startWebCall() {
@@ -104,6 +113,8 @@ export default function DashboardOverview() {
           systemTypeOverride: directOverride,
           onClosed: () => cleanupCall(),
           onError: (message) => setCallError(message),
+          onTranscript: (role, text) =>
+            setCallTranscript((prev) => [...prev, { role, content: text }]),
         });
         setCallStatus("active");
         return;
@@ -440,9 +451,12 @@ export default function DashboardOverview() {
             <div className="flex-1 w-full bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-4 flex flex-col justify-between">
               <div>
                 <p className="text-[10px] font-bold text-slate-400 dark:text-white/25 mb-3 uppercase tracking-widest">Live Transcript</p>
-                <div className="space-y-3">
+                <div className="space-y-3 overflow-y-auto max-h-64 pr-1">
                   {callTranscript.length === 0 && callStatus === "connecting" && (
                     <p className="text-[13px] text-slate-400 dark:text-white/30">Connecting to your agent...</p>
+                  )}
+                  {callTranscript.length === 0 && callStatus === "active" && (
+                    <p className="text-[13px] text-slate-400 dark:text-white/30">Listening…</p>
                   )}
                   {callTranscript.map((msg, i) => (
                     msg.role === "user" ? (
@@ -465,6 +479,7 @@ export default function DashboardOverview() {
                       </div>
                     )
                   ))}
+                  <div ref={transcriptEndRef} />
                 </div>
               </div>
             </div>
@@ -473,7 +488,11 @@ export default function DashboardOverview() {
             <div className="w-full lg:w-44 flex flex-col justify-center items-center gap-5 bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-5 shrink-0">
               <div className="relative">
                 {callStatus === "active" && (
-                  <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: 'var(--accent)' }} />
+                  <>
+                    <div className="sonar-ring" style={{ borderColor: 'var(--accent)' }} />
+                    <div className="sonar-ring sonar-ring-2" style={{ borderColor: 'var(--accent)' }} />
+                    <div className="sonar-ring sonar-ring-3" style={{ borderColor: 'var(--accent)' }} />
+                  </>
                 )}
                 <div className="w-16 h-16 rounded-full flex items-center justify-center relative z-10 shadow-xl border-4 border-white dark:border-[#0d1117]"
                   style={{ background: 'var(--accent-muted)', boxShadow: '0 0 20px var(--accent-glow)' }}
@@ -483,9 +502,9 @@ export default function DashboardOverview() {
               </div>
 
               {callStatus === "active" && (
-                <div className="flex items-center gap-[3px] h-6">
-                  {[4,8,14,20,14,8,4].map((h, i) => (
-                    <div key={i} className="waveform-bar" style={{ height: `${h}px`, animationDelay: `${i * 80}ms` }} />
+                <div className="flex items-end gap-[3px] h-9">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div key={i} className="waveform-bar" />
                   ))}
                 </div>
               )}

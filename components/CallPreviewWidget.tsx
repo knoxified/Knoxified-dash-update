@@ -27,9 +27,15 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
   const deviceRef = useRef<any>(null);
   const activeCallRef = useRef<any>(null);
   const directCallRef = useRef<DirectCall | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   // Animate the browser-tab favicon and title while a call is live
   useFaviconPulse(callStatus === 'active');
+
+  // Auto-scroll transcript to bottom on new messages
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [callTranscript]);
 
   useEffect(() => {
     // Phone-number readiness only matters for the account's own real
@@ -59,6 +65,8 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
           systemTypeOverride: previewSystemType || "",
           onClosed: () => cleanupCall(),
           onError: (message) => setCallError(message),
+          onTranscript: (role, text) =>
+            setCallTranscript((prev) => [...prev, { role, content: text }]),
         });
         setCallStatus("active");
         return;
@@ -246,9 +254,12 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
         <div className="flex-1 w-full bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-4 flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-400 dark:text-white/25 mb-3 uppercase tracking-widest">Live Transcript</p>
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto max-h-64 pr-1">
               {callTranscript.length === 0 && callStatus === "connecting" && (
                 <p className="text-[13px] text-slate-400 dark:text-white/30">Connecting to your agent...</p>
+              )}
+              {callTranscript.length === 0 && callStatus === "active" && (
+                <p className="text-[13px] text-slate-400 dark:text-white/30">Listening…</p>
               )}
               {callTranscript.map((msg, i) => (
                 msg.role === "user" ? (
@@ -271,6 +282,7 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
                   </div>
                 )
               ))}
+              <div ref={transcriptEndRef} />
             </div>
           </div>
         </div>

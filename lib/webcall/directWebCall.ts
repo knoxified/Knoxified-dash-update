@@ -67,6 +67,8 @@ export interface DirectCallOptions {
   // connection dropped, mic lost).
   onClosed: () => void;
   onError: (message: string) => void;
+  // Fired each time the agent or caller says something (live transcript).
+  onTranscript?: (role: 'user' | 'agent', text: string) => void;
 }
 
 export interface DirectCall {
@@ -203,7 +205,10 @@ export async function startDirectWebCall(opts: DirectCallOptions): Promise<Direc
     try {
       const msg = JSON.parse(event.data as string);
       if (msg.event === "media" && msg.media?.payload) playMulaw(msg.media.payload);
-      else if (msg.event === "clear") stopPlayback(); // caller started talking: agent goes quiet
+      else if (msg.event === "clear") stopPlayback();
+      else if (msg.event === "transcript" && opts.onTranscript) {
+        opts.onTranscript(msg.role as 'user' | 'agent', msg.text as string);
+      }
     } catch { /* ignore non-JSON frames */ }
   };
 
