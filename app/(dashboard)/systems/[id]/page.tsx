@@ -41,7 +41,7 @@ export default function SystemDetailPage() {
   const [automationsLoading, setAutomationsLoading] = useState(true);
   const [pendingAutomationId, setPendingAutomationId] = useState<string | null>(null);
   const [readiness, setReadiness] = useState({ hasPhoneNumber: false, hasMemory: false });
-  const [isPreviewing, setIsPreviewing] = useState(false);
+
 
   useEffect(() => {
     getAgentIdentity().then(setIdentity);
@@ -56,21 +56,6 @@ export default function SystemDetailPage() {
       setAutomationsLoading(false);
     });
   }, [params.id]);
-
-  const handlePreviewVoice = () => {
-    setIsPreviewing(true);
-    import("@/lib/actions/voice-preview-actions").then(async ({ previewAgentVoice }) => {
-      const result = await previewAgentVoice();
-      setIsPreviewing(false);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      if (result.audioDataUrl) {
-        new Audio(result.audioDataUrl).play();
-      }
-    });
-  };
 
   const handleToggleAutomation = (automation: SystemAutomation) => {
     setPendingAutomationId(automation.id);
@@ -281,14 +266,7 @@ export default function SystemDetailPage() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handlePreviewVoice}
-                disabled={isPreviewing}
-                className="flex items-center justify-center gap-2 bg-[color:var(--accent)] text-slate-900 px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 shadow-[0_0_15px_rgba(0,229,255,0.25)] shrink-0"
-              >
-                {isPreviewing ? <RefreshCcw size={16} className="animate-spin" /> : <Volume2 size={16} />}
-                {isPreviewing ? "Generating..." : "Preview Voice"}
-              </button>
+
             </div>
 
             {/* Readiness checklist */}
@@ -322,11 +300,8 @@ export default function SystemDetailPage() {
             </div>
           </div>
 
-          {/* Live, two-way call preview -- distinct from the one-way
-              "Preview Voice" TTS sample above: this is an actual
-              conversation, using this vertical's real tone/temperature via
-              systemTypeOverride, regardless of the account's own
-              configured system_type. */}
+          {/* Live two-way webcall — uses this vertical's real tone/temperature
+              via systemTypeOverride regardless of the account's own system_type. */}
           <CallPreviewWidget previewSystemType={system.id} previewSystemLabel={system.name} />
 
           {/* Automations for this system -- ALL of them need to be active
