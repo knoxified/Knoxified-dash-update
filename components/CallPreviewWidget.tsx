@@ -256,7 +256,7 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
         <div className="flex-1 w-full bg-slate-50 dark:bg-white/[0.025] rounded-xl border border-slate-200/80 dark:border-white/[0.05] p-4 flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-400 dark:text-white/25 mb-3 uppercase tracking-widest">Live Transcript</p>
-            <div className="space-y-3 overflow-y-auto max-h-64 pr-1">
+            <div className="space-y-3 overflow-y-auto h-64 pr-1 overscroll-contain [overflow-anchor:none]">
               {callTranscript.length === 0 && callStatus === "connecting" && (
                 <p className="text-[13px] text-slate-400 dark:text-white/30">Connecting to your agent...</p>
               )}
