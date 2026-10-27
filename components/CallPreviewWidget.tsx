@@ -34,7 +34,9 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
 
   // Auto-scroll transcript to bottom on new messages
   useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll only the transcript box. scrollIntoView also scrolls the whole page.
+    const box = transcriptEndRef.current?.parentElement;
+    if (box) box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
   }, [callTranscript]);
 
   useEffect(() => {
