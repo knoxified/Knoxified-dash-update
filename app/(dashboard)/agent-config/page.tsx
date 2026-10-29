@@ -18,6 +18,21 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { CallRoutingEditor } from "@/components/CallRoutingEditor";
 import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle, Check } from "lucide-react";
 
+
+// Timezone list for the "Business Timezone" field: every zone this browser knows, plus the saved one.
+function timezoneOptions(current: string): string[] {
+  let all: string[] = [];
+  try {
+    all = (Intl as any).supportedValuesOf ? (Intl as any).supportedValuesOf("timeZone") : [];
+  } catch {
+    all = [];
+  }
+  if (all.length === 0) {
+    all = ["Africa/Lagos", "Africa/Johannesburg", "Africa/Nairobi", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "America/Toronto", "Europe/London", "Europe/Paris", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Australia/Sydney", "UTC"];
+  }
+  return current && !all.includes(current) ? [current, ...all] : all;
+}
+
 export default function AgentConfigPage() {
   const { data: catalogSystems } = useSystems();
   const [webcallPreviewSystem, setWebcallPreviewSystemState] = useState("");
@@ -66,6 +81,7 @@ export default function AgentConfigPage() {
     agent_greeting: "",
     organization_name: "",
     business_hours: "",
+    timezone: "",
     temperature: "0.7",
     preferred_voice_id: VOICE_OPTIONS[0].id,
     memory_context: "",
@@ -111,6 +127,8 @@ export default function AgentConfigPage() {
           agent_greeting: voiceSettings?.agent_greeting || "",
           organization_name: agentConfig?.organization_name || "",
           business_hours: agentConfig?.business_hours || "",
+          // Nothing saved yet: pre-select the timezone this browser reports, the owner just confirms it.
+          timezone: agentConfig?.timezone || (typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "") || "",
           temperature: agentConfig?.temperature?.toString() || "0.7",
           preferred_voice_id: voiceSettings?.preferred_voice_id || VOICE_OPTIONS[0].id,
           memory_context: agentConfig?.memory_context || "",
@@ -546,6 +564,26 @@ export default function AgentConfigPage() {
                     placeholder="e.g. Mon-Fri, 9AM-5PM EST"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="timezone" className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
+                  Business Timezone
+                </label>
+                <select
+                  id="timezone"
+                  name="timezone"
+                  value={form.timezone}
+                  onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                >
+                  {timezoneOptions(form.timezone).map((tz) => (
+                    <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+                <p className="text-[12px] text-slate-400 dark:text-[#666]">
+                  Used only to check availability and book appointment times in your local time.
+                </p>
               </div>
             </div>
           </div>

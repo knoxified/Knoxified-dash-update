@@ -28,6 +28,7 @@ export async function getAgentConfig() {
         id: row.id,
         organization_name: row.organization_name,
         business_hours: row.business_hours,
+        timezone: row.timezone,
         temperature: row.temperature,
         voice_minute_limit_alert: row.voice_minute_limit_alert,
         alert_email: row.alert_email,
@@ -78,6 +79,7 @@ export async function updateAgentConfig(formData: FormData) {
   const agent_nickname = (formData.get("agent_nickname") as string) || "Alex";
   const agent_avatar = (formData.get("agent_avatar") as string) || "bot";
   const business_hours = formData.get("business_hours") as string;
+  const timezoneRaw = ((formData.get("timezone") as string) || "").trim();
   const temperatureStr = formData.get("temperature") as string;
   const memory_context = (formData.get("memory_context") as string) || null;
   const custom_system_prompt = (formData.get("custom_system_prompt") as string) || null;
@@ -140,6 +142,21 @@ export async function updateAgentConfig(formData: FormData) {
       if (fallbackRes.error) return { error: fallbackRes.error.message };
     } else if (res.error) {
       return { error: res.error.message };
+    }
+  }
+
+  // Business timezone (used only for availability and booking times). Saved on its own so that
+  // if the column has not been added yet, nothing else on this page fails to save.
+  if (timezoneRaw) {
+    let validTz = true;
+    try { new Intl.DateTimeFormat("en-US", { timeZone: timezoneRaw }); } catch { validTz = false; }
+    if (!validTz) return { error: "That timezone is not recognised." };
+    const tzRes = await supabase
+      .from("agent_configs")
+      .update({ timezone: timezoneRaw })
+      .eq("user_id", user.id);
+    if (tzRes.error && !(tzRes.error.message.includes("does not exist") || tzRes.error.message.toLowerCase().includes("could not find"))) {
+      return { error: tzRes.error.message };
     }
   }
 
