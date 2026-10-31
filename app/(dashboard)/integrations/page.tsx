@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { BillingIntegrationsTabs } from "@/components/BillingIntegrationsTabs";
+import { CalendarConnections } from "@/components/CalendarConnections";
 
 function IntegrationsPageInner() {
   const [activeTab, setActiveTab] = useState("oauth");
@@ -46,7 +47,7 @@ function IntegrationsPageInner() {
       
       const { data: userIntegrations } = await supabase
         .from('oauth_connections')
-        .select('*')
+        .select('id, provider, status, provider_email, created_at')
         .eq('user_id', user.id);
         
       const { data: numberMappings } = await supabase
@@ -158,7 +159,15 @@ function IntegrationsPageInner() {
         >
           Developer APIs & Keys
         </button>
+        <button 
+          onClick={() => setActiveTab("calendars")}
+          className={`text-xs font-semibold px-4 py-2 rounded-md transition-all ${activeTab === "calendars" ? 'bg-[color:var(--accent)]/15 text-[color:var(--accent)] shadow-[0_0_10px_rgba(0,229,255,0.15)]' : 'text-slate-500 dark:text-[#888] hover:text-slate-900 dark:hover:text-white'}`}
+        >
+          Calendars (API key)
+        </button>
       </div>
+
+      {activeTab === "calendars" && <CalendarConnections />}
 
       {activeTab === "oauth" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
