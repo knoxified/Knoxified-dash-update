@@ -69,10 +69,15 @@ export interface DirectCallOptions {
   onError: (message: string) => void;
   // Fired each time the agent or caller says something (live transcript).
   onTranscript?: (role: 'user' | 'agent', text: string) => void;
+  // The agent heard an email and wants it confirmed on screen. email is empty when the
+  // caller should type it instead; done=true means it is settled and the card can go.
+  onEmailCheck?: (email: string, done: boolean) => void;
 }
 
 export interface DirectCall {
   stop: () => void;
+  // Send the email the caller confirmed or typed on screen back to the agent.
+  sendEmail: (email: string) => void;
 }
 
 export async function startDirectWebCall(opts: DirectCallOptions): Promise<DirectCall> {
@@ -112,7 +117,22 @@ export async function startDirectWebCall(opts: DirectCallOptions): Promise<Direc
     throw new Error("Microphone access was blocked. Allow the mic for this site and try again.");
   }
 
-  const ctx = new AudioContext({ latencyHint: "interactive" });
+  // Ask the browser for a 16 kHz context so IT resamples the mic with a proper filter
+  // (cleaner than averaging samples by hand). Firefox refuses to connect a mic running at a
+  // different rate, so fall back to the default context and the manual downsampler.
+  let ctx: AudioContext;
+  try {
+    const clean = new AudioContext({ latencyHint: "interactive", sampleRate: 16000 });
+    try {
+      clean.createMediaStreamSource(mic).disconnect();
+      ctx = clean;
+    } catch {
+      void clean.close().catch(() => { /* unsupported */ });
+      ctx = new AudioContext({ latencyHint: "interactive" });
+    }
+  } catch {
+    ctx = new AudioContext({ latencyHint: "interactive" });
+  }
   await ctx.resume();
 
   const workletUrl = URL.createObjectURL(new Blob([WORKLET_SOURCE], { type: "application/javascript" }));
@@ -206,6 +226,7 @@ export async function startDirectWebCall(opts: DirectCallOptions): Promise<Direc
       const msg = JSON.parse(event.data as string);
       if (msg.event === "media" && msg.media?.payload) playMulaw(msg.media.payload);
       else if (msg.event === "clear") stopPlayback();
+      else if (msg.event === "email_confirm" && opts.onEmailCheck) opts.onEmailCheck(String(msg.email || ""), !!msg.done);
       else if (msg.event === "transcript" && opts.onTranscript) {
         opts.onTranscript(msg.role as 'user' | 'agent', msg.text as string);
       }
@@ -227,5 +248,10 @@ export async function startDirectWebCall(opts: DirectCallOptions): Promise<Direc
     ws.send(JSON.stringify({ event: "media", streamSid, media: { track: "inbound", payload: btoa(bin) } }));
   };
 
-  return { stop: () => finish(true) };
+  return {
+    stop: () => finish(true),
+    sendEmail: (email: string) => {
+      if (!stopped && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ event: "email_confirmed", streamSid, email }));
+    },
+  };
 }

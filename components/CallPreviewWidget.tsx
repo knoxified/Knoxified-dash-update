@@ -23,6 +23,9 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
   const [callStatus, setCallStatus] = useState<"idle" | "connecting" | "active">("idle");
   const [callError, setCallError] = useState<string | null>(null);
   const [callTranscript, setCallTranscript] = useState<{ role: "user" | "agent"; content: string }[]>([]);
+  // Email the agent heard, shown for the caller to confirm or type (null = nothing to confirm).
+  const [emailCheck, setEmailCheck] = useState<{ email: string } | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
   const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean | null>(null);
   const deviceRef = useRef<any>(null);
   const activeCallRef = useRef<any>(null);
@@ -69,6 +72,11 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
           onError: (message) => setCallError(message),
           onTranscript: (role, text) =>
             setCallTranscript((prev) => [...prev, { role, content: text }]),
+          onEmailCheck: (email, done) => {
+            if (done) { setEmailCheck(null); return; }
+            setEmailCheck({ email });
+            setEmailDraft(email);
+          },
         });
         setCallStatus("active");
         return;
@@ -149,6 +157,7 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
   }
 
   function cleanupCall() {
+    setEmailCheck(null);
     try {
       directCallRef.current?.stop();
     } catch { /* already gone */ }
@@ -286,6 +295,35 @@ export function CallPreviewWidget({ previewSystemType, previewSystemLabel }: Cal
               ))}
               <div ref={transcriptEndRef} />
             </div>
+            {emailCheck && (
+              <div className="mt-3 rounded-xl border p-3" style={{ background: 'var(--accent-muted)', borderColor: 'var(--accent-dim)' }}>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/40 mb-2">
+                  {emailCheck.email ? "Is this your email?" : "Type your email here"}
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={emailDraft}
+                    onChange={(e) => setEmailDraft(e.target.value.trim())}
+                    placeholder="name@example.com"
+                    className="flex-1 min-w-0 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2 text-[13px] text-slate-800 dark:text-white/80 outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailDraft)}
+                    onClick={() => { directCallRef.current?.sendEmail(emailDraft); setEmailCheck(null); }}
+                    className="rounded-lg px-3 py-2 text-[13px] font-semibold text-white disabled:opacity-40"
+                    style={{ background: 'var(--accent)' }}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
