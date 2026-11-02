@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Play, Search, ChevronDown, ChevronRight, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { pushLeadReachLeads } from "@/lib/actions/leads-actions";
+import { Select } from "@/components/ui/Select";
 
 export default function LeadReachBoard() {
   const [formData, setFormData] = useState({
@@ -129,99 +130,27 @@ export default function LeadReachBoard() {
           <div className="space-y-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Country</label>
-              <div className="relative group">
-                <select 
-                  value={formData.country}
-                  onChange={(e) => setFormData({...formData, country: e.target.value})}
-                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
-                >
-                  <option value="united states">United States</option>
-                  <option value="united kingdom">United Kingdom</option>
-                  <option value="canada">Canada</option>
-                  <option value="australia">Australia</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
+              <Select value={formData.country} onChange={(v) => setFormData({ ...formData, country: v })} options={[{ value: "united states", label: "United States" }, { value: "united kingdom", label: "United Kingdom" }, { value: "canada", label: "Canada" }, { value: "australia", label: "Australia" }]} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">State / Region</label>
-              <div className="relative group">
-                <select 
-                  value={formData.state}
-                  onChange={(e) => setFormData({...formData, state: e.target.value})}
-                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
-                >
-                  <option value="california">California</option>
-                  <option value="new york">New York</option>
-                  <option value="texas">Texas</option>
-                  <option value="florida">Florida</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
+              <Select value={formData.state} onChange={(v) => setFormData({ ...formData, state: v })} options={[{ value: "california", label: "California" }, { value: "new york", label: "New York" }, { value: "texas", label: "Texas" }, { value: "florida", label: "Florida" }]} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Target Seniority</label>
-              <div className="relative group">
-                <select 
-                  value={formData.seniority}
-                  onChange={(e) => setFormData({...formData, seniority: e.target.value})}
-                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
-                >
-                  <option value="CEO">CEO</option>
-                  <option value="CFO">CFO</option>
-                  <option value="CTO">CTO</option>
-                  <option value="VP">VP Level</option>
-                  <option value="Director">Director Level</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
+              <Select value={formData.seniority} onChange={(v) => setFormData({ ...formData, seniority: v })} options={[{ value: "CEO", label: "CEO" }, { value: "CFO", label: "CFO" }, { value: "CTO", label: "CTO" }, { value: "VP", label: "VP Level" }, { value: "Director", label: "Director Level" }]} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Industry</label>
-              <div className="relative group">
-                <select 
-                  value={formData.industry}
-                  onChange={(e) => setFormData({...formData, industry: e.target.value})}
-                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
-                >
-                  <option value="software development">Software Development</option>
-                  <option value="financial services">Financial Services</option>
-                  <option value="healthcare">Healthcare</option>
-                  <option value="ecommerce">E-commerce</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
+              <Select value={formData.industry} onChange={(v) => setFormData({ ...formData, industry: v })} options={[{ value: "software development", label: "Software Development" }, { value: "financial services", label: "Financial Services" }, { value: "healthcare", label: "Healthcare" }, { value: "ecommerce", label: "E-commerce" }]} />
             </div>
             
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Lead Count Limit</label>
-              <div className="relative group">
-                <select 
-                  value={formData.leadCount}
-                  onChange={(e) => setFormData({...formData, leadCount: e.target.value})}
-                  className="w-full appearance-none bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white transition-all duration-300 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
-                >
-                  <option value="5">5 Leads</option>
-                  <option value="10">10 Leads</option>
-                  <option value="15">15 Leads</option>
-                  <option value="20">20 Leads</option>
-                  <option value="25">25 Leads</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 group-hover:text-sky-500 transition-colors">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
+              <Select value={formData.leadCount} onChange={(v) => setFormData({ ...formData, leadCount: v })} options={[{ value: "5", label: "5 Leads" }, { value: "10", label: "10 Leads" }, { value: "15", label: "15 Leads" }, { value: "20", label: "20 Leads" }, { value: "25", label: "25 Leads" }]} />
             </div>
           </div>
 

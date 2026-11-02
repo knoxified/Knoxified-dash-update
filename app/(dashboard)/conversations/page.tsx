@@ -90,13 +90,13 @@ export default function ConversationsPage() {
           </Link>
         </div>
       ) : (
-      <div className="flex-1 glass-card rounded-xl overflow-hidden flex flex-col md:flex-row">
-        <div className="w-full md:w-80 border-r border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#020617]/50 flex flex-col">
-          <div className="p-4 border-b border-slate-200 dark:border-white/5">
+      <div className="flex-1 glass-card rounded-2xl overflow-hidden flex flex-col md:flex-row" style={{ boxShadow: "0 0 0 1px var(--accent-dim), 0 20px 60px -20px rgba(0,0,0,0.45), 0 0 40px var(--accent-muted)" }}>
+        <div className="w-full md:w-80 border-r border-slate-200/70 dark:border-white/[0.06] bg-white/55 dark:bg-white/[0.025] backdrop-blur-xl flex flex-col">
+          <div className="p-4 border-b border-slate-200/70 dark:border-white/[0.06]">
             <input
               type="text"
               placeholder="Search logs..."
-              className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-300 dark:border-white/10 text-sm text-slate-900 dark:text-white rounded-md px-3 py-2.5 focus:outline-none focus:border-[color:var(--accent)] transition-colors"
+              className="glass-field w-full text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 rounded-xl px-3.5 py-2.5 focus:outline-none"
             />
           </div>
           <div className="flex-1 overflow-y-auto p-2">
@@ -119,10 +119,10 @@ export default function ConversationsPage() {
               <div
                 key={t.id}
                 onClick={() => setSelectedId(t.id)}
-                className={`p-4 rounded-lg mb-1 cursor-pointer transition-colors ${
+                className={`glass-list-item p-4 rounded-xl mb-1.5 cursor-pointer ${
                   t.id === selectedId
-                    ? "bg-[color:var(--accent)]/10 border border-[color:var(--accent)]/30 shadow-[0_0_15px_rgba(0,229,255,0.08)]"
-                    : "hover:bg-slate-200 dark:hover:bg-white/5 border border-transparent"
+                    ? "bg-[color:var(--accent)]/10 border border-[color:var(--accent)]/40 shadow-[0_0_22px_rgba(0,229,255,0.14)]"
+                    : "hover:bg-white/70 dark:hover:bg-white/[0.05] border border-transparent hover:border-slate-200/80 dark:hover:border-white/[0.07]"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -147,24 +147,35 @@ export default function ConversationsPage() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#020617]/30 h-[600px] md:h-auto">
+        <div className="glass-reader flex-1 flex flex-col h-[600px] md:h-auto">
           {!selected && !loading && (
-            <div className="flex-1 flex items-center justify-center text-sm text-slate-500 dark:text-[#888]">
+            <div className="flex-1 flex items-center justify-center text-sm text-slate-500">
               {transcripts.length === 0 ? "No calls to show yet." : "Select a call to view its transcript."}
             </div>
           )}
 
           {selected && (
             <>
-              <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#0F172A]/50">
-                <div>
-                  <h3 className="text-slate-900 dark:text-white font-semibold text-base">
+              <div className="glass-reader-head px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <h3 className="text-slate-900 font-semibold text-[17px] tracking-tight truncate">
                     {selected.caller_number || "Unknown caller"}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-[#888] mt-1">
-                    {formatDuration(selected.duration_secs)}
-                    {selected.provider ? ` • via ${selected.provider}` : ""}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-900/[0.05] text-slate-600">
+                      {formatDuration(selected.duration_secs)}
+                    </span>
+                    {selected.provider && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-900/[0.05] text-slate-600">
+                        via {selected.provider}
+                      </span>
+                    )}
+                    {selected.outcome && OUTCOME_STYLE[selected.outcome] && (
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${OUTCOME_STYLE[selected.outcome].cls}`}>
+                        {OUTCOME_STYLE[selected.outcome].label}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {selected.recording_url && (
                   <audio controls src={selected.recording_url} className="h-9 max-w-[220px]">
@@ -173,9 +184,9 @@ export default function ConversationsPage() {
                 )}
               </div>
 
-              <div className="flex-1 p-6 overflow-y-auto space-y-6">
+              <div className="flex-1 px-6 py-6 overflow-y-auto space-y-5">
                 {selected.messages.length === 0 && (
-                  <p className="text-sm text-slate-500 dark:text-[#888]">
+                  <p className="text-sm text-slate-500">
                     This call didn&apos;t capture any speech (e.g. it may have gone unanswered).
                   </p>
                 )}
@@ -187,20 +198,20 @@ export default function ConversationsPage() {
                         <Phone size={14} className="text-emerald-600 dark:text-[#10B981]" />
                       </div>
                       <div className="flex flex-col items-end">
-                        <p className="text-[12px] font-bold text-slate-500 dark:text-[#888] mb-1">Customer</p>
-                        <div className="bg-[color:var(--accent)] text-slate-900 p-3.5 rounded-2xl rounded-tr-sm text-[14px] leading-relaxed shadow-[0_0_15px_rgba(0,229,255,0.25)]">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-1.5">Customer</p>
+                        <div className="text-slate-900 px-4 py-3 rounded-2xl rounded-tr-md text-[14.5px] leading-[1.6] max-w-[34rem]" style={{ background: "linear-gradient(135deg, var(--accent), #5eead4)", boxShadow: "0 8px 24px -8px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
                           {m.content}
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div key={i} className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      <div className="w-8 h-8 rounded-full bg-white dark:bg-[#0F172A] border border-[color:var(--accent)]/30 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
+                      <div className="w-8 h-8 rounded-full bg-white border border-[color:var(--accent)]/40 flex items-center justify-center shrink-0 shadow-[0_0_14px_rgba(0,229,255,0.28)]">
                         <Mic size={14} className="text-[color:var(--accent)]" />
                       </div>
                       <div>
-                        <p className="text-[12px] font-bold text-slate-500 dark:text-[#888] mb-1">AI Agent</p>
-                        <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white/90 p-3.5 rounded-2xl rounded-tl-sm text-[14px] leading-relaxed shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-1.5">AI Agent</p>
+                        <div className="glass-bubble text-slate-800 px-4 py-3 rounded-2xl rounded-tl-md text-[14.5px] leading-[1.6] max-w-[34rem]">
                           {m.content}
                         </div>
                       </div>

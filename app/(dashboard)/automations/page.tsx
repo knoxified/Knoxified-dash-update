@@ -1,5 +1,5 @@
 "use client";
-import { Select } from "@/components/ui/Select";
+import { Select, SelectField } from "@/components/ui/Select";
 import { Search, Settings, X, Plus, Workflow, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
@@ -600,25 +600,13 @@ function RuleBuilderModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Event Type</label>
-                  <select className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none">
-                    <option>Call Ends</option>
-                    <option>Meeting Booked</option>
-                    <option>Lead Captured</option>
-                    <option>Voicemail Received</option>
-                  </select>
+                  <SelectField className="w-full" options={["Call Ends", "Meeting Booked", "Lead Captured", "Voicemail Received"]} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Condition (Optional)</label>
                   <div className="flex gap-2">
-                     <select className="flex-1 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none">
-                      <option>Call Outcome</option>
-                      <option>Duration</option>
-                      <option>Sentiment</option>
-                    </select>
-                    <select className="w-32 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none">
-                      <option>Equals</option>
-                      <option>Contains</option>
-                    </select>
+                     <SelectField className="flex-1" options={["Call Outcome", "Duration", "Sentiment"]} />
+                    <SelectField className="w-32" options={["Equals", "Contains"]} />
                     <input type="text" placeholder="Value" className="flex-1 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sky-500" defaultValue="Success" />
                   </div>
                 </div>
@@ -639,12 +627,7 @@ function RuleBuilderModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Action Provider</label>
-                  <select className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none">
-                    <option>Send SMS (Twilio)</option>
-                    <option>Create CRM Contact</option>
-                    <option>Send Email (SendGrid)</option>
-                    <option>Slack Notification</option>
-                  </select>
+                  <SelectField className="w-full" options={["Send SMS (Twilio)", "Create CRM Contact", "Send Email (SendGrid)", "Slack Notification"]} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Message Template</label>

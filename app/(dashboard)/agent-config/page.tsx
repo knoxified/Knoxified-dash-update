@@ -570,17 +570,11 @@ export default function AgentConfigPage() {
                 <label htmlFor="timezone" className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">
                   Business Timezone
                 </label>
-                <select
-                  id="timezone"
-                  name="timezone"
+                <Select
                   value={form.timezone}
-                  onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                >
-                  {timezoneOptions(form.timezone).map((tz) => (
-                    <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setForm({ ...form, timezone: v })}
+                  options={timezoneOptions(form.timezone).map((tz) => ({ value: tz, label: tz.replace(/_/g, " ") }))}
+                />
                 <p className="text-[12px] text-slate-400 dark:text-[#666]">
                   Used only to check availability and book appointment times in your local time.
                 </p>

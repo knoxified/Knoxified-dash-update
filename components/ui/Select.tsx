@@ -50,13 +50,7 @@ export function Select({ value, onChange, options, placeholder = "Select...", cl
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between bg-white dark:bg-white/[0.04] border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white transition-all outline-none shadow-sm`}
-        style={isOpen ? {
-          borderColor: 'var(--accent)',
-          boxShadow: '0 0 0 2px var(--accent-dim)',
-        } : {
-          borderColor: 'var(--border)',
-        }}
+        className={`glass-field ${isOpen ? 'is-open' : ''} w-full flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white outline-none`}
       >
         <span className={`block truncate text-[13px] font-medium ${!selectedOption ? 'text-slate-400 dark:text-white/25' : 'text-slate-800 dark:text-white/80'}`}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -69,13 +63,8 @@ export function Select({ value, onChange, options, placeholder = "Select...", cl
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1.5 rounded-2xl shadow-2xl overflow-hidden origin-top animate-in fade-in slide-in-from-top-2 duration-150 border"
-          style={{ 
-            background: 'var(--surface-2)',
-            borderColor: 'var(--border)',
-            boxShadow: '0 16px 48px rgba(0,0,0,0.15), 0 0 0 1px var(--border)'
-          }}
-        >
+        <div className="glass-menu absolute z-50 w-full mt-2 rounded-2xl overflow-hidden origin-top animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+          <div className="h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', opacity: 0.55 }} />
           <ul className="max-h-60 overflow-y-auto p-1.5 space-y-0.5">
             {options.length === 0 ? (
               <li className="px-3 py-2 text-[13px] text-slate-400 dark:text-white/25">No options</li>
@@ -86,14 +75,15 @@ export function Select({ value, onChange, options, placeholder = "Select...", cl
                   <li
                     key={opt.value}
                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                    className={`flex items-center justify-between px-3 py-2 text-[13px] rounded-xl cursor-pointer transition-all font-medium ${
+                    className={`glass-option flex items-center justify-between px-3 py-2 text-[13px] rounded-xl cursor-pointer font-medium ${
                       selected 
                         ? '' 
-                        : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                        : 'text-slate-700 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
                     }`}
                     style={selected ? { 
                       background: 'var(--accent-muted)', 
-                      color: 'var(--accent)'
+                      color: 'var(--accent)',
+                      boxShadow: 'inset 2px 0 0 var(--accent)'
                     } : {}}
                   >
                     <span>{opt.label}</span>
@@ -107,4 +97,10 @@ export function Select({ value, onChange, options, placeholder = "Select...", cl
       )}
     </div>
   );
+}
+
+// Drop-in for the old plain <select> elements that kept their own value (builder mock-ups).
+export function SelectField({ options, defaultValue, className = "" }: { options: string[]; defaultValue?: string; className?: string }) {
+  const [value, setValue] = useState(defaultValue ?? options[0] ?? "");
+  return <Select value={value} onChange={setValue} options={options.map((o) => ({ value: o, label: o }))} className={className} />;
 }

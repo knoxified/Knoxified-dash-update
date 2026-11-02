@@ -70,7 +70,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row relative overflow-hidden" style={{ background: '#060A11', fontFamily: 'var(--font-sans, Inter, sans-serif)' }}>
+    <div className="min-h-screen md:h-[100dvh] md:min-h-0 flex flex-col md:flex-row relative overflow-hidden" style={{ background: '#060A11', fontFamily: 'var(--font-sans, Inter, sans-serif)' }}>
       
       {/* Ambient blobs */}
       <div className="absolute top-[-15%] right-[-5%] w-[60%] h-[60%] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)', filter: 'blur(40px)' }} />
@@ -78,8 +78,8 @@ function LoginContent() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.03) 0%, transparent 70%)', filter: 'blur(60px)' }} />
 
       {/* Left Branding Panel */}
-      <div className="hidden md:flex flex-col w-[45%] p-12 justify-between relative z-10 border-r"
-        style={{ background: 'rgba(10,14,20,0.95)', borderColor: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(40px)' }}
+      <div className="hidden md:flex flex-col w-[45%] justify-between relative z-10 border-r h-full overflow-hidden"
+        style={{ background: 'rgba(10,14,20,0.95)', borderColor: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(40px)', padding: 'clamp(1.25rem, 4.5vh, 3rem) clamp(1.5rem, 3.5vw, 3rem)' }}
       >
         {/* Top dot grid decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
@@ -88,7 +88,7 @@ function LoginContent() {
 
         <div className="relative z-10">
           {/* Logo */}
-          <div className="mb-12 flex items-center gap-3">
+          <div className="flex items-center gap-3" style={{ marginBottom: "clamp(1rem, 4.5vh, 3rem)" }}>
             <div className="w-12 h-12 rounded-2xl p-2 border"
               style={{ background: 'rgba(0,229,255,0.08)', borderColor: 'rgba(0,229,255,0.2)', boxShadow: '0 0 20px rgba(0,229,255,0.15)' }}
             >
@@ -100,31 +100,32 @@ function LoginContent() {
             </div>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-[1.1] mb-5 tracking-tight max-w-md">
+          <h1 className="font-extrabold text-white leading-[1.1] tracking-tight max-w-md" style={{ fontSize: "clamp(1.75rem, 5.2vh, 3rem)", marginBottom: "clamp(.6rem, 2vh, 1.25rem)" }}>
             Manage your Enterprise AI Systems{' '}
             <span style={{ background: 'linear-gradient(135deg, #00E5FF, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               with Precision.
             </span>
           </h1>
-          <p className="text-white/40 text-base max-w-md mb-3 leading-relaxed">
+          <p className="text-white/40 max-w-md leading-relaxed" style={{ fontSize: "clamp(.8rem, 1.9vh, 1rem)", marginBottom: "clamp(.4rem, 1.2vh, .75rem)" }}>
             The unified platform for orchestrating autonomous workflows, scaling voice agents, and driving compliance-first automation.
           </p>
           <p className="text-sm tracking-widest uppercase font-bold" style={{ color: '#00E5FF', opacity: 0.6 }}>&quot;Think. Automate. Elevate&quot;</p>
 
           {/* Animated feature cards */}
-          <div className="mt-12 space-y-2">
+          <div className="space-y-2" style={{ marginTop: "clamp(1rem, 4vh, 3rem)" }}>
             {FEATURES.map((f, i) => {
               const Icon = f.icon;
               const isActive = activeFeature === i;
               return (
                 <div 
                   key={i}
-                  className="flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all duration-500"
+                  className="flex items-center gap-3.5 rounded-2xl border transition-all duration-500" data-feature-card
                   style={{
                     background: isActive ? 'rgba(0,229,255,0.05)' : 'rgba(255,255,255,0.02)',
                     borderColor: isActive ? 'rgba(0,229,255,0.2)' : 'rgba(255,255,255,0.04)',
                     boxShadow: isActive ? '0 0 20px rgba(0,229,255,0.08)' : 'none',
-                    transform: isActive ? 'translateX(4px)' : 'none'
+                    transform: isActive ? 'translateX(4px)' : 'none',
+                    padding: 'clamp(.45rem, 1.5vh, .875rem)'
                   }}
                 >
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all"
@@ -134,7 +135,7 @@ function LoginContent() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold transition-colors" style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.4)' }}>{f.title}</p>
-                    <p className="text-[12px] transition-colors" style={{ color: isActive ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)' }}>{f.desc}</p>
+                    <p className="login-short-hide text-[12px] transition-colors" style={{ color: isActive ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)' }}>{f.desc}</p>
                   </div>
                 </div>
               );
