@@ -252,6 +252,8 @@ export default function AgentConfigPage() {
         toast.error(result.error);
       } else {
         toast.success("Agent configuration saved successfully.");
+        // Tell the top bar (and anything else showing the agent's name/avatar) to reload it.
+        window.dispatchEvent(new Event("agent-identity-updated"));
       }
     });
   };

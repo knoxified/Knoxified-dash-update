@@ -169,12 +169,25 @@ export function useAgentIdentity() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    import("@/lib/actions/agent-identity-actions").then(({ getAgentIdentity }) => {
-      getAgentIdentity().then((identity) => {
-        setData(identity);
-        setLoading(false);
-      });
-    });
+    let alive = true;
+    const load = () =>
+      import("@/lib/actions/agent-identity-actions").then(({ getAgentIdentity }) =>
+        getAgentIdentity().then((identity) => {
+          if (!alive) return;
+          setData(identity);
+          setLoading(false);
+        })
+      );
+    load();
+    // The header stays mounted while you move between pages, so it must reload when the
+    // agent's name or avatar is saved (Agent Config fires this event) and when you return to the tab.
+    window.addEventListener("agent-identity-updated", load);
+    window.addEventListener("focus", load);
+    return () => {
+      alive = false;
+      window.removeEventListener("agent-identity-updated", load);
+      window.removeEventListener("focus", load);
+    };
   }, []);
 
   return { data, loading };
