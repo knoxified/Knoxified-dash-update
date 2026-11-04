@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MessageSquare, Phone, Mic, Inbox, Lock, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { getCallTranscripts, getCallRecordingStatus, type CallTranscript } from "@/lib/actions/conversations-actions";
+import { OperationsTabs } from "@/components/OperationsTabs";
 
 function formatDuration(secs: number): string {
   const m = Math.floor(secs / 60);
@@ -61,6 +62,7 @@ export default function ConversationsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 h-[calc(100vh-80px)] flex flex-col">
+      <OperationsTabs />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">

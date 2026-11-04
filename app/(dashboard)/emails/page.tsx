@@ -6,6 +6,7 @@ import { Mail, ChevronDown, ChevronRight, Trash2, AlertCircle } from "lucide-rea
 import { toast } from "sonner";
 import CampaignLauncher from "@/components/CampaignLauncher";
 import {
+import { OperationsTabs } from "@/components/OperationsTabs";
   getEmails,
   getSenderInfo,
   deleteDraftSequences,
@@ -120,6 +121,7 @@ export default function EmailsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <OperationsTabs />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">Emails</h1>
         <p className="text-slate-500 dark:text-[#888] text-sm max-w-2xl">

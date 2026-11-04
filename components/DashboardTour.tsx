@@ -21,10 +21,8 @@ const STEPS: Step[] = [
   { tourId: "systems", href: "/systems", title: "Systems", body: "Activate the industry systems that match your business. Each one teaches your voice agent that industry's language and priorities." },
   { tourId: "agent-config", href: "/agent-config", title: "Agent Config", body: "Set your agent's voice, greeting, and business memory -- what it knows about your business." },
   { tourId: "automations", href: "/automations", title: "Automations", body: "Workflows that run alongside your voice agent -- follow-ups and reminders, without you lifting a finger." },
-  { tourId: "leads", href: "/leads", title: "Leads", body: "Every lead your agent captures lands here, ready to follow up on." },
-  { tourId: "campaigns", href: "/campaigns", title: "Campaigns", body: "Track outreach and follow-up campaigns tied to your leads." },
-  { tourId: "conversations", href: "/conversations", title: "Inbox", body: "Full call transcripts from every conversation your agent has." },
-  { tourId: "billing", href: "/billing", title: "Billing", body: "Manage your plan and usage any time." },
+  { tourId: "operations", href: "/leads", title: "Operations", body: "Leads, campaigns, emails, your call inbox and questions your agent couldn't answer -- all side by side in one place." },
+  { tourId: "billing", href: "/billing", title: "Billing & Integrations", body: "Manage your plan and usage, and connect your calendar and other apps." },
   { tourId: "settings", href: "/settings", title: "Settings", body: "Account, theme, and accent color live here. That's the full tour -- you're set." },
 ];
 

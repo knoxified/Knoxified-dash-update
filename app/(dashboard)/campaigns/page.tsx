@@ -8,6 +8,7 @@ import ScheduleManager from "@/components/ScheduleManager";
 import CampaignLauncher from "@/components/CampaignLauncher";
 import { getLeads, type Lead } from "@/lib/actions/leads-actions";
 import {
+import { OperationsTabs } from "@/components/OperationsTabs";
   getCampaigns,
   getCampaignRecipients,
   setCampaignStatus,
@@ -119,6 +120,7 @@ export default function CampaignsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <OperationsTabs />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">Campaigns</h1>

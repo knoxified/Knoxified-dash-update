@@ -8,6 +8,7 @@ import { UrgencyBadge } from "@/components/UrgencyBadge";
 import { getLeads, addLead, importLeads, getLeadTimeline, type Lead, type LeadSource, type TimelineItem } from "@/lib/actions/leads-actions";
 import { parseCsv, detectColumns, rowsToLeads, type ColumnMap } from "@/lib/csv";
 import CampaignLauncher from "@/components/CampaignLauncher";
+import { OperationsTabs } from "@/components/OperationsTabs";
 
 type Tab = "all" | LeadSource | "cold";
 
@@ -239,6 +240,7 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <OperationsTabs />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">

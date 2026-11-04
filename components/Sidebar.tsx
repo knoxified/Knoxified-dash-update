@@ -88,18 +88,14 @@ export function Sidebar() {
         <div>
           <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Operations</p>
           <div className="flex flex-col gap-0.5">
-            <NavItem href="/leads" icon={<Users size={14} />} label="Leads" pathname={pathname} tourId="leads" />
-            <NavItem href="/campaigns" icon={<Megaphone size={14} />} label="Campaigns" pathname={pathname} tourId="campaigns" />
-            <NavItem href="/emails" icon={<Mail size={14} />} label="Emails" pathname={pathname} tourId="emails" />
-            <NavItem href="/conversations" icon={<MessageSquare size={14} />} label="Inbox" pathname={pathname} tourId="conversations" />
-            <NavItem href="/questions" icon={<HelpCircle size={14} />} label="Questions" pathname={pathname} tourId="questions" />
+            <NavItem href="/leads" icon={<Users size={14} />} label="Operations" pathname={pathname} tourId="operations" matchPrefixes={["/leads","/campaigns","/emails","/conversations","/questions"]} />
           </div>
         </div>
 
         <div>
           <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Infrastructure</p>
           <div className="flex flex-col gap-0.5">
-            <NavItem href="/billing" icon={<CreditCard size={14} />} label="Billing" pathname={pathname} tourId="billing" />
+            <NavItem href="/billing" icon={<CreditCard size={14} />} label="Billing & Integrations" pathname={pathname} tourId="billing" matchPrefixes={["/billing","/integrations"]} />
           </div>
         </div>
       </div>
@@ -164,8 +160,10 @@ export function Sidebar() {
   );
 }
 
-function NavItem({ href, icon, label, pathname, tourId }: { href: string; icon: ReactNode; label: string; pathname: string; tourId?: string }) {
-  const active = pathname === href || (href !== '/' && pathname.startsWith(href));
+function NavItem({ href, icon, label, pathname, tourId, matchPrefixes }: { href: string; icon: ReactNode; label: string; pathname: string; tourId?: string; matchPrefixes?: string[] }) {
+  const active = matchPrefixes
+    ? matchPrefixes.some((p) => pathname === p || pathname.startsWith(p + "/"))
+    : pathname === href || (href !== '/' && pathname.startsWith(href));
   return (
     <Link
       href={href}

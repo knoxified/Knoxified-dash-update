@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { HelpCircle, Check, X, Inbox } from "lucide-react";
 import {
+import { OperationsTabs } from "@/components/OperationsTabs";
   getPendingQuestions,
   answerQuestion,
   dismissQuestion,
@@ -56,6 +57,7 @@ export default function QuestionsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <OperationsTabs />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">Questions waiting</h1>
         <p className="text-slate-500 dark:text-[#888] text-sm max-w-2xl">

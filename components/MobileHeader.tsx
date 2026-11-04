@@ -12,10 +12,8 @@ const navLinks = [
   { href: "/metrics", label: "Analytics", icon: BarChart3 },
   { href: "/systems", label: "Systems", icon: Server },
   { href: "/automations", label: "Automations", icon: Zap },
-  { href: "/leads", label: "Leads", icon: Users },
-  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-  { href: "/conversations", label: "Inbox", icon: MessageSquare },
-  { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/leads", label: "Operations", icon: Users },
+  { href: "/billing", label: "Billing & Integrations", icon: CreditCard },
 ];
 
 export function MobileHeader() {
