@@ -8,7 +8,6 @@ import ScheduleManager from "@/components/ScheduleManager";
 import CampaignLauncher from "@/components/CampaignLauncher";
 import { getLeads, type Lead } from "@/lib/actions/leads-actions";
 import {
-import { OperationsTabs } from "@/components/OperationsTabs";
   getCampaigns,
   getCampaignRecipients,
   setCampaignStatus,
@@ -16,6 +15,7 @@ import { OperationsTabs } from "@/components/OperationsTabs";
   type CampaignSummary,
   type RecipientRow,
 } from "@/lib/actions/email-actions";
+import { OperationsTabs } from "@/components/OperationsTabs";
 
 const STATUS_STYLE: Record<string, string> = {
   active: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",

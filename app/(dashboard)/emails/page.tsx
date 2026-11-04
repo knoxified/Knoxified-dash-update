@@ -6,13 +6,13 @@ import { Mail, ChevronDown, ChevronRight, Trash2, AlertCircle } from "lucide-rea
 import { toast } from "sonner";
 import CampaignLauncher from "@/components/CampaignLauncher";
 import {
-import { OperationsTabs } from "@/components/OperationsTabs";
   getEmails,
   getSenderInfo,
   deleteDraftSequences,
   updateDraftEmail,
   type EmailRow,
 } from "@/lib/actions/email-actions";
+import { OperationsTabs } from "@/components/OperationsTabs";
 
 type Tab = "drafts" | "scheduled" | "sent";
 

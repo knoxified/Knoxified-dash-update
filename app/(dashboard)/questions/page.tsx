@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { HelpCircle, Check, X, Inbox } from "lucide-react";
 import {
-import { OperationsTabs } from "@/components/OperationsTabs";
   getPendingQuestions,
   answerQuestion,
   dismissQuestion,
   type PendingQuestion,
 } from "@/lib/actions/questions-actions";
+import { OperationsTabs } from "@/components/OperationsTabs";
 
 export default function QuestionsPage() {
   const [questions, setQuestions] = useState<PendingQuestion[]>([]);
