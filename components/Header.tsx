@@ -13,10 +13,10 @@ export function Header() {
   const { data: identity } = useAgentIdentity();
 
   const planName = workspace?.plan?.name || "—";
-  const creditsUsed = workspace?.workspace?.usage?.credits ?? 0;
-  const creditsLimit = workspace?.plan?.limit_credits;
-  const isUnlimited = creditsLimit === 0;
-  const creditsRemaining = creditsLimit && creditsLimit > 0 ? Math.max(creditsLimit - creditsUsed, 0) : null;
+  const minutesUsed = workspace?.workspace?.usage?.voiceMinutes ?? 0;
+  const minutesLimit = workspace?.plan?.limit_voice_minutes;
+  const isUnlimited = minutesLimit === 0;
+  const minutesRemaining = minutesLimit && minutesLimit > 0 ? Math.max(minutesLimit - minutesUsed, 0) : null;
 
   return (
     <header className="hidden md:flex h-[60px] items-center px-6 border-b border-slate-200/60 dark:border-white/[0.04] sticky top-0 z-30 transition-all"
@@ -61,9 +61,9 @@ export function Header() {
             <span className="text-slate-500 dark:text-white/35">
               {isUnlimited
                 ? "Unlimited"
-                : creditsRemaining !== null
-                ? `${creditsRemaining.toLocaleString()} left`
-                : `${creditsUsed.toLocaleString()} used`}
+                : minutesRemaining !== null
+                ? `${minutesRemaining.toLocaleString()} min left`
+                : `${minutesUsed.toLocaleString()} min used`}
             </span>
           </Link>
         )}
