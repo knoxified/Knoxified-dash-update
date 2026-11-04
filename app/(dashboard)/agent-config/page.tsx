@@ -428,7 +428,7 @@ export default function AgentConfigPage() {
                   {form.agent_nickname || "Your Agent"}
                 </p>
                 <p className="text-[13px] text-slate-500 dark:text-[#888] mb-3">
-                  &ldquo;Hi, this is {form.agent_nickname || "your assistant"}, an AI assistant{form.organization_name ? ` from ${form.organization_name}` : ""}. How can I help you today?&rdquo;
+                  &ldquo;Hi, this is {form.agent_nickname || "your assistant"}{form.organization_name ? ` from ${form.organization_name}` : ""}. How can I help you today?&rdquo;
                 </p>
                 <input type="hidden" name="preferred_voice_id" value={form.preferred_voice_id} />
                 <p className="text-[13px] font-medium text-slate-500 dark:text-[#888] mb-2 flex items-center gap-1.5">
