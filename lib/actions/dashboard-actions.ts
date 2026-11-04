@@ -96,10 +96,26 @@ export async function getDashboardStats(dateRange: string = "7d") {
     .eq('user_id', user.id)
     .eq('is_enabled', true);
 
+  // Real lead pipeline counts (leads table). "Qualified" includes won, since a
+  // won lead was qualified first and the count should not drop when it closes.
+  const { count: qualifiedCount } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .in('status', ['qualified', 'won']);
+
+  const { count: bookedCount } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('appointment_booked', true);
+
   return {
     voiceMinutes: totalVoice,
     automationRuns: totalAutoRuns,
-    activeSystemsCount: activeSys?.length || 0
+    activeSystemsCount: activeSys?.length || 0,
+    qualifiedLeads: qualifiedCount || 0,
+    appointmentsBooked: bookedCount || 0
   };
 }
 

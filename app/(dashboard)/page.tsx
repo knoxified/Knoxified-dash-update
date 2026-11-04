@@ -349,9 +349,6 @@ export default function DashboardOverview() {
               <DollarSign size={16} className="text-emerald-500" />
             </div>
             <span className="text-slate-500 dark:text-white/50 font-semibold text-sm">Revenue Influenced</span>
-            <span className="ml-auto text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 px-2.5 py-1 rounded-full">
-              +12.4% this period
-            </span>
           </div>
           <div className="text-[52px] md:text-[68px] font-extrabold text-slate-900 dark:text-white tracking-[-3px] leading-none relative z-10" style={{ fontFeatureSettings: '"tnum"' }}>
             {formatCurrency(metrics.revenueInfluenced)}
@@ -360,9 +357,9 @@ export default function DashboardOverview() {
         </div>
         
         <div className="md:col-span-4 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} trend="+5.2%" trendUp={true} sparklineData={[{val:30},{val:40},{val:35},{val:55},{val:45},{val:60},{val:70}]} />
-          <StatCard label="Appointments" value={metrics.appointmentsBooked.toString()} icon={CalendarCheck} trend="+18%" trendUp={true} sparklineData={[{val:10},{val:15},{val:12},{val:22},{val:18},{val:30},{val:40}]} />
-          <StatCard label="Qualified Leads" value={metrics.qualifiedLeads.toString()} icon={Target} trend="-2.4%" trendUp={false} sparklineData={[{val:80},{val:85},{val:75},{val:82},{val:70},{val:65},{val:60}]} />
+          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} />
+          <StatCard label="Appointments" value={metrics.appointmentsBooked.toString()} icon={CalendarCheck} />
+          <StatCard label="Qualified Leads" value={metrics.qualifiedLeads.toString()} icon={Target} />
           <StatCard label="Failed Follow-ups" value={metrics.failedFollowups.toString()} icon={AlertTriangle} subtitle="Requires attention" isWarning={true} />
         </div>
       </div>

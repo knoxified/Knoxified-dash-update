@@ -118,6 +118,8 @@ export class DataService {
         defaultData.voiceUsage.used = realStats.voiceMinutes;
         defaultData.totalActiveSystems = realStats.activeSystemsCount;
         defaultData.totalActiveAutomations = realStats.automationRuns;
+        defaultData.qualifiedLeads = realStats.qualifiedLeads;
+        defaultData.appointmentsBooked = realStats.appointmentsBooked;
       }
     } catch (error) {
       console.error("Could not fetch real dashboard stats:", error);
