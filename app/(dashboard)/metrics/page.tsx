@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Phone, Zap, Layers, FileText } from "lucide-react";
+import { Phone, Zap, Layers, FileText, Target, CalendarCheck, PhoneOff, DollarSign, Shield, AlertTriangle } from "lucide-react";
 import { getDashboardStats, getRecentActivityLogs } from "@/lib/actions/dashboard-actions";
 
 interface Stats {
   voiceMinutes: number;
   automationRuns: number;
   activeSystemsCount: number;
+  qualifiedLeads: number;
+  appointmentsBooked: number;
+  callsSaved: number;
+  revenueInfluenced: number;
+  revenueProtected: number;
+  failedFollowups: number;
 }
 
 interface ActivityLog {
@@ -28,7 +34,7 @@ export default function MetricsPage() {
     async function load() {
       try {
         const [statsResult, logsResult] = await Promise.all([
-          getDashboardStats(),
+          getDashboardStats("all"),
           getRecentActivityLogs(),
         ]);
         setStats(statsResult);
@@ -61,13 +67,19 @@ export default function MetricsPage() {
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <div key={i} className="skeleton h-32 rounded-xl" />)}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => <div key={i} className="skeleton h-32 rounded-xl" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard icon={Phone} label="Voice Minutes Used" value={stats?.voiceMinutes ?? 0} suffix="min" />
           <StatCard icon={Zap} label="Automation Runs" value={stats?.automationRuns ?? 0} />
           <StatCard icon={Layers} label="Active Systems" value={stats?.activeSystemsCount ?? 0} />
+          <StatCard icon={Target} label="Qualified Leads" value={stats?.qualifiedLeads ?? 0} />
+          <StatCard icon={CalendarCheck} label="Appointments Booked" value={stats?.appointmentsBooked ?? 0} />
+          <StatCard icon={PhoneOff} label="Calls Saved" value={stats?.callsSaved ?? 0} />
+          <StatCard icon={DollarSign} label="Revenue Influenced" value={stats?.revenueInfluenced ?? 0} prefix="$" />
+          <StatCard icon={Shield} label="Revenue Protected" value={stats?.revenueProtected ?? 0} prefix="$" />
+          <StatCard icon={AlertTriangle} label="Failed Follow-ups" value={stats?.failedFollowups ?? 0} />
         </div>
       )}
 
@@ -99,7 +111,7 @@ export default function MetricsPage() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, suffix }: { icon: React.ElementType; label: string; value: number; suffix?: string }) {
+function StatCard({ icon: Icon, label, value, suffix, prefix }: { icon: React.ElementType; label: string; value: number; suffix?: string; prefix?: string }) {
   return (
     <div className="glass-card card-hover rounded-xl p-5 flex flex-col justify-between h-32">
       <div className="flex items-center gap-2">
@@ -107,7 +119,7 @@ function StatCard({ icon: Icon, label, value, suffix }: { icon: React.ElementTyp
         <h3 className="text-slate-600 dark:text-white/60 font-medium text-[13px]">{label}</h3>
       </div>
       <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-        {value.toLocaleString()}{suffix ? <span className="text-base font-medium text-slate-400 dark:text-white/30 ml-1">{suffix}</span> : null}
+        {prefix}{value.toLocaleString()}{suffix ? <span className="text-base font-medium text-slate-400 dark:text-white/30 ml-1">{suffix}</span> : null}
       </div>
     </div>
   );

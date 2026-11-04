@@ -60,6 +60,17 @@ export interface DashboardMetrics {
   conversionRate: number;
   missedOpportunityReduction: number;
   failedFollowups: number;
+  callsSaved: number;
+  unpricedAppointments: number;
+  /** % change vs the previous period of the same length; null = no baseline */
+  trends: {
+    qualifiedLeads: number | null;
+    appointmentsBooked: number | null;
+    callsSaved: number | null;
+    revenueInfluenced: number | null;
+    failedFollowups: number | null;
+    revenueProtected: number | null;
+  };
 }
 
 export interface Workspace {
@@ -110,6 +121,9 @@ export class DataService {
       conversionRate: 0,
       missedOpportunityReduction: 0,
       failedFollowups: 0,
+      callsSaved: 0,
+      unpricedAppointments: 0,
+      trends: { qualifiedLeads: null, appointmentsBooked: null, callsSaved: null, revenueInfluenced: null, failedFollowups: null, revenueProtected: null },
     };
 
     try {
@@ -120,6 +134,12 @@ export class DataService {
         defaultData.totalActiveAutomations = realStats.automationRuns;
         defaultData.qualifiedLeads = realStats.qualifiedLeads;
         defaultData.appointmentsBooked = realStats.appointmentsBooked;
+        defaultData.callsSaved = realStats.callsSaved;
+        defaultData.revenueProtected = realStats.revenueProtected;
+        defaultData.failedFollowups = realStats.failedFollowups;
+        defaultData.revenueInfluenced = realStats.revenueInfluenced;
+        defaultData.unpricedAppointments = realStats.unpricedAppointments;
+        defaultData.trends = realStats.trends;
       }
     } catch (error) {
       console.error("Could not fetch real dashboard stats:", error);

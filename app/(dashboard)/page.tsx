@@ -353,14 +353,25 @@ export default function DashboardOverview() {
           <div className="text-[52px] md:text-[68px] font-extrabold text-slate-900 dark:text-white tracking-[-3px] leading-none relative z-10" style={{ fontFeatureSettings: '"tnum"' }}>
             {formatCurrency(metrics.revenueInfluenced)}
           </div>
-          <p className="text-[13px] text-slate-400 dark:text-white/30 mt-3 relative z-10">Across all active systems and automations</p>
+          <div className="flex items-center gap-2 mt-3 relative z-10">
+            <TrendBadge pct={metrics.trends.revenueInfluenced} />
+            <span className="text-[13px] text-slate-400 dark:text-white/30">vs previous period · appointments that took place and weren&apos;t cancelled</span>
+          </div>
+          {metrics.unpricedAppointments > 0 && (
+            <p className="text-[12px] text-amber-500 mt-2 relative z-10">
+              {metrics.unpricedAppointments} past appointment{metrics.unpricedAppointments === 1 ? '' : 's'} not counted: no matching price in <Link href="/agent-config" className="underline">Agent Config</Link>.
+            </p>
+          )}
         </div>
         
         <div className="md:col-span-4 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} />
-          <StatCard label="Appointments" value={metrics.appointmentsBooked.toString()} icon={CalendarCheck} />
-          <StatCard label="Qualified Leads" value={metrics.qualifiedLeads.toString()} icon={Target} />
-          <StatCard label="Failed Follow-ups" value={metrics.failedFollowups.toString()} icon={AlertTriangle} subtitle="Requires attention" isWarning={true} />
+          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} trendPct={metrics.trends.revenueProtected} subtitle="Upcoming, booked this period" />
+          <StatCard label="Appointments" value={metrics.appointmentsBooked.toString()} icon={CalendarCheck} trendPct={metrics.trends.appointmentsBooked} />
+          <StatCard label="Qualified Leads" value={metrics.qualifiedLeads.toString()} icon={Target} trendPct={metrics.trends.qualifiedLeads} />
+          <StatCard label="Calls Saved" value={metrics.callsSaved.toString()} icon={PhoneOff} trendPct={metrics.trends.callsSaved} subtitle="Booked, escalated or lead captured" />
+          <div className="sm:col-span-2">
+            <StatCard label="Failed Follow-ups" value={metrics.failedFollowups.toString()} icon={AlertTriangle} subtitle="Requires attention" isWarning={true} trendPct={metrics.trends.failedFollowups} />
+          </div>
         </div>
       </div>
 
@@ -728,10 +739,27 @@ interface StatCardProps {
   trendUp?: boolean;
   subtitle?: string;
   isWarning?: boolean;
+  trendPct?: number | null;
   sparklineData?: Array<{val: number}>;
 }
 
-function StatCard({ label, value, icon: Icon, trend, trendUp, subtitle, isWarning, sparklineData }: StatCardProps) {
+// Real change vs the previous period. A dash means there is no baseline yet
+// (nothing in the previous period), so no percentage can honestly be shown.
+function TrendBadge({ pct, invert }: { pct: number | null; invert?: boolean }) {
+  if (pct === null) {
+    return <span title="No previous-period baseline yet" className="text-[12px] font-bold mb-0.5 text-slate-400 dark:text-white/30">—</span>;
+  }
+  const good = invert ? pct < 0 : pct > 0;
+  const bad = invert ? pct > 0 : pct < 0;
+  const color = good ? 'text-emerald-600 dark:text-emerald-400' : bad ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-white/30';
+  return (
+    <span title="Change vs the previous period of the same length" className={`text-[12px] font-bold mb-0.5 ${color}`}>
+      {pct > 0 ? '+' : ''}{pct}%
+    </span>
+  );
+}
+
+function StatCard({ label, value, icon: Icon, trend, trendUp, subtitle, isWarning, sparklineData, trendPct }: StatCardProps) {
   const strokeColor = trendUp ? '#10b981' : '#f43f5e';
 
   return (
@@ -756,6 +784,7 @@ function StatCard({ label, value, icon: Icon, trend, trendUp, subtitle, isWarnin
       {/* Value */}
       <div className="flex items-end gap-2 relative z-10 mt-auto">
         <p className="text-[26px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-none" style={{ fontFeatureSettings: '"tnum"' }}>{value}</p>
+        {trendPct !== undefined && <TrendBadge pct={trendPct} invert={isWarning} />}
         {trend && (
           <span className={`text-[12px] font-bold mb-0.5 ${trendUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
             {trend}

@@ -123,6 +123,9 @@ export function useDashboardMetrics(dateRange: string = "7d") {
     };
 
     fetchRealtimeMetrics();
+    // Leads, saved calls and appointments change outside this page (voice agent,
+    // n8n), so re-check every 30s as well as on voice usage inserts.
+    const poll = setInterval(fetchRealtimeMetrics, 30_000);
 
     // Ensure the UI updates instantly when a new row is added to voice_usage
     const channel = supabase.channel('voice_usage_changes')
@@ -143,6 +146,7 @@ export function useDashboardMetrics(dateRange: string = "7d") {
 
     return () => {
       isMounted = false;
+      clearInterval(poll);
       supabase.removeChannel(channel);
     };
   }, [dateRange]);

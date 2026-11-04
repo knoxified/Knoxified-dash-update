@@ -16,6 +16,7 @@ import { VOICE_OPTIONS } from "@/lib/voice-options";
 import { AVATAR_OPTIONS } from "@/lib/avatar-options";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { CallRoutingEditor } from "@/components/CallRoutingEditor";
+import { ServicesPricing } from "@/components/ServicesPricing";
 import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle, Check } from "lucide-react";
 
 
@@ -784,6 +785,8 @@ export default function AgentConfigPage() {
               />
               <p className="text-xs text-slate-400 dark:text-[#666]">Saved with Save Configuration below. Scanning never overwrites these notes.</p>
             </div>
+
+            <ServicesPricing />
           </div>
 
           <div className="h-px bg-slate-200 dark:bg-white/5 w-full"></div>
