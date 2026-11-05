@@ -155,6 +155,7 @@ function RescheduleDialog({ lead, info, error, viewerTz, onClose, onDone }: {
               <div className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 px-3 py-2.5">
                 <p className="text-xs text-slate-500 dark:text-[#888]">Currently booked</p>
                 <p className="font-medium text-slate-900 dark:text-white">{formatAppointmentTime(appt.start, appt.timeZone)}</p>
+                {appt.title && <p className="text-xs text-slate-500 dark:text-[#888] mt-0.5">Calendar event: {appt.title}</p>}
               </div>
 
               <div className="space-y-2">

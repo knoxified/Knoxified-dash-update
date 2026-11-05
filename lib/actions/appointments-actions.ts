@@ -16,6 +16,7 @@ export interface LeadAppointment {
   start: string;
   end: string | null;
   type: string | null;
+  title: string | null;
   provider: string;
   timeZone: string;
 }
@@ -65,8 +66,19 @@ async function loadContext(leadId: string, viewerTz?: string) {
   if (!row && email) {
     const found = await callAuth("/auth/google/calendar/find-events", { userId: user.id, email });
     const events: any[] = found.status === 200 && Array.isArray(found.json?.events) ? found.json.events : [];
-    const next = events.filter((e) => Date.parse(e.start) >= now).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
-    const ev = next || events.sort((a, b) => Date.parse(b.start) - Date.parse(a.start))[0];
+    // Several leads can share one email (e.g. the owner testing), so prefer the event
+    // whose title/notes mention THIS lead's reason for calling or name.
+    const norm = (v: unknown) => String(v || "").toLowerCase();
+    const reasonKey = norm(lead.reason).trim();
+    const nameKey = norm(lead.name).trim();
+    const score = (e: any) => {
+      const text = norm(e.summary) + " " + norm(e.description);
+      return (reasonKey && text.includes(reasonKey) ? 2 : 0) + (nameKey && text.includes(nameKey) ? 1 : 0);
+    };
+    const best = events.reduce((m, e) => Math.max(m, score(e)), 0);
+    const pool = events.filter((e) => score(e) === best);
+    const next = pool.filter((e) => Date.parse(e.start) >= now).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
+    const ev = next || pool.sort((a, b) => Date.parse(b.start) - Date.parse(a.start))[0];
     if (ev) {
       row = {
         id: null,
@@ -74,6 +86,7 @@ async function loadContext(leadId: string, viewerTz?: string) {
         appointment_start: ev.start,
         appointment_end: ev.end,
         appointment_type: null,
+        title: ev.summary || null,
         timezone: ev.timeZone || null,
         calendar_provider: "google",
       };
@@ -101,6 +114,7 @@ export async function getLeadAppointment(leadId: string, viewerTz?: string): Pro
           start: row.appointment_start,
           end: row.appointment_end || null,
           type: row.appointment_type || null,
+          title: row.title || null,
           provider: row.calendar_provider || "google",
           timeZone,
         }
