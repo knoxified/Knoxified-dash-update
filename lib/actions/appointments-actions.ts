@@ -58,7 +58,27 @@ async function loadContext(leadId: string, viewerTz?: string) {
   const now = Date.now();
   const list = (rows || []) as any[];
   const upcoming = list.filter((r) => Date.parse(r.appointment_start) >= now).sort((a, b) => Date.parse(a.appointment_start) - Date.parse(b.appointment_start))[0];
-  const row = upcoming || list[0] || null;
+  let row: any = upcoming || list[0] || null;
+
+  // No saved booking record? Look the booking up on the owner's Google Calendar by
+  // the lead's email instead, so this works however the booking was made.
+  if (!row && email) {
+    const found = await callAuth("/auth/google/calendar/find-events", { userId: user.id, email });
+    const events: any[] = found.status === 200 && Array.isArray(found.json?.events) ? found.json.events : [];
+    const next = events.filter((e) => Date.parse(e.start) >= now).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
+    const ev = next || events.sort((a, b) => Date.parse(b.start) - Date.parse(a.start))[0];
+    if (ev) {
+      row = {
+        id: null,
+        appointment_id: ev.id,
+        appointment_start: ev.start,
+        appointment_end: ev.end,
+        appointment_type: null,
+        timezone: ev.timeZone || null,
+        calendar_provider: "google",
+      };
+    }
+  }
 
   const [{ data: cfg }, { data: prof }] = await Promise.all([
     supabase.from("agent_configs").select("organization_name, timezone").eq("user_id", user.id).maybeSingle(),
@@ -140,7 +160,7 @@ export async function rescheduleAppointment(input: {
   const newEndIso: string | null = moved.json?.end || null;
 
   // 2) Keep our own record in step with the calendar (and let reminders fire again for the new time).
-  const upd = await supabase
+  const upd = !row.id ? { error: null } : await supabase
     .from("reminders")
     .update({
       appointment_start: newStartIso,
