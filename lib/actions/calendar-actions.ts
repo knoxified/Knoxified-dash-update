@@ -78,6 +78,18 @@ export async function disconnectCalcomAction(): Promise<{ ok: true } | { ok: fal
   return status === 200 ? { ok: true } : { ok: false, error: "Couldn't disconnect Cal.com. Please try again." };
 }
 
+const OAUTH_PROVIDERS = ["google", "microsoft", "zoho", "slack", "github", "notion", "meta", "linkedin"];
+
+// Disconnects an OAuth app for the signed-in user. knoxified-auth revokes the
+// grant at the provider where it can (Google) and deletes the stored tokens.
+export async function disconnectOAuthAction(provider: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { user } = await currentUser();
+  if (!user) return { ok: false, error: "Please sign in again." };
+  if (!OAUTH_PROVIDERS.includes(provider)) return { ok: false, error: "Unknown app." };
+  const { status } = await callAuth(`/auth/${provider}/disconnect`, { userId: user.id });
+  return status === 200 ? { ok: true } : { ok: false, error: "Couldn't disconnect. Please try again." };
+}
+
 export async function getCalendarSettingsAction(): Promise<CalendarSettings> {
   const empty: CalendarSettings = { provider: "google", calcom: null, googleConnected: false };
   const { supabase, user } = await currentUser();

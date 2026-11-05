@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { BillingIntegrationsTabs } from "@/components/BillingIntegrationsTabs";
 import { CalendarConnections } from "@/components/CalendarConnections";
+import { disconnectOAuthAction } from "@/lib/actions/calendar-actions";
 
 function IntegrationsPageInner() {
   const [activeTab, setActiveTab] = useState("oauth");
@@ -84,9 +85,26 @@ function IntegrationsPageInner() {
     window.location.href = `https://oauth.knoxified.org/auth/${appId}/start?user_id=${user.id}&return_to=${returnTo}`;
   };
 
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  // Revokes the grant at the provider (Google) and removes the stored tokens, so
+  // the next Connect starts from a clean consent screen.
+  const disconnectApp = async (appId: string, appName: string) => {
+    if (!window.confirm(`Disconnect ${appName}? Knoxified will lose access until you connect it again.`)) return;
+    setDisconnecting(appId);
+    const res = await disconnectOAuthAction(appId);
+    setDisconnecting(null);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    setIntegrations((prev) => prev.filter((i) => i.provider !== appId));
+    toast.success(`${appName} disconnected.`);
+  };
+
   const baseOauthIntegrations = [
-    { id: "google", name: "Google Workspace", icon: Box, desc: "Connect Gmail, Calendar, and Drive.", brandColor: "text-blue-500" },
-    { id: "microsoft", name: "Microsoft 365", icon: LayoutGrid, desc: "Connect Outlook and Teams.", brandColor: "text-sky-500" },
+    { id: "google", name: "Google Workspace", icon: Box, desc: "Connect Gmail and Google Calendar.", brandColor: "text-blue-500" },
+    { id: "microsoft", name: "Microsoft 365", icon: LayoutGrid, desc: "Microsoft 365: Connect Outlook and Teams.", brandColor: "text-sky-500" },
     { id: "zoho", name: "Zoho Mail", icon: Mail, desc: "Send email sequences from your Zoho Mail account.", brandColor: "text-red-500" },
     { id: "slack", name: "Slack", icon: Slack, desc: "Send notifications and alerts to channels.", brandColor: "text-purple-500" },
     { id: "github", name: "GitHub", icon: Github, desc: "Sync repositories and track issues.", brandColor: "text-slate-900 dark:text-white" },
@@ -214,6 +232,15 @@ function IntegrationsPageInner() {
                 }`}>
                   {app.status === 'connected' ? 'Reconnect' : 'Connect Account'}
                 </button>
+                {app.status === 'connected' && (
+                  <button
+                    onClick={() => disconnectApp(app.id, app.name)}
+                    disabled={disconnecting === app.id}
+                    className="w-full mt-2 py-2 rounded-lg text-sm font-semibold text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all disabled:opacity-50"
+                  >
+                    {disconnecting === app.id ? 'Disconnecting...' : 'Disconnect'}
+                  </button>
+                )}
               </motion.div>
             );
           })}

@@ -1,3 +1,4 @@
+import { LegalLinks } from "@/components/LegalLinks";
 import { Sidebar } from '@/components/Sidebar';
 import { MobileHeader } from '@/components/MobileHeader';
 import { Header } from '@/components/Header';
@@ -51,6 +52,9 @@ export default async function DashboardLayout({
         <div className="flex-1 p-5 md:p-8 max-w-[1400px] w-full mx-auto">
           {children}
         </div>
+        <footer className="px-5 md:px-8 py-5 border-t border-slate-200/60 dark:border-white/[0.05]">
+          <LegalLinks />
+        </footer>
       </main>
       <SupportChat />
     </>

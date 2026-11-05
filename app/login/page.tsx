@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { login } from "@/lib/actions/auth-actions";
 import { Loader2, Eye, EyeOff, Zap, Shield, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import { LegalLinks } from "@/components/LegalLinks";
 import { useSearchParams } from "next/navigation";
 
 const FEATURES = [
@@ -303,6 +304,7 @@ function LoginContent() {
                 Get Started
               </a>
             </p>
+            <LegalLinks tone="dark" className="mt-4" />
           </div>
         </div>
       </div>
