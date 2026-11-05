@@ -1,6 +1,6 @@
 "use server";
 
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { callAuth } from "@/lib/auth-service";
 import { createClient } from "@/lib/supabase/server";
 
 // Calendar connections that use an API key instead of OAuth (Cal.com now; Calendly etc. later), and the
@@ -32,23 +32,6 @@ async function currentUser() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   return { supabase, user };
-}
-
-async function callAuth(path: string, body: unknown): Promise<{ status: number; json: any }> {
-  const { env } = getCloudflareContext() as any;
-  const key = env?.CONNECT_API_KEY || process.env.CONNECT_API_KEY;
-  if (!key) return { status: 503, json: { error: "not_configured" } };
-  try {
-    const res = await env.OAUTH.fetch(`https://knoxified-auth.internal${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-connect-key": key },
-      body: JSON.stringify(body),
-    });
-    const json = await res.json().catch(() => ({}));
-    return { status: res.status, json };
-  } catch {
-    return { status: 502, json: { error: "calcom_unavailable" } };
-  }
 }
 
 // Step 1: check the pasted key and list the event types to choose from (nothing is saved yet).

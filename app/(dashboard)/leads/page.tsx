@@ -9,6 +9,7 @@ import { getLeads, addLead, importLeads, getLeadTimeline, type Lead, type LeadSo
 import { parseCsv, detectColumns, rowsToLeads, type ColumnMap } from "@/lib/csv";
 import CampaignLauncher from "@/components/CampaignLauncher";
 import { OperationsTabs } from "@/components/OperationsTabs";
+import { AppointmentActions } from "@/components/AppointmentActions";
 import { markCallersSeen } from "@/lib/recent-callers-seen";
 
 type Tab = "all" | LeadSource | "cold";
@@ -412,7 +413,12 @@ export default function LeadsPage() {
                       <td className="px-5 py-4"><UrgencyBadge urgency={lead.urgency} /></td>
                       <td className="px-5 py-4 text-[12px] text-slate-700 dark:text-slate-300 capitalize">{lead.caller_tone || "—"}</td>
                       <td className="px-5 py-4 text-[12px]">
-                        {lead.appointment_booked ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Yes</span> : <span className="text-slate-400">—</span>}
+                        {lead.appointment_booked ? (
+                          <div>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Yes</span>
+                            <AppointmentActions lead={lead} compact />
+                          </div>
+                        ) : <span className="text-slate-400">—</span>}
                       </td>
                       <td className="px-5 py-4">
                         <span className="text-[12px] text-slate-700 dark:text-slate-300">{SOURCE_LABEL[lead.source]}</span>
@@ -578,6 +584,12 @@ export default function LeadsPage() {
                 <p><span className="text-slate-500 dark:text-[#888]">Source:</span> {SOURCE_LABEL[drawerLead.source]}</p>
                 <p><span className="text-slate-500 dark:text-[#888]">Consent:</span> {drawerLead.consent_source || "No consent on file"}</p>
               </div>
+              {drawerLead.appointment_booked && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#888]">Appointment</h3>
+                  <AppointmentActions lead={drawerLead} onDone={() => openLead(drawerLead)} />
+                </div>
+              )}
               {drawerLead.email && (
                 <button
                   onClick={() => {
