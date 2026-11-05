@@ -286,7 +286,7 @@ export default function DashboardOverview() {
           <p className="text-slate-500 dark:text-white/40 text-sm">
             Your agents are running <span className="font-semibold text-slate-700 dark:text-white/70">{activeOperations.length}</span> active pipelines. They&apos;ve secured{' '}
             <span className="font-semibold text-slate-700 dark:text-white/70">{formatCurrency(metrics.revenueProtected)}</span>{' '}
-            in the {dateRange === '24h' ? 'last 24 hours' : `last ${dateRange.replace('d', ' days')}`}.
+            in the {dateRange === '24h' ? 'last 24 hours' : `last ${dateRange.replace('d', ' days')}`}, and saved <span className="font-semibold text-slate-700 dark:text-white/70">{metrics.callsSaved}</span> {metrics.callsSaved === 1 ? 'call' : 'calls'}.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-2.5">
@@ -355,23 +355,21 @@ export default function DashboardOverview() {
           </div>
           <div className="flex items-center gap-2 mt-3 relative z-10">
             <TrendBadge pct={metrics.trends.revenueInfluenced} />
-            <span className="text-[13px] text-slate-400 dark:text-white/30">vs previous period · appointments that took place and weren&apos;t cancelled</span>
+            <span className="text-[13px] text-slate-400 dark:text-white/30">
+              {metrics.unpricedAppointments > 0 ? (
+                <>vs previous period · <Link href="/agent-config" className="text-amber-500 underline">{metrics.unpricedAppointments} unpriced</Link></>
+              ) : (
+                <>vs previous period</>
+              )}
+            </span>
           </div>
-          {metrics.unpricedAppointments > 0 && (
-            <p className="text-[12px] text-amber-500 mt-2 relative z-10">
-              {metrics.unpricedAppointments} past appointment{metrics.unpricedAppointments === 1 ? '' : 's'} not counted: no matching price in <Link href="/agent-config" className="underline">Agent Config</Link>.
-            </p>
-          )}
         </div>
         
         <div className="md:col-span-4 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} trendPct={metrics.trends.revenueProtected} subtitle="Upcoming, booked this period" />
+          <StatCard label="Revenue Protected" value={formatCurrency(metrics.revenueProtected)} icon={Shield} trendPct={metrics.trends.revenueProtected} />
           <StatCard label="Appointments" value={metrics.appointmentsBooked.toString()} icon={CalendarCheck} trendPct={metrics.trends.appointmentsBooked} />
           <StatCard label="Qualified Leads" value={metrics.qualifiedLeads.toString()} icon={Target} trendPct={metrics.trends.qualifiedLeads} />
-          <StatCard label="Calls Saved" value={metrics.callsSaved.toString()} icon={PhoneOff} trendPct={metrics.trends.callsSaved} subtitle="Booked, escalated or lead captured" />
-          <div className="sm:col-span-2">
-            <StatCard label="Failed Follow-ups" value={metrics.failedFollowups.toString()} icon={AlertTriangle} subtitle="Requires attention" isWarning={true} trendPct={metrics.trends.failedFollowups} />
-          </div>
+          <StatCard label="Failed Follow-ups" value={metrics.failedFollowups.toString()} icon={AlertTriangle} subtitle="Requires attention" isWarning={true} trendPct={metrics.trends.failedFollowups} />
         </div>
       </div>
 

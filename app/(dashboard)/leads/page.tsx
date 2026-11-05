@@ -9,6 +9,7 @@ import { getLeads, addLead, importLeads, getLeadTimeline, type Lead, type LeadSo
 import { parseCsv, detectColumns, rowsToLeads, type ColumnMap } from "@/lib/csv";
 import CampaignLauncher from "@/components/CampaignLauncher";
 import { OperationsTabs } from "@/components/OperationsTabs";
+import { markCallersSeen } from "@/lib/recent-callers-seen";
 
 type Tab = "all" | LeadSource | "cold";
 
@@ -53,6 +54,7 @@ function formatDate(iso: string | null) {
 }
 
 export default function LeadsPage() {
+  useEffect(() => { markCallersSeen(); }, []);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
