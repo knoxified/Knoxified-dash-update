@@ -352,3 +352,29 @@ export async function getLeadTimeline(leadId: string): Promise<{ items: Timeline
   items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   return { items };
 }
+
+// Permanently deletes leads (this account's only). Email history is kept but
+// detached from the lead, and any email sequence still running for a deleted
+// lead is paused so nothing more is sent to them. Call transcripts are untouched.
+export async function deleteLeads(ids: string[]): Promise<{ ok: boolean; deleted: number; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, deleted: 0, error: "Not authenticated" };
+
+  const clean = Array.from(new Set((Array.isArray(ids) ? ids : []).filter((x) => typeof x === "string" && /^[0-9a-f-]{36}$/i.test(x)))).slice(0, 500);
+  if (clean.length === 0) return { ok: false, deleted: 0, error: "No leads selected" };
+
+  // Only ever touch this account's leads.
+  const { data: owned, error: ownedErr } = await supabase.from("leads").select("id").eq("user_id", user.id).in("id", clean);
+  if (ownedErr) return { ok: false, deleted: 0, error: ownedErr.message };
+  const mine = (owned || []).map((r: { id: string }) => r.id);
+  if (mine.length === 0) return { ok: false, deleted: 0, error: "Lead not found" };
+
+  await supabase.from("campaign_recipients").update({ status: "paused" }).eq("user_id", user.id).in("lead_id", mine).eq("status", "active");
+  await supabase.from("campaign_recipients").update({ lead_id: null }).eq("user_id", user.id).in("lead_id", mine);
+  await supabase.from("emails").update({ lead_id: null }).eq("user_id", user.id).in("lead_id", mine);
+
+  const { error } = await supabase.from("leads").delete().eq("user_id", user.id).in("id", mine);
+  if (error) return { ok: false, deleted: 0, error: error.message };
+  return { ok: true, deleted: mine.length };
+}

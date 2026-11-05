@@ -1,11 +1,11 @@
 "use client";
 import { Select } from "@/components/ui/Select";
 import React, { useEffect, useMemo, useState } from "react";
-import { Download, Search, UserPlus, PhoneIncoming, Upload, X, Mail, Phone } from "lucide-react";
+import { Download, Search, UserPlus, PhoneIncoming, Upload, X, Mail, Phone, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UrgencyBadge } from "@/components/UrgencyBadge";
-import { getLeads, addLead, importLeads, getLeadTimeline, type Lead, type LeadSource, type TimelineItem } from "@/lib/actions/leads-actions";
+import { getLeads, addLead, importLeads, getLeadTimeline, deleteLeads, type Lead, type LeadSource, type TimelineItem } from "@/lib/actions/leads-actions";
 import { parseCsv, detectColumns, rowsToLeads, type ColumnMap } from "@/lib/csv";
 import CampaignLauncher from "@/components/CampaignLauncher";
 import { OperationsTabs } from "@/components/OperationsTabs";
@@ -184,6 +184,25 @@ export default function LeadsPage() {
         "."
     );
     resetImport();
+    refresh();
+  };
+
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    const what = ids.length === 1 ? "this lead" : `${ids.length} leads`;
+    if (!window.confirm(`Delete ${what}? This can't be undone. Any email sequence still running for them will be stopped. Call history is kept.`)) return;
+    setDeleting(true);
+    const res = await deleteLeads(ids);
+    setDeleting(false);
+    if (!res.ok) {
+      toast.error(res.error || "Couldn't delete. Please try again.");
+      return;
+    }
+    toast.success(res.deleted === 1 ? "Lead deleted." : `${res.deleted} leads deleted.`);
+    setSelected(new Set());
+    setDrawerLead((d) => (d && ids.includes(d.id) ? null : d));
     refresh();
   };
 
@@ -467,6 +486,9 @@ export default function LeadsPage() {
           <button onClick={() => setLauncherOpen(true)} className="flex items-center gap-1.5 bg-[color:var(--accent)] text-slate-900 text-sm font-semibold rounded-full px-4 py-1.5 hover:opacity-90">
             <Mail size={14} /> Start email sequence
           </button>
+          <button onClick={() => handleDelete(Array.from(selected))} disabled={deleting} className="flex items-center gap-1.5 bg-red-500 text-white text-sm font-semibold rounded-full px-4 py-1.5 hover:bg-red-600 disabled:opacity-60">
+            <Trash2 size={14} /> {deleting ? "Deleting..." : "Delete"}
+          </button>
           <button onClick={() => setSelected(new Set())} className="text-xs opacity-70 hover:opacity-100 pr-2">Clear</button>
         </div>
       )}
@@ -602,6 +624,13 @@ export default function LeadsPage() {
                   <Mail size={15} /> Start email sequence
                 </button>
               )}
+              <button
+                onClick={() => handleDelete([drawerLead.id])}
+                disabled={deleting}
+                className="flex items-center gap-2 text-sm font-medium text-red-500 hover:bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+              >
+                <Trash2 size={15} /> {deleting ? "Deleting..." : "Delete lead"}
+              </button>
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#888] mb-3">Activity</h3>
                 {timeline === null ? (
