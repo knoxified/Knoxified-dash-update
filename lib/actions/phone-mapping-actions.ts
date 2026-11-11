@@ -2,6 +2,7 @@
 
 import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isPaidUser } from "@/lib/plan-access";
 
 // Very loose E.164-ish check -- good enough to catch obvious typos without
 // rejecting legitimate international numbers.
@@ -26,7 +27,7 @@ export async function listMyForwardingNumbers() {
   // explicitly scoped to user.id regardless.
   const { data, error } = await supabaseAdmin
     .from("phone_number_mappings")
-    .select("id, phone_number, is_active, created_at")
+    .select("id, phone_number, is_active, created_at, source, verified_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -38,6 +39,7 @@ export async function addForwardingNumber(rawNumber: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  if (!(await isPaidUser(user.id))) return { error: "Adding numbers is available on paid plans." };
 
   if (!isPlausiblePhoneNumber(rawNumber)) {
     return { error: "That doesn't look like a valid phone number. Include your country code, e.g. +1 555 123 4567." };
@@ -65,11 +67,13 @@ export async function removeForwardingNumber(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  if (!(await isPaidUser(user.id))) return { error: "Managing numbers is available on paid plans." };
 
   const { error } = await supabaseAdmin
     .from("phone_number_mappings")
     .delete()
     .eq("id", id)
+    .eq("source", "customer_forwarded") // purchased numbers are released by us, not deleted here
     .eq("user_id", user.id); // belt-and-braces even though we use the admin client
 
   if (error) return { error: error.message };

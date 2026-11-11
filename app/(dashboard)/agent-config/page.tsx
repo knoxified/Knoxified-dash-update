@@ -16,6 +16,7 @@ import { VOICE_OPTIONS } from "@/lib/voice-options";
 import { AVATAR_OPTIONS } from "@/lib/avatar-options";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { CallRoutingEditor } from "@/components/CallRoutingEditor";
+import { NumberProvisioningCard } from "@/components/NumberProvisioningCard";
 import { ServicesPricing } from "@/components/ServicesPricing";
 import { Save, Bot, MessageSquare, Building, Clock, Sliders, Info, List, Settings, Phone, Calendar, ArrowRight, User, CalendarPlus, X, Volume2, Brain, Globe, Loader2, Trash2, Plus, PhoneForwarded, Play, Pause, ShieldCheck, AlertTriangle, Check } from "lucide-react";
 
@@ -110,6 +111,7 @@ export default function AgentConfigPage() {
   const [phoneNumbers, setPhoneNumbers] = useState<{ id: string; phone_number: string; is_active: boolean }[]>([]);
   const [newNumber, setNewNumber] = useState("");
   const [isNumbersLoading, setIsNumbersLoading] = useState(true);
+  const [numAccess, setNumAccess] = useState({ isPaid: true, hasProvisioned: false });
   const [isAddingNumber, startAddingNumber] = useTransition();
 
   const [recordingEnabled, setRecordingEnabled] = useState(false);
@@ -953,15 +955,19 @@ export default function AgentConfigPage() {
                 <PhoneForwarded size={16} className="text-sky-500" /> Call Forwarding
               </h2>
               <p className="text-sm text-slate-500 dark:text-[#888] mt-2">
-                Forward calls from your existing business number to your Knoxified agent. Set up call forwarding with your phone carrier to redirect calls to the number below, then register your business number here so the agent knows it's you answering.
+                Get a dedicated number for your agent. Publish it directly, or forward your existing business line to it for the times you can't pick up.
               </p>
             </div>
 
+            <NumberProvisioningCard onState={setNumAccess} />
+
+            {!numAccess.hasProvisioned && (
+            <>
             <div className="bg-sky-50 dark:bg-sky-500/5 border border-sky-100 dark:border-sky-500/10 rounded-lg p-4">
               <p className="text-xs font-medium text-slate-500 dark:text-[#888] uppercase tracking-wider mb-1">Forward calls to</p>
               <p className="text-lg font-semibold text-slate-900 dark:text-white font-mono">{process.env.NEXT_PUBLIC_VOICE_AGENT_NUMBER || "Contact support for your forwarding number"}</p>
               <p className="text-xs text-slate-400 dark:text-[#666] mt-2">
-                On most carriers: dial *72 followed by this number to enable unconditional call forwarding. Steps vary by carrier and country — check with yours if unsure.
+                To have the agent answer only when you don't, set forwarding for no answer or busy: on most mobile carriers dial **61*number# (no answer) or **67*number# (busy). Steps vary by carrier and country.
               </p>
             </div>
 
@@ -976,6 +982,7 @@ export default function AgentConfigPage() {
                     type="tel"
                     value={newNumber}
                     onChange={(e) => setNewNumber(e.target.value)}
+                    disabled={!numAccess.isPaid}
                     placeholder="+1 555 123 4567"
                     className="w-full pl-10 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
                   />
@@ -983,7 +990,7 @@ export default function AgentConfigPage() {
                 <button
                   type="button"
                   onClick={handleAddNumber}
-                  disabled={isAddingNumber}
+                  disabled={isAddingNumber || !numAccess.isPaid}
                   className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-50 shrink-0"
                 >
                   <Plus size={16} /> Add
@@ -1021,6 +1028,8 @@ export default function AgentConfigPage() {
                 </div>
               )}
             </div>
+            </>
+            )}
           </div>
         )}
       </div>
