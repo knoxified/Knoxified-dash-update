@@ -3,11 +3,10 @@
 import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isPaidUser } from "@/lib/plan-access";
-import { searchNumbers, buyNumber, TelephonyError, type AvailableNumber } from "@/lib/telephony/signalwire";
+import { getProvider, TelephonyError, type AvailableNumber } from "@/lib/telephony";
 
 // Global safety valve: a bug or abuse can never buy more than this per day.
 const DAILY_PURCHASE_CAP = 25;
-const VOICE_INBOUND_URL = process.env.VOICE_INBOUND_URL || "https://voice.knoxified.org/voice/inbound";
 const PREPARING_MESSAGE = "Your number is being prepared. We'll have it ready shortly. Check back soon.";
 
 async function requireUser() {
@@ -43,7 +42,7 @@ async function loadDedicatedCountry(countryCode: string) {
     .select("country_code, provider, number_mode, is_enabled")
     .eq("country_code", countryCode)
     .maybeSingle();
-  if (!data || !data.is_enabled || data.number_mode !== "dedicated" || data.provider !== "signalwire") return null;
+  if (!data || !data.is_enabled || data.number_mode !== "dedicated" || !getProvider(data.provider)) return null;
   return data;
 }
 
@@ -51,10 +50,11 @@ export async function searchAvailableNumbers(countryCode: string, areaCode?: str
   const user = await requireUser();
   if (!user) return { error: "Not authenticated" };
   if (!(await isPaidUser(user.id))) return { error: "Getting a number is available on paid plans." };
-  if (!(await loadDedicatedCountry(countryCode))) return { error: "Numbers aren't available for that country yet." };
+  const country = await loadDedicatedCountry(countryCode);
+  if (!country) return { error: "Numbers aren't available for that country yet." };
 
   try {
-    const numbers = await searchNumbers(countryCode, areaCode?.trim() || undefined);
+    const numbers = await getProvider(country.provider)!.search(countryCode, areaCode?.trim() || undefined);
     if (numbers.length === 0) return { error: "No numbers found for that search. Try another area code." };
     return { numbers };
   } catch (err) {
@@ -107,7 +107,9 @@ export async function claimNumber(countryCode: string, phoneNumber: string): Pro
   if (logErr || !purchase) return { error: "Couldn't start your number setup. Please try again." };
 
   try {
-    const bought = await buyNumber(phoneNumber, VOICE_INBOUND_URL, `Knoxified ${user.id.slice(0, 8)}`);
+    const provider = getProvider(country.provider)!;
+    await provider.checkFunds?.();
+    const bought = await provider.buy(phoneNumber, `Knoxified ${user.id.slice(0, 8)}`);
 
     const { error: mapErr } = await supabaseAdmin.from("phone_number_mappings").insert({
       user_id: user.id,
@@ -115,7 +117,7 @@ export async function claimNumber(countryCode: string, phoneNumber: string): Pro
       is_active: true,
       source: "provisioned",
       verified_at: new Date().toISOString(),
-      sms_provider: "signalwire",
+      sms_provider: country.provider,
       provider_number_id: bought.sid,
       country_code: countryCode,
     });

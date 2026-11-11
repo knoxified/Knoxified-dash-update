@@ -4,18 +4,7 @@ import "server-only";
 // dashboard Worker: SIGNALWIRE_SPACE_URL (e.g. yourspace.signalwire.com),
 // SIGNALWIRE_PROJECT_ID, SIGNALWIRE_API_TOKEN. Never put them in wrangler vars.
 
-export type AvailableNumber = { phone_number: string; friendly_name: string; region: string | null };
-export type PurchasedNumber = { sid: string; phone_number: string };
-
-export class TelephonyError extends Error {
-  status: number;
-  lowBalance: boolean;
-  constructor(message: string, status: number, lowBalance = false) {
-    super(message);
-    this.status = status;
-    this.lowBalance = lowBalance;
-  }
-}
+import { TelephonyError, type AvailableNumber, type PurchasedNumber, type TelephonyProvider } from "./types";
 
 function base() {
   const space = (process.env.SIGNALWIRE_SPACE_URL || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
@@ -71,3 +60,10 @@ export async function buyNumber(phoneNumber: string, voiceUrl: string, label: st
   if (!data.sid || !data.phone_number) throw new TelephonyError("Provider returned an unexpected response", 502);
   return { sid: data.sid, phone_number: data.phone_number };
 }
+
+export const signalwireProvider: TelephonyProvider = {
+  name: "signalwire",
+  search: searchNumbers,
+  buy: (phoneNumber, label) =>
+    buyNumber(phoneNumber, process.env.VOICE_INBOUND_URL || "https://voice.knoxified.org/voice/inbound", label),
+};
