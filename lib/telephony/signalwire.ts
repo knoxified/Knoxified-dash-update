@@ -19,7 +19,7 @@ function base() {
 
 // Heuristic: provider rejects the purchase because the account has no funds.
 function looksLikeLowBalance(status: number, body: string) {
-  return status === 402 || /insufficient|balance|funds|payment required|trial/i.test(body);
+  return status === 402 || status === 403 || /insufficient|balance|funds|payment required|trial|verif/i.test(body);
 }
 
 export async function searchNumbers(countryCode: string, areaCode?: string): Promise<AvailableNumber[]> {

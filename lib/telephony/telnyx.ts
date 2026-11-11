@@ -15,7 +15,8 @@ function headers() {
 }
 
 function lowBalanceLike(status: number, body: string) {
-  return status === 402 || /insufficient|balance|funds|payment|credit/i.test(body);
+  // Also treats "account not verified / still on trial" as not-ready, so a purchase waits instead of failing.
+  return status === 402 || status === 403 || /insufficient|balance|funds|payment|credit|verif|kyc|identity|upgrade|account level|trial|not (permitted|allowed)/i.test(body);
 }
 
 async function search(countryCode: string, areaCode?: string): Promise<AvailableNumber[]> {

@@ -3,7 +3,8 @@
 import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isPaidUser } from "@/lib/plan-access";
-import { getProvider, TelephonyError, type AvailableNumber } from "@/lib/telephony";
+import { getProvider, type AvailableNumber } from "@/lib/telephony";
+import { executePurchase, alertOwner } from "@/lib/number-purchase";
 
 // Global safety valve: a bug or abuse can never buy more than this per day.
 const DAILY_PURCHASE_CAP = 25;
@@ -63,10 +64,6 @@ export async function searchAvailableNumbers(countryCode: string, areaCode?: str
   }
 }
 
-async function alertOwner(action: string, userId: string, metadata: Record<string, unknown>) {
-  await supabaseAdmin.from("audit_logs").insert({ user_id: userId, action, entity_type: "phone_number", metadata });
-}
-
 export async function claimNumber(countryCode: string, phoneNumber: string): Promise<{ success?: true; number?: string; preparing?: true; message?: string; error?: string }> {
   const user = await requireUser();
   if (!user) return { error: "Not authenticated" };
@@ -106,42 +103,13 @@ export async function claimNumber(countryCode: string, phoneNumber: string): Pro
   }).select("id").single();
   if (logErr || !purchase) return { error: "Couldn't start your number setup. Please try again." };
 
-  try {
-    const provider = getProvider(country.provider)!;
-    await provider.checkFunds?.();
-    const bought = await provider.buy(phoneNumber, `Knoxified ${user.id.slice(0, 8)}`);
-
-    const { error: mapErr } = await supabaseAdmin.from("phone_number_mappings").insert({
-      user_id: user.id,
-      phone_number: bought.phone_number,
-      is_active: true,
-      source: "provisioned",
-      verified_at: new Date().toISOString(),
-      sms_provider: country.provider,
-      provider_number_id: bought.sid,
-      country_code: countryCode,
-    });
-    if (mapErr) {
-      // Bought but not saved: never lose track of money spent.
-      await alertOwner("number_purchase_orphaned", user.id, { number: bought.phone_number, sid: bought.sid, error: mapErr.message });
-      await supabaseAdmin.from("number_purchases").update({ status: "failed", error: `orphaned: ${mapErr.message}` }).eq("id", purchase.id);
-      return { error: "We hit a problem finishing your setup. Our team has been notified." };
-    }
-
-    await supabaseAdmin.from("number_purchases").update({ status: "succeeded", phone_number: bought.phone_number }).eq("id", purchase.id);
+  const result = await executePurchase({ userId: user.id, country, phoneNumber, purchaseId: purchase.id });
+  if ("success" in result) {
     revalidatePath("/agent-config");
-    return { success: true, number: bought.phone_number };
-  } catch (err) {
-    const e = err as TelephonyError;
-    console.error("[numbers] purchase failed:", e.message);
-    if (e.lowBalance) {
-      await supabaseAdmin.from("number_purchases").update({ status: "paused_low_balance", error: e.message }).eq("id", purchase.id);
-      await alertOwner("number_purchase_low_balance", user.id, { country: countryCode, number: phoneNumber, error: e.message });
-      return { preparing: true, message: PREPARING_MESSAGE };
-    }
-    await supabaseAdmin.from("number_purchases").update({ status: "failed", error: e.message }).eq("id", purchase.id);
-    return { error: "That number couldn't be reserved. Please pick another." };
+    return { success: true, number: result.number };
   }
+  if ("preparing" in result) return { preparing: true, message: PREPARING_MESSAGE };
+  return { error: result.error };
 }
 
 // Called when a customer returns while their purchase is paused (balance was low).
