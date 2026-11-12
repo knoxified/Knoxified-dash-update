@@ -16,6 +16,17 @@ export type RoutingRule = {
 };
 
 const E164 = /^\+[1-9]\d{7,14}$/;
+
+// Basic abuse guard (not ownership verification): the transfer number must be in a country
+// we sell in and must not be a premium-rate range. TRANSFER_EXTRA_PREFIXES (comma list,
+// e.g. "+234") lets you allow more prefixes without a deploy of code.
+const ALLOWED_PREFIXES = ["+1", "+44", "+353", "+61", "+64"];
+const PREMIUM = [/^\+1(900|976)/, /^\+449/, /^\+4470/, /^\+61190/, /^\+649/];
+function transferNumberAllowed(n: string) {
+  const extra = (process.env.TRANSFER_EXTRA_PREFIXES || "").split(",").map((x) => x.trim()).filter(Boolean);
+  if (PREMIUM.some((re) => re.test(n))) return false;
+  return [...ALLOWED_PREFIXES, ...extra].some((p) => n.startsWith(p));
+}
 // Accounts with an enabled system get fewer rules (the system already handles
 // its own job; rules are only for exceptions). Starter has no system, so it
 // gets more. Keep in sync with voice-agent-beta's routing.js.
@@ -60,6 +71,9 @@ export async function saveCallRouting(input: { rules: RoutingRule[]; businessPho
   const businessPhone = (input.businessPhone || "").trim();
   if (businessPhone && !E164.test(businessPhone)) {
     return { error: "Transfer number must be in international format, e.g. +12125551234." };
+  }
+  if (businessPhone && !transferNumberAllowed(businessPhone)) {
+    return { error: "That transfer number isn't supported. Use a regular phone number in a country we serve." };
   }
 
   const maxRules = await getMaxRules(supabase, user.id);

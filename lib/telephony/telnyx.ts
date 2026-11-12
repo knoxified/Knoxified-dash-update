@@ -81,4 +81,14 @@ async function buy(phoneNumber: string, _label: string): Promise<PurchasedNumber
   return { sid: got.id || order.id, phone_number: got.phone_number };
 }
 
-export const telnyxProvider: TelephonyProvider = { name: "telnyx", search, buy, checkFunds };
+// The id stored at purchase is the order item id, so the live number resource is looked up by number.
+async function release(phoneNumber: string, _id: string | null) {
+  const find = await fetch(`${API}/phone_numbers?filter[phone_number]=${encodeURIComponent(phoneNumber)}`, { headers: headers() });
+  if (!find.ok) throw new TelephonyError(`Release lookup failed (${find.status})`, find.status);
+  const id = (await find.json()).data?.[0]?.id;
+  if (!id) return; // not found: already released
+  const del = await fetch(`${API}/phone_numbers/${id}`, { method: "DELETE", headers: headers() });
+  if (!del.ok && del.status !== 404) throw new TelephonyError(`Release failed (${del.status})`, del.status);
+}
+
+export const telnyxProvider: TelephonyProvider = { name: "telnyx", search, buy, release, checkFunds };

@@ -961,7 +961,7 @@ export default function AgentConfigPage() {
 
             <NumberProvisioningCard onState={setNumAccess} />
 
-            {!numAccess.hasProvisioned && (
+            {!numAccess.hasProvisioned && phoneNumbers.length > 0 && (
             <>
             <div className="bg-sky-50 dark:bg-sky-500/5 border border-sky-100 dark:border-sky-500/10 rounded-lg p-4">
               <p className="text-xs font-medium text-slate-500 dark:text-[#888] uppercase tracking-wider mb-1">Forward calls to</p>
@@ -972,31 +972,7 @@ export default function AgentConfigPage() {
             </div>
 
             <div className="space-y-3">
-              <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">Your Business Number(s)</label>
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone size={16} className="text-slate-400" />
-                  </div>
-                  <input
-                    type="tel"
-                    value={newNumber}
-                    onChange={(e) => setNewNumber(e.target.value)}
-                    disabled={!numAccess.isPaid}
-                    placeholder="+1 555 123 4567"
-                    className="w-full pl-10 bg-slate-50 dark:bg-[#020617] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddNumber}
-                  disabled={isAddingNumber || !numAccess.isPaid}
-                  className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-50 shrink-0"
-                >
-                  <Plus size={16} /> Add
-                </button>
-              </div>
-
+              <label className="block text-[13px] font-medium text-slate-500 dark:text-[#888]">Your existing forwarded number(s)</label>
               {isNumbersLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 size={20} className="animate-spin text-slate-400" />

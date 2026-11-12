@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     .order("created_at", { ascending: true })
     .limit(5);
 
-  let done = 0;
+  const completed: { user_id: string; number: string }[] = [];
   for (const row of rows || []) {
     if (!row.phone_number) continue;
 
@@ -55,11 +55,11 @@ export async function POST(req: Request) {
 
     const result = await retryPurchase(row as any);
     if ("success" in result) {
-      done++;
+      completed.push({ user_id: row.user_id, number: result.number });
       await alertOwner("number_purchase_completed_after_retry", row.user_id, { number: result.number });
     }
     if ("preparing" in result) break; // provider still not ready: stop, try again next cron
   }
 
-  return NextResponse.json({ ok: true, completed: done });
+  return NextResponse.json({ ok: true, completed });
 }

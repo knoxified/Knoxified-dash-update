@@ -18,6 +18,8 @@ export interface TelephonyProvider {
   name: "signalwire" | "telnyx";
   search(countryCode: string, areaCode?: string): Promise<AvailableNumber[]>;
   buy(phoneNumber: string, label: string): Promise<PurchasedNumber>;
+  // Give the number back to the provider so it stops billing. Must treat "already gone" as success.
+  release(phoneNumber: string, providerNumberId: string | null): Promise<void>;
   // Optional pre-flight: throw TelephonyError(lowBalance=true) if the account can't afford a purchase.
   checkFunds?(): Promise<void>;
 }

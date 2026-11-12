@@ -39,6 +39,8 @@ export async function addForwardingNumber(rawNumber: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  return { error: "Adding your own number is retired. Get a Knoxified number in Agent Config instead." };
+  // eslint-disable-next-line no-unreachable
   if (!(await isPaidUser(user.id))) return { error: "Adding numbers is available on paid plans." };
 
   if (!isPlausiblePhoneNumber(rawNumber)) {

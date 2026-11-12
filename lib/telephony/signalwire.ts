@@ -61,8 +61,21 @@ export async function buyNumber(phoneNumber: string, voiceUrl: string, label: st
   return { sid: data.sid, phone_number: data.phone_number };
 }
 
+export async function releaseNumber(phoneNumber: string, sid: string | null) {
+  const { url, auth } = base();
+  let id = sid;
+  if (!id) {
+    const res = await fetch(`${url}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(phoneNumber)}`, { headers: { Authorization: auth } });
+    if (res.ok) id = (await res.json()).incoming_phone_numbers?.[0]?.sid || null;
+  }
+  if (!id) return; // not found: already released
+  const del = await fetch(`${url}/IncomingPhoneNumbers/${id}.json`, { method: "DELETE", headers: { Authorization: auth } });
+  if (!del.ok && del.status !== 404) throw new TelephonyError(`Release failed (${del.status})`, del.status);
+}
+
 export const signalwireProvider: TelephonyProvider = {
   name: "signalwire",
+  release: releaseNumber,
   search: searchNumbers,
   buy: (phoneNumber, label) =>
     buyNumber(phoneNumber, process.env.VOICE_INBOUND_URL || "https://voice.knoxified.org/voice/inbound", label),
