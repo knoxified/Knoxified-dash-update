@@ -35,34 +35,10 @@ export async function listMyForwardingNumbers() {
   return { numbers: data || [] };
 }
 
-export async function addForwardingNumber(rawNumber: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+// Retired: customers now get a dedicated Knoxified number (see number-provisioning-actions).
+// Kept so any stale client call fails with a clear message instead of a 404.
+export async function addForwardingNumber(_rawNumber: string): Promise<{ success?: true; error?: string }> {
   return { error: "Adding your own number is retired. Get a Knoxified number in Agent Config instead." };
-  // eslint-disable-next-line no-unreachable
-  if (!(await isPaidUser(user.id))) return { error: "Adding numbers is available on paid plans." };
-
-  if (!isPlausiblePhoneNumber(rawNumber)) {
-    return { error: "That doesn't look like a valid phone number. Include your country code, e.g. +1 555 123 4567." };
-  }
-  const phone_number = normalizePhoneNumber(rawNumber);
-
-  const { error } = await supabaseAdmin.from("phone_number_mappings").insert({
-    user_id: user.id,
-    phone_number,
-    is_active: true,
-  });
-
-  if (error) {
-    if (error.message.includes("duplicate") || error.code === "23505") {
-      return { error: "That number is already registered (to you or another account)." };
-    }
-    return { error: error.message };
-  }
-
-  revalidatePath("/agent-config");
-  return { success: true };
 }
 
 export async function removeForwardingNumber(id: string) {
