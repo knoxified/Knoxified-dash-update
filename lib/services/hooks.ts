@@ -84,6 +84,14 @@ export function useDashboardMetrics(dateRange: string = "7d") {
           }
         }
 
+        // Partner bonus minutes/credits on top of the plan (falls back to the plan values above).
+        const { data: effRows } = await supabase.rpc('get_effective_limits', { p_user_id: user.id });
+        const eff = Array.isArray(effRows) ? effRows[0] : effRows;
+        if (eff) {
+          limitVoice = eff.limit_voice_minutes || limitVoice;
+          limitCredits = eff.limit_credits || limitCredits;
+        }
+
         // Calculate current usage by summing minutes_used from public.voice_usage
         const { data: voiceUsage } = await supabase
           .from('voice_usage')

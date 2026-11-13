@@ -1,18 +1,48 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { FOUNDING_RATE_PLAN_NAME } from "@/lib/constants/discount";
+import { ORGANIC_DISCOUNT_ENABLED } from "@/lib/constants/discount";
 
 const OFFER_WINDOW_HOURS = 48;
 
-export async function getFoundingRatePlan() {
+export interface AffiliateRatePlan {
+  id: string; // the hidden affiliate-rate plan row
+  baseId: string; // the public plan it discounts
+  baseName: string;
+  baseInterval: string | null;
+  price: number | null;
+  currency: string | null;
+  purchasable: boolean; // has a Flutterwave payment plan and a price
+}
+
+// Every affiliate-rate variant. Used by the billing page to show discounted
+// prices while the offer is open, and to recognise a variant as "current".
+export async function getAffiliateRatePlans(): Promise<AffiliateRatePlan[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("plans")
-    .select("id, price, currency")
-    .eq("name", FOUNDING_RATE_PLAN_NAME)
-    .maybeSingle();
-  return data;
+    .select("id, price, currency, flutterwave_plan_id, affiliate_rate_of, base:plans!affiliate_rate_of(name, billing_interval)")
+    .not("affiliate_rate_of", "is", null);
+  return (data ?? []).map((p: any) => {
+    const base = Array.isArray(p.base) ? p.base[0] : p.base;
+    return {
+      id: p.id,
+      baseId: p.affiliate_rate_of,
+      baseName: base?.name ?? "",
+      baseInterval: base?.billing_interval ?? null,
+      price: p.price === null || p.price === undefined ? null : Number(p.price),
+      currency: p.currency ?? null,
+      purchasable: Boolean(p.flutterwave_plan_id) && p.price !== null && p.price !== undefined,
+    };
+  });
+}
+
+// The banner's "Lock in my rate" button: the monthly Pro variant.
+export async function getAffiliateProPlan() {
+  const plans = await getAffiliateRatePlans();
+  return (
+    plans.find((p) => p.purchasable && /^pro/i.test(p.baseName) && p.baseInterval === "month") ?? null
+  );
 }
 
 // Starts the 48-hour Founding Rate window -- called once, right after a
@@ -28,12 +58,17 @@ export async function triggerDiscountOffer() {
 
   const { data: existing } = await supabase
     .from("users")
-    .select("discount_offer_expires_at")
+    .select("discount_offer_expires_at, referred_by_partner_id")
     .eq("id", user.id)
     .maybeSingle();
 
   if (existing?.discount_offer_expires_at) {
     return { alreadySet: true };
+  }
+
+  // Only partner-referred accounts get the window unless the master switch is on.
+  if (!ORGANIC_DISCOUNT_ENABLED && !existing?.referred_by_partner_id) {
+    return { notEligible: true };
   }
 
   const expiresAt = new Date(Date.now() + OFFER_WINDOW_HOURS * 60 * 60 * 1000).toISOString();

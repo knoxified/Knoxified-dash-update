@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { FOUNDING_RATE_PLAN_NAME } from "@/lib/constants/discount";
 
 /**
  * POST /api/webhooks/flutterwave
@@ -81,7 +80,7 @@ export async function POST(request: Request) {
   // tampered or mismatched checkout can't grant a higher plan than paid for.
   const { data: plan } = await supabaseAdmin
     .from("plans")
-    .select("price, currency, name")
+    .select("price, currency, name, affiliate_rate_of")
     .eq("id", planId)
     .single();
 
@@ -103,7 +102,7 @@ export async function POST(request: Request) {
     credits_locked_reason: null,
   };
 
-  if (plan.name === FOUNDING_RATE_PLAN_NAME) {
+  if (plan.affiliate_rate_of) {
     updatePayload.discount_offer_claimed_at = new Date().toISOString();
   }
 
@@ -114,6 +113,16 @@ export async function POST(request: Request) {
 
   if (updateError) {
     console.error("Failed to update user plan from webhook:", updateError);
+  }
+
+  // Partner attribution: the first successful payment turns a referred lead into "paid".
+  const { error: leadError } = await supabaseAdmin
+    .from("partner_leads")
+    .update({ status: "paid", paid_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .neq("status", "paid");
+  if (leadError) {
+    console.error("Failed to mark partner lead as paid:", leadError);
   }
 
   return new Response("OK", { status: 200 });

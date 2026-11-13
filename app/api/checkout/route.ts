@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { FOUNDING_RATE_PLAN_NAME } from "@/lib/constants/discount";
 
 /**
  * POST /api/checkout
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
 
   const { data: plan, error: planError } = await supabase
     .from("plans")
-    .select("id, name, price, currency, flutterwave_plan_id")
+    .select("id, name, price, currency, flutterwave_plan_id, affiliate_rate_of")
     .eq("id", planId)
     .single();
 
@@ -48,11 +47,11 @@ export async function POST(request: Request) {
     );
   }
 
-  // The Founding Rate offer is time-boxed per-user, permanently, once
+  // The affiliate rate offer is time-boxed per-user, permanently, once
   // triggered -- never trust a client-side countdown for this. If the
   // window's expired (or was never triggered, or already claimed), this
   // plan simply isn't purchasable for this user, full stop.
-  if (plan.name === FOUNDING_RATE_PLAN_NAME) {
+  if (plan.affiliate_rate_of) {
     const { data: userRow } = await supabase
       .from("users")
       .select("discount_offer_expires_at, discount_offer_claimed_at")
@@ -69,6 +68,17 @@ export async function POST(request: Request) {
         { status: 410 }
       );
     }
+  }
+
+  // Customers only ever see the base plan's name, never the internal variant name.
+  let displayName = plan.name;
+  if (plan.affiliate_rate_of) {
+    const { data: base } = await supabase
+      .from("plans")
+      .select("name")
+      .eq("id", plan.affiliate_rate_of)
+      .maybeSingle();
+    if (base?.name) displayName = base.name;
   }
 
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
@@ -99,7 +109,7 @@ export async function POST(request: Request) {
         },
         customizations: {
           title: "Knoxified",
-          description: `${plan.name === FOUNDING_RATE_PLAN_NAME ? "Pro" : plan.name} subscription`,
+          description: `${displayName} subscription`,
         },
         meta: {
           user_id: user.id,

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { X, Zap } from "lucide-react";
-import { getDiscountOfferStatus, getFoundingRatePlan } from "@/lib/actions/discount-actions";
+import { getDiscountOfferStatus, getAffiliateProPlan } from "@/lib/actions/discount-actions";
 
 function formatCountdown(ms: number) {
   if (ms <= 0) return "00:00:00";
@@ -42,7 +42,7 @@ export function DiscountOfferBanner() {
     const checkoutTab = window.open("", "_blank");
     if (checkoutTab) checkoutTab.opener = null;
 
-    getFoundingRatePlan().then(async (plan) => {
+    getAffiliateProPlan().then(async (plan) => {
       if (!plan) {
         toast.error("This offer isn't available right now.");
         setIsCheckingOut(false);

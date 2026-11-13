@@ -1,8 +1,9 @@
-// Internal-only label -- this is the plans.name value used to identify
-// the discount plan row in the database and in Flutterwave's dashboard.
-// Never shown to customers (see DiscountOfferBanner.tsx for the actual
-// customer-facing copy, which deliberately avoids "new"/"founding"
-// language -- see the Nielsen brand-familiarity research this was based
-// on: 60% of consumers prefer a familiar brand over a new one, so surfacing
-// "you're an early customer" works against conversion, not for it).
-export const FOUNDING_RATE_PLAN_NAME = "Pro Founding Rate";
+// The 48-hour discount is offered through "Affiliate Discount Rate" plans:
+// one hidden plan row per paid plan, linked to its base plan through
+// plans.affiliate_rate_of. These rows are internal only; customer-facing copy
+// (see DiscountOfferBanner.tsx) deliberately avoids "new"/"founding"/"affiliate"
+// language because surfacing "you're an early customer" works against conversion.
+
+// Master switch. false = only partner-referred signups get the 48-hour window.
+// Flip to true to offer it to every account again (no other change needed).
+export const ORGANIC_DISCOUNT_ENABLED = false;

@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "../supabase/server";
-import { FOUNDING_RATE_PLAN_NAME } from "../constants/discount";
 
 export async function getRealSystems() {
   const supabase = await createClient();
@@ -276,7 +275,7 @@ export async function getRealPlans() {
     .from('plans')
     .select('*')
     .eq('is_active', true)
-    .neq('name', FOUNDING_RATE_PLAN_NAME);
+    .is('affiliate_rate_of', null);
   if (error) {
     console.error("Error fetching plans:", error);
     return [];
@@ -308,6 +307,20 @@ export async function getRealWorkspace() {
   const totalEmails = usageData?.filter((r: any) => r.feature_key === 'emails').reduce((acc: number, row: any) => acc + (row.used_quantity || 0), 0) || 0;
   const totalCredits = usageData?.filter((r: any) => r.feature_key === 'credits').reduce((acc: number, row: any) => acc + (row.used_quantity || 0), 0) || 0;
 
+  // Partner bonus minutes/credits are added on top of the plan limits.
+  const { data: effRows } = await supabase.rpc('get_effective_limits', { p_user_id: authUser.id });
+  const eff = Array.isArray(effRows) ? effRows[0] : effRows;
+  const basePlan: any = user.plans;
+  const plan = basePlan && eff
+    ? {
+        ...basePlan,
+        limit_voice_minutes: eff.limit_voice_minutes,
+        limit_credits: eff.limit_credits,
+        bonus_voice_minutes: eff.bonus_voice_minutes,
+        bonus_credits: eff.bonus_credits,
+      }
+    : basePlan;
+
   return {
     workspace: {
       id: authUser.id,
@@ -320,6 +333,6 @@ export async function getRealWorkspace() {
         credits: totalCredits
       }
     },
-    plan: user.plans
+    plan
   };
 }
