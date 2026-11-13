@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { discountedPrice, isOfferEligiblePlan } from "@/lib/discount-pricing";
 
 /**
  * POST /api/checkout
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
   const { data: plan, error: planError } = await supabase
     .from("plans")
-    .select("id, name, price, currency, flutterwave_plan_id, affiliate_rate_of")
+    .select("id, name, price, currency, flutterwave_plan_id, billing_interval")
     .eq("id", planId)
     .single();
 
@@ -47,11 +48,13 @@ export async function POST(request: Request) {
     );
   }
 
-  // The affiliate rate offer is time-boxed per-user, permanently, once
-  // triggered -- never trust a client-side countdown for this. If the
-  // window's expired (or was never triggered, or already claimed), this
-  // plan simply isn't purchasable for this user, full stop.
-  if (plan.affiliate_rate_of) {
+  // First-payment offer. The window is per-user and permanent once triggered, and it
+  // can be used once (discount_offer_claimed_at). It is decided here, on the server;
+  // never trust a client-side countdown or amount. Once the window has closed or the
+  // offer has been used, the customer simply pays the normal price.
+  let chargeAmount = Number(plan.price);
+  let offerApplied = false;
+  if (isOfferEligiblePlan(plan)) {
     const { data: userRow } = await supabase
       .from("users")
       .select("discount_offer_expires_at, discount_offer_claimed_at")
@@ -59,26 +62,12 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     const expiresAt = userRow?.discount_offer_expires_at;
+    const windowOpen = Boolean(expiresAt) && new Date(expiresAt as string).getTime() > Date.now();
     const alreadyClaimed = Boolean(userRow?.discount_offer_claimed_at);
-    const windowOpen = expiresAt && new Date(expiresAt).getTime() > Date.now();
-
-    if (!windowOpen || alreadyClaimed) {
-      return Response.json(
-        { error: "This offer has expired and can't be reactivated." },
-        { status: 410 }
-      );
+    if (windowOpen && !alreadyClaimed) {
+      chargeAmount = discountedPrice(plan);
+      offerApplied = true;
     }
-  }
-
-  // Customers only ever see the base plan's name, never the internal variant name.
-  let displayName = plan.name;
-  if (plan.affiliate_rate_of) {
-    const { data: base } = await supabase
-      .from("plans")
-      .select("name")
-      .eq("id", plan.affiliate_rate_of)
-      .maybeSingle();
-    if (base?.name) displayName = base.name;
   }
 
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
@@ -100,7 +89,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         tx_ref: txRef,
-        amount: plan.price,
+        amount: chargeAmount,
         currency: plan.currency || "USD",
         payment_plan: plan.flutterwave_plan_id,
         redirect_url: `${origin}/billing?checkout=complete`,
@@ -109,11 +98,12 @@ export async function POST(request: Request) {
         },
         customizations: {
           title: "Knoxified",
-          description: `${displayName} subscription`,
+          description: `${plan.name} subscription`,
         },
         meta: {
           user_id: user.id,
           plan_id: plan.id,
+          offer_applied: offerApplied,
         },
       }),
     });

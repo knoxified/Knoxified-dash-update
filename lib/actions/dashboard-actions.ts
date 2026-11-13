@@ -274,8 +274,7 @@ export async function getRealPlans() {
   const { data: plans, error } = await supabase
     .from('plans')
     .select('*')
-    .eq('is_active', true)
-    .is('affiliate_rate_of', null);
+    .eq('is_active', true);
   if (error) {
     console.error("Error fetching plans:", error);
     return [];

@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { X, Zap } from "lucide-react";
-import { getDiscountOfferStatus, getAffiliateProPlan, type AffiliateRatePlan } from "@/lib/actions/discount-actions";
+import { getDiscountOfferStatus, getOfferPlans, type OfferPlan } from "@/lib/actions/discount-actions";
+import { isMonthlyInterval } from "@/lib/discount-pricing";
 
 function formatCountdown(ms: number) {
   if (ms <= 0) return "00:00:00";
@@ -23,11 +24,12 @@ export function DiscountOfferBanner() {
   const [showModal, setShowModal] = useState(false);
   const [dismissedModal, setDismissedModal] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [rate, setRate] = useState<AffiliateRatePlan | null>(null);
+  const [rate, setRate] = useState<OfferPlan | null>(null);
   const [referrerName, setReferrerName] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([getDiscountOfferStatus(), getAffiliateProPlan()]).then(([status, plan]) => {
+    Promise.all([getDiscountOfferStatus(), getOfferPlans()]).then(([status, plans]) => {
+      const plan = plans.find((p) => /^pro/i.test(p.name) && isMonthlyInterval(p.interval)) ?? null;
       // Only show the offer when there is a purchasable discounted plan behind it.
       if (status.active && status.expiresAt && plan) {
         setRate(plan);
@@ -46,7 +48,8 @@ export function DiscountOfferBanner() {
           currency: rate?.currency || "USD",
           maximumFractionDigits: 0,
         }).format(value);
-  const savings = rate && rate.price !== null && rate.basePrice !== null ? rate.basePrice - rate.price : null;
+  const savings = rate ? rate.price - rate.offerPrice : null;
+  const percentOff = rate && rate.price > 0 ? Math.round((1 - rate.offerPrice / rate.price) * 100) : 0;
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -59,7 +62,7 @@ export function DiscountOfferBanner() {
     const checkoutTab = window.open("", "_blank");
     if (checkoutTab) checkoutTab.opener = null;
 
-    getAffiliateProPlan().then(async (plan) => {
+    Promise.resolve(rate).then(async (plan) => {
       if (!plan) {
         toast.error("This offer isn't available right now.");
         setIsCheckingOut(false);
@@ -70,7 +73,7 @@ export function DiscountOfferBanner() {
         const res = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ planId: plan.id }),
+          body: JSON.stringify({ planId: plan.planId }),
         });
         const data = await res.json();
         setIsCheckingOut(false);
@@ -90,7 +93,7 @@ export function DiscountOfferBanner() {
         checkoutTab?.close();
       }
     });
-  }, []);
+  }, [rate]);
 
   if (!expiresAt) return null;
 
@@ -128,14 +131,14 @@ export function DiscountOfferBanner() {
               </h2>
               <p className="text-[14px] text-slate-500 dark:text-[#888] leading-relaxed mb-5">
                 {referrerName
-                  ? `Because you signed up through ${referrerName}, you can get Pro at a reduced rate for a limited time. When the timer ends, this offer is gone for good.`
-                  : "For a limited time, get Pro at a reduced rate. When the timer ends, this offer is gone for good."}
+                  ? `Because you signed up through ${referrerName}, your first Pro payment is ${percentOff}% off. When the timer ends, this offer is gone for good.`
+                  : `For a limited time, your first Pro payment is ${percentOff}% off. When the timer ends, this offer is gone for good.`}
               </p>
 
               <div className="flex items-end gap-3 mb-6">
-                <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{money(rate?.price ?? null)}</span>
-                <span className="text-lg text-slate-400 dark:text-[#666] line-through mb-1">{money(rate?.basePrice ?? null)}</span>
-                <span className="text-[13px] text-emerald-600 dark:text-emerald-400 font-semibold mb-1.5">{savings && savings > 0 ? `Save ${money(savings)}/mo` : ""}</span>
+                <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{money(rate?.offerPrice ?? null)}</span>
+                <span className="text-lg text-slate-400 dark:text-[#666] line-through mb-1">{money(rate?.price ?? null)}</span>
+                <span className="text-[13px] text-emerald-600 dark:text-emerald-400 font-semibold mb-1.5">{savings && savings > 0 ? `Save ${money(savings)} on your first payment` : ""}</span>
               </div>
 
               <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-lg px-4 py-3 mb-6">
@@ -158,7 +161,7 @@ export function DiscountOfferBanner() {
       {(!showModal || dismissedModal) && (
         <div className="bg-orange-500 px-5 md:px-8 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
           <p className="text-[13px] text-white font-medium">
-            Pro's reduced rate ($397/mo, was $697) expires in{" "}
+            Pro's {percentOff}% off first payment expires in{" "}
             <span className="font-bold tabular-nums">{countdown}</span>
           </p>
           <button

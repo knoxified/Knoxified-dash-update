@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CreditCard, Check, Zap, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePlans, useWorkspace } from "@/lib/services/hooks";
-import { getAffiliateRatePlans, getDiscountOfferStatus, type AffiliateRatePlan } from "@/lib/actions/discount-actions";
+import { getOfferPlans, getDiscountOfferStatus, type OfferPlan } from "@/lib/actions/discount-actions";
 import { BillingIntegrationsTabs } from "@/components/BillingIntegrationsTabs";
 
 // Global glow styles for AI theme
@@ -30,12 +30,12 @@ export default function BillingPage() {
   const { data: wsData, loading: wsLoading } = useWorkspace();
   const [isAnnual, setIsAnnual] = useState(false);
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
-  const [affiliateRates, setAffiliateRates] = useState<AffiliateRatePlan[]>([]);
+  const [offerPlans, setOfferPlans] = useState<OfferPlan[]>([]);
   const [offerActive, setOfferActive] = useState(false);
 
   useEffect(() => {
     getDiscountOfferStatus().then((s) => setOfferActive(s.active)).catch(() => {});
-    getAffiliateRatePlans().then(setAffiliateRates).catch(() => {});
+    getOfferPlans().then(setOfferPlans).catch(() => {});
   }, []);
 
   if (loading || wsLoading || !wsData) {
@@ -180,11 +180,10 @@ export default function BillingPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-8">
         {displayPlans.map(plan => {
-          // While the offer window is open, show (and sell) the discounted variant of this plan.
-          const rate = offerActive ? affiliateRates.find((r) => r.baseId === plan.id && r.purchasable) : undefined;
-          const isCurrent =
-            plan.id === workspace?.planId ||
-            affiliateRates.some((r) => r.id === workspace?.planId && r.baseId === plan.id);
+          // While the offer window is open, show the discounted first payment for this plan.
+          // The amount is decided again server-side at checkout.
+          const rate = offerActive ? offerPlans.find((o) => o.planId === plan.id) : undefined;
+          const isCurrent = plan.id === workspace?.planId;
           const isPro = plan.name.includes('Pro');
           return (
             <div 
@@ -211,12 +210,15 @@ export default function BillingPage() {
                 {plan.name.replace(' (Monthly)', '').replace(' (Annual)', '')}
               </h3>
               <div className="text-[36px] font-bold tracking-tight mb-3 leading-none bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                {rate ? formatPrice({ ...plan, price: rate.price, currency: rate.currency || plan.currency }) : formatPrice(plan)}
+                {rate ? formatPrice({ ...plan, price: rate.offerPrice, currency: rate.currency || plan.currency }) : formatPrice(plan)}
                 {plan.price !== null && plan.price !== undefined && (
                   <span className="text-sm font-normal text-slate-500">/{plan.billing_interval === 'annual' || plan.billing_interval === 'year' ? 'yr' : 'mo'}</span>
                 )}
                 {rate && (
                   <span className="ml-2 text-sm font-normal text-slate-500 line-through">{formatPrice(plan)}</span>
+                )}
+                {rate && (
+                  <span className="block text-xs font-normal text-emerald-500 mt-1">First payment only, then {formatPrice(plan)}</span>
                 )}
               </div>
               <p className="text-[13px] text-slate-500 dark:text-[#888] mb-6 flex-1">{plan.keyRestrictions}</p>
@@ -235,8 +237,8 @@ export default function BillingPage() {
               </div>
 
               <button
-                onClick={() => !isCurrent && handleUpgrade(rate ? { ...plan, id: rate.id } : plan)}
-                disabled={isCurrent || checkoutPlanId === (rate?.id ?? plan.id)}
+                onClick={() => !isCurrent && handleUpgrade(plan)}
+                disabled={isCurrent || checkoutPlanId === plan.id}
                 className={`w-full py-3 rounded-lg text-sm font-semibold transition-all transform hover:scale-[1.02] disabled:hover:scale-100 flex items-center justify-center gap-2 ${
                 isCurrent 
                   ? 'bg-transparent border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-200 dark:bg-white/5 cursor-default' 
@@ -244,7 +246,7 @@ export default function BillingPage() {
                     ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)]'
                     : 'bg-[color:var(--accent)] hover:opacity-90 text-slate-900 border border-transparent shadow-[0_0_15px_rgba(0,229,255,0.25)]'
               } disabled:opacity-70`}>
-                {checkoutPlanId === (rate?.id ?? plan.id) && <Loader2 size={14} className="animate-spin" />}
+                {checkoutPlanId === plan.id && <Loader2 size={14} className="animate-spin" />}
                 {isCurrent ? 'Manage Plan' : plan.name === 'Custom' ? 'Contact Us' : 'Upgrade'}
               </button>
             </div>

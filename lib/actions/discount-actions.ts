@@ -2,52 +2,43 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { ORGANIC_DISCOUNT_ENABLED } from "@/lib/constants/discount";
+import { discountedPrice, isOfferEligiblePlan } from "@/lib/discount-pricing";
 
 const OFFER_WINDOW_HOURS = 168; // 7 days
 
-export interface AffiliateRatePlan {
-  id: string; // the hidden affiliate-rate plan row
-  baseId: string; // the public plan it discounts
-  baseName: string;
-  baseInterval: string | null;
-  basePrice: number | null;
-  price: number | null;
+export interface OfferPlan {
+  planId: string;
+  name: string;
+  interval: string | null;
+  price: number; // normal price
+  offerPrice: number; // first-payment price while the offer is open
   currency: string | null;
-  purchasable: boolean; // has a Flutterwave payment plan and a price
 }
 
-// Every affiliate-rate variant. Used by the billing page to show discounted
-// prices while the offer is open, and to recognise a variant as "current".
-export async function getAffiliateRatePlans(): Promise<AffiliateRatePlan[]> {
+// Every plan the first-payment offer applies to, with its discounted first payment.
+// The billing page and banner use this for display; /api/checkout recomputes the
+// amount server-side and never trusts these numbers.
+export async function getOfferPlans(): Promise<OfferPlan[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("plans")
-    .select("id, price, currency, flutterwave_plan_id, affiliate_rate_of, base:plans!affiliate_rate_of(name, billing_interval, price)")
-    .not("affiliate_rate_of", "is", null);
-  return (data ?? []).map((p: any) => {
-    const base = Array.isArray(p.base) ? p.base[0] : p.base;
-    return {
-      id: p.id,
-      baseId: p.affiliate_rate_of,
-      baseName: base?.name ?? "",
-      baseInterval: base?.billing_interval ?? null,
-      basePrice: base?.price === null || base?.price === undefined ? null : Number(base.price),
-      price: p.price === null || p.price === undefined ? null : Number(p.price),
+    .select("id, name, price, currency, billing_interval, flutterwave_plan_id")
+    .eq("is_active", true)
+    .not("flutterwave_plan_id", "is", null)
+    .gt("price", 0);
+  return (data ?? [])
+    .filter((p: any) => isOfferEligiblePlan(p))
+    .map((p: any) => ({
+      planId: p.id,
+      name: p.name,
+      interval: p.billing_interval ?? null,
+      price: Number(p.price),
+      offerPrice: discountedPrice(p),
       currency: p.currency ?? null,
-      purchasable: Boolean(p.flutterwave_plan_id) && p.price !== null && p.price !== undefined,
-    };
-  });
+    }));
 }
 
-// The banner's "Lock in my rate" button: the monthly Pro variant.
-export async function getAffiliateProPlan() {
-  const plans = await getAffiliateRatePlans();
-  return (
-    plans.find((p) => p.purchasable && /^pro/i.test(p.baseName) && p.baseInterval === "month") ?? null
-  );
-}
-
-// Starts the 7-day affiliate rate window -- called once, right after a
+// Starts the 7-day first-payment offer window -- called once, right after a
 // user's first successful voice preview (the agreed trigger: after they've
 // actually heard real value, not on first page load). A no-op if this
 // user's window was already set, ever -- expires_at is written exactly

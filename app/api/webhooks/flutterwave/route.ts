@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { discountedPrice, isOfferEligiblePlan } from "@/lib/discount-pricing";
 
 /**
  * POST /api/webhooks/flutterwave
@@ -78,20 +79,28 @@ export async function POST(request: Request) {
 
   // Confirm the amount actually matches the plan being activated, so a
   // tampered or mismatched checkout can't grant a higher plan than paid for.
+  // The first payment may be the discounted offer amount (checkout sets
+  // meta.offer_applied); the amount is recomputed here, never trusted.
   const { data: plan } = await supabaseAdmin
     .from("plans")
-    .select("price, currency, name, affiliate_rate_of")
+    .select("price, currency, name, billing_interval")
     .eq("id", planId)
     .single();
 
-  if (
-    !plan ||
-    Number(verifyData.amount) < Number(plan.price) ||
-    verifyData.currency !== plan.currency
-  ) {
+  const paid = Number(verifyData.amount);
+  const listPrice = plan ? Number(plan.price) : NaN;
+  const paidFull = paid >= listPrice;
+  const paidOffer =
+    !!plan &&
+    String(verifyData.meta?.offer_applied) === "true" &&
+    isOfferEligiblePlan(plan) &&
+    paid >= discountedPrice(plan) - 0.01;
+
+  if (!plan || verifyData.currency !== plan.currency || (!paidFull && !paidOffer)) {
     console.error("Webhook amount/currency mismatch for plan", { verifyData, plan });
     return new Response("OK", { status: 200 });
   }
+  const usedOffer = !paidFull && paidOffer;
 
   const updatePayload: Record<string, unknown> = {
     plan_id: planId,
@@ -102,10 +111,6 @@ export async function POST(request: Request) {
     credits_locked_reason: null,
   };
 
-  if (plan.affiliate_rate_of) {
-    updatePayload.discount_offer_claimed_at = new Date().toISOString();
-  }
-
   const { error: updateError } = await supabaseAdmin
     .from("users")
     .update(updatePayload)
@@ -113,6 +118,31 @@ export async function POST(request: Request) {
 
   if (updateError) {
     console.error("Failed to update user plan from webhook:", updateError);
+  }
+
+  // The offer is single-use: record the claim once (a retried webhook won't overwrite it).
+  if (usedOffer) {
+    const { data: claimed } = await supabaseAdmin
+      .from("users")
+      .update({ discount_offer_claimed_at: new Date().toISOString() })
+      .eq("id", userId)
+      .is("discount_offer_claimed_at", null)
+      .select("id");
+    if (claimed && claimed.length > 0) {
+      await supabaseAdmin.from("audit_logs").insert({
+        user_id: userId,
+        action: "first_payment_offer_claimed",
+        entity_type: "plan",
+        entity_id: planId,
+        metadata: {
+          plan: plan.name,
+          list_price: listPrice,
+          paid,
+          currency: plan.currency,
+          transaction_id: transactionId,
+        },
+      });
+    }
   }
 
   // Partner attribution: the first successful payment turns a referred lead into "paid".
