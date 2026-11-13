@@ -4,15 +4,17 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { X, Zap } from "lucide-react";
-import { getDiscountOfferStatus, getAffiliateProPlan } from "@/lib/actions/discount-actions";
+import { getDiscountOfferStatus, getAffiliateProPlan, type AffiliateRatePlan } from "@/lib/actions/discount-actions";
 
 function formatCountdown(ms: number) {
   if (ms <= 0) return "00:00:00";
   const totalSeconds = Math.floor(ms / 1000);
-  const h = Math.floor(totalSeconds / 3600);
+  const d = Math.floor(totalSeconds / 86400);
+  const h = Math.floor((totalSeconds % 86400) / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
-  return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
+  const clock = [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
+  return d > 0 ? `${d}d ${clock}` : clock;
 }
 
 export function DiscountOfferBanner() {
@@ -21,15 +23,30 @@ export function DiscountOfferBanner() {
   const [showModal, setShowModal] = useState(false);
   const [dismissedModal, setDismissedModal] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [rate, setRate] = useState<AffiliateRatePlan | null>(null);
+  const [referrerName, setReferrerName] = useState<string | null>(null);
 
   useEffect(() => {
-    getDiscountOfferStatus().then((status) => {
-      if (status.active && status.expiresAt) {
+    Promise.all([getDiscountOfferStatus(), getAffiliateProPlan()]).then(([status, plan]) => {
+      // Only show the offer when there is a purchasable discounted plan behind it.
+      if (status.active && status.expiresAt && plan) {
+        setRate(plan);
+        setReferrerName(status.referrerName ?? null);
         setExpiresAt(status.expiresAt);
         setShowModal(true); // first load with an active offer this session
       }
     });
   }, []);
+
+  const money = (value: number | null) =>
+    value === null
+      ? ""
+      : new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: rate?.currency || "USD",
+          maximumFractionDigits: 0,
+        }).format(value);
+  const savings = rate && rate.price !== null && rate.basePrice !== null ? rate.basePrice - rate.price : null;
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -107,16 +124,18 @@ export function DiscountOfferBanner() {
               </div>
 
               <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
-                Your Pro rate is ready
+                {referrerName ? `Your ${referrerName} sign-up discount` : "Your Pro rate is ready"}
               </h2>
               <p className="text-[14px] text-slate-500 dark:text-[#888] leading-relaxed mb-5">
-                For a limited time, get Pro at a reduced rate. After the next 48 hours, this offer is gone for good.
+                {referrerName
+                  ? `Because you signed up through ${referrerName}, you can get Pro at a reduced rate for a limited time. When the timer ends, this offer is gone for good.`
+                  : "For a limited time, get Pro at a reduced rate. When the timer ends, this offer is gone for good."}
               </p>
 
               <div className="flex items-end gap-3 mb-6">
-                <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">$397</span>
-                <span className="text-lg text-slate-400 dark:text-[#666] line-through mb-1">$697</span>
-                <span className="text-[13px] text-emerald-600 dark:text-emerald-400 font-semibold mb-1.5">Save $300/mo</span>
+                <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{money(rate?.price ?? null)}</span>
+                <span className="text-lg text-slate-400 dark:text-[#666] line-through mb-1">{money(rate?.basePrice ?? null)}</span>
+                <span className="text-[13px] text-emerald-600 dark:text-emerald-400 font-semibold mb-1.5">{savings && savings > 0 ? `Save ${money(savings)}/mo` : ""}</span>
               </div>
 
               <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-lg px-4 py-3 mb-6">

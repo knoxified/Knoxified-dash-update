@@ -3,13 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { ORGANIC_DISCOUNT_ENABLED } from "@/lib/constants/discount";
 
-const OFFER_WINDOW_HOURS = 48;
+const OFFER_WINDOW_HOURS = 168; // 7 days
 
 export interface AffiliateRatePlan {
   id: string; // the hidden affiliate-rate plan row
   baseId: string; // the public plan it discounts
   baseName: string;
   baseInterval: string | null;
+  basePrice: number | null;
   price: number | null;
   currency: string | null;
   purchasable: boolean; // has a Flutterwave payment plan and a price
@@ -21,7 +22,7 @@ export async function getAffiliateRatePlans(): Promise<AffiliateRatePlan[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("plans")
-    .select("id, price, currency, flutterwave_plan_id, affiliate_rate_of, base:plans!affiliate_rate_of(name, billing_interval)")
+    .select("id, price, currency, flutterwave_plan_id, affiliate_rate_of, base:plans!affiliate_rate_of(name, billing_interval, price)")
     .not("affiliate_rate_of", "is", null);
   return (data ?? []).map((p: any) => {
     const base = Array.isArray(p.base) ? p.base[0] : p.base;
@@ -30,6 +31,7 @@ export async function getAffiliateRatePlans(): Promise<AffiliateRatePlan[]> {
       baseId: p.affiliate_rate_of,
       baseName: base?.name ?? "",
       baseInterval: base?.billing_interval ?? null,
+      basePrice: base?.price === null || base?.price === undefined ? null : Number(base.price),
       price: p.price === null || p.price === undefined ? null : Number(p.price),
       currency: p.currency ?? null,
       purchasable: Boolean(p.flutterwave_plan_id) && p.price !== null && p.price !== undefined,
@@ -45,7 +47,7 @@ export async function getAffiliateProPlan() {
   );
 }
 
-// Starts the 48-hour Founding Rate window -- called once, right after a
+// Starts the 7-day affiliate rate window -- called once, right after a
 // user's first successful voice preview (the agreed trigger: after they've
 // actually heard real value, not on first page load). A no-op if this
 // user's window was already set, ever -- expires_at is written exactly
@@ -87,6 +89,7 @@ export interface DiscountOfferStatus {
   expiresAt: string | null;
   claimed: boolean;
   forfeited: boolean;
+  referrerName?: string | null; // the partner who referred this account, if any
 }
 
 export async function getDiscountOfferStatus(): Promise<DiscountOfferStatus> {
@@ -115,10 +118,18 @@ export async function getDiscountOfferStatus(): Promise<DiscountOfferStatus> {
     await supabase.from("users").update({ discount_offer_forfeited: true }).eq("id", user.id);
   }
 
+  const active = !expired && !claimed;
+  let referrerName: string | null = null;
+  if (active) {
+    const { data: name } = await supabase.rpc("get_my_referrer_name");
+    referrerName = typeof name === "string" && name.trim() ? name.trim() : null;
+  }
+
   return {
-    active: !expired && !claimed,
+    active,
     expiresAt,
     claimed,
     forfeited: expired && !claimed,
+    referrerName,
   };
 }
