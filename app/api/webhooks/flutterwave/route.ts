@@ -16,6 +16,30 @@ import { discountedPrice, isOfferEligiblePlan } from "@/lib/discount-pricing";
  * duplicate webhook delivery has no side effect, so no separate dedupe
  * table is needed for this use case.
  */
+
+// Commission is calculated on the net amount: what the customer paid minus Flutterwave's fees
+// (both in the transaction currency, so no currency conversion is involved).
+function netAmount(v: any): number {
+  const gross = Number(v.amount);
+  const fees = Number(v.app_fee ?? 0) + Number(v.merchant_fee ?? 0);
+  return Math.max(0, Math.round((gross - fees) * 100) / 100);
+}
+
+// Writes one row to the partner commission ledger for a referred customer's payment.
+// record_partner_commission ignores customers who weren't referred and is idempotent
+// per transaction id, so retried webhooks never double count.
+async function recordCommission(userId: string, v: any, transactionId: string | number) {
+  const { error } = await supabaseAdmin.rpc("record_partner_commission", {
+    p_user_id: userId,
+    p_tx_id: String(transactionId),
+    p_paid_at: v.created_at ? new Date(v.created_at).toISOString() : new Date().toISOString(),
+    p_gross: Number(v.amount),
+    p_net: netAmount(v),
+    p_currency: v.currency,
+  });
+  if (error) console.error("Failed to record partner commission:", error);
+}
+
 export async function POST(request: Request) {
   const secretHash = process.env.FLW_SECRET_HASH;
   const signature = request.headers.get("verif-hash");
@@ -73,6 +97,20 @@ export async function POST(request: Request) {
   const planId = verifyData.meta?.plan_id;
 
   if (!userId || !planId) {
+    // Renewal charges carry no checkout metadata. They don't change the plan, but they can
+    // still earn the referring partner a commission, so find the customer by email.
+    const email = String(verifyData.customer?.email ?? "").trim().toLowerCase();
+    if (email) {
+      const { data: renewingUser } = await supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+      if (renewingUser?.id) {
+        await recordCommission(renewingUser.id, verifyData, transactionId);
+        return new Response("OK", { status: 200 });
+      }
+    }
     console.error("Webhook verified but missing meta.user_id/meta.plan_id", verifyData);
     return new Response("OK", { status: 200 });
   }
@@ -154,6 +192,9 @@ export async function POST(request: Request) {
   if (leadError) {
     console.error("Failed to mark partner lead as paid:", leadError);
   }
+
+  // Commission ledger entry for this payment (no-op for customers who weren't referred).
+  await recordCommission(userId, verifyData, transactionId);
 
   return new Response("OK", { status: 200 });
 }
