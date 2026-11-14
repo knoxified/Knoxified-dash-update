@@ -1,13 +1,13 @@
--- Affiliate commission is 20% in year one and 10% in year two (corrected from 30/20). Safe to re-run.
-alter table public.partners alter column commission_rate set default 20;
-alter table public.partners alter column commission_rate_year2 set default 10;
+-- add_partner now accepts both commission rates (defaults 30% year one, 20% year two). Safe to re-run.
+alter table public.partners alter column commission_rate set default 30;
+alter table public.partners alter column commission_rate_year2 set default 20;
 
 drop function if exists public.add_partner(text, text, text, text, numeric);
 create or replace function public.add_partner(
   p_name text, p_company text, p_email text,
   p_ref_code text default null,
-  p_commission_rate numeric default 20,
-  p_commission_rate_year2 numeric default 10)
+  p_commission_rate numeric default 30,
+  p_commission_rate_year2 numeric default 20)
 returns table (out_partner_id uuid, out_ref_code text, out_link text)
 language plpgsql set search_path = public as $$
 declare v_base text; v_code text; v_n int := 1;
