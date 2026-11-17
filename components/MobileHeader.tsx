@@ -12,7 +12,7 @@ const navLinks = [
   { href: "/metrics", label: "Analytics", icon: BarChart3 },
   { href: "/systems", label: "Systems", icon: Server },
   { href: "/automations", label: "Automations", icon: Zap },
-  { href: "/leads", label: "Operations", icon: Users },
+  { href: "/campaigns", label: "Campaigns", icon: Users },
   { href: "/billing", label: "Billing & Integrations", icon: CreditCard },
 ];
 

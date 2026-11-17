@@ -86,9 +86,9 @@ export function Sidebar() {
         </div>
 
         <div>
-          <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Operations</p>
+          <p className="px-2.5 text-[10px] font-bold text-slate-400/60 dark:text-white/20 mb-1.5 uppercase tracking-[0.1em]">Outreach</p>
           <div className="flex flex-col gap-0.5">
-            <NavItem href="/leads" icon={<Users size={14} />} label="Operations" pathname={pathname} tourId="operations" matchPrefixes={["/leads","/campaigns","/emails","/conversations","/questions"]} />
+            <NavItem href="/campaigns" icon={<Users size={14} />} label="Campaigns" pathname={pathname} tourId="operations" matchPrefixes={["/leads","/campaigns","/emails","/conversations","/questions"]} />
           </div>
         </div>
 

@@ -21,7 +21,7 @@ const STEPS: Step[] = [
   { tourId: "systems", href: "/systems", title: "Systems", body: "Activate the industry systems that match your business. Each one teaches your voice agent that industry's language and priorities." },
   { tourId: "agent-config", href: "/agent-config", title: "Agent Config", body: "Set your agent's voice, greeting, and business memory -- what it knows about your business." },
   { tourId: "automations", href: "/automations", title: "Automations", body: "Workflows that run alongside your voice agent -- follow-ups and reminders, without you lifting a finger." },
-  { tourId: "operations", href: "/leads", title: "Operations", body: "Leads, campaigns, emails, your call inbox and questions your agent couldn't answer -- all side by side in one place." },
+  { tourId: "operations", href: "/campaigns", title: "Campaigns", body: "Leads, campaigns, emails, your call inbox and questions your agent couldn't answer -- all side by side in one place." },
   { tourId: "billing", href: "/billing", title: "Billing & Integrations", body: "Manage your plan and usage, and connect your calendar and other apps." },
   { tourId: "settings", href: "/settings", title: "Settings", body: "Account, theme, and accent color live here. That's the full tour -- you're set." },
 ];
