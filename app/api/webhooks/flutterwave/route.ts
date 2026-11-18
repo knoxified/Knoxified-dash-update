@@ -17,12 +17,11 @@ import { discountedPrice, isOfferEligiblePlan } from "@/lib/discount-pricing";
  * table is needed for this use case.
  */
 
-// Commission is calculated on the net amount: what the customer paid minus Flutterwave's fees
-// (both in the transaction currency, so no currency conversion is involved).
+// Commission is calculated on what the customer paid, before Flutterwave's fees (Knoxified
+// bears the fees). The value is stored in partner_commissions.net_amount, which the partner
+// portal labels as the commission base.
 function netAmount(v: any): number {
-  const gross = Number(v.amount);
-  const fees = Number(v.app_fee ?? 0) + Number(v.merchant_fee ?? 0);
-  return Math.max(0, Math.round((gross - fees) * 100) / 100);
+  return Math.max(0, Math.round(Number(v.amount) * 100) / 100);
 }
 
 // Writes one row to the partner commission ledger for a referred customer's payment.
