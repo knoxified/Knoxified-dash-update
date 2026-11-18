@@ -49,5 +49,5 @@ export async function runAutomation(automationId: string, actionKey: string | nu
     }
   }
 
-  return { success: false, error: "Coming soon! This automation doesn't have a live webhook yet." };
+  return { success: false, error: "This automation's connection isn't finished yet. Please try again shortly." };
 }

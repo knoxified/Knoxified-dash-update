@@ -51,10 +51,11 @@ export default function AutomationsPage() {
         
         let userAutomationsMap = new Map();
         let catalogByKey = new Map();
+        let catalogByName = new Map();
         if (user) {
           const [userAutosRes, catalogRes, userPlanRes] = await Promise.all([
             supabase.from('user_automations').select('*').eq('user_id', user.id),
-            supabase.from('automation_catalog').select('id, key, slot_required, trial_eligible, is_active').eq('is_active', true),
+            supabase.from('automation_catalog').select('id, key, name, slot_required, trial_eligible, is_active').eq('is_active', true),
             supabase.from('users').select('plans(name, limit_active_automations)').eq('id', user.id).single(),
           ]);
 
@@ -68,6 +69,9 @@ export default function AutomationsPage() {
             console.error("Could not fetch automation_catalog -- every automation will show as 'Coming soon' until this is fixed", catalogRes.error);
           } else if (catalogRes.data) {
             catalogRes.data.forEach((c: any) => catalogByKey.set(c.key, c));
+            // Fallback match by name (e.g. "ProofPulse" -> id "proofpulse") so Pro-system
+            // automations resolve without a hardcoded key for every one.
+            catalogRes.data.forEach((c: any) => { if (c.name) catalogByName.set(String(c.name).toLowerCase().replace(/[^a-z0-9]/g, ''), c); });
           }
 
           const plan = (userPlanRes.data as any)?.plans;
@@ -83,7 +87,7 @@ export default function AutomationsPage() {
         // toggle handler treats as "Coming soon".
         const merged = AUTOMATIONS.map(aut => {
           const catalogKey = AUTOMATION_CATALOG_KEYS[aut.id];
-          const catalog = catalogKey ? catalogByKey.get(catalogKey) : null;
+          const catalog = (catalogKey ? catalogByKey.get(catalogKey) : null) || catalogByName.get(aut.id) || null;
           const ua = catalog ? userAutomationsMap.get(catalog.id) : null;
           return {
             ...aut,
@@ -161,7 +165,7 @@ export default function AutomationsPage() {
 
       const usedSlots = automations
         .filter(a => a.enabled && a.id !== aut.id)
-        .reduce((sum, a) => sum + (a.slotRequired || 1), 0);
+        .reduce((sum, a) => sum + (a.slotRequired ?? 1), 0);
 
       if (usedSlots + aut.slotRequired > planLimit) {
         toast.error(
@@ -180,7 +184,7 @@ export default function AutomationsPage() {
         const recentlyDisabled = automations.filter(
           a => a.id !== aut.id && !a.enabled && a.disabledAt && (nowMs - new Date(a.disabledAt).getTime()) < DAY_MS
         );
-        const recentlyFreedSlots = recentlyDisabled.reduce((sum, a) => sum + (a.slotRequired || 1), 0);
+        const recentlyFreedSlots = recentlyDisabled.reduce((sum, a) => sum + (a.slotRequired ?? 1), 0);
         const neededTheFreedSlot = (usedSlots + recentlyFreedSlots + aut.slotRequired) > planLimit;
 
         lockedUntilToSet = (recentlyDisabled.length > 0 && neededTheFreedSlot)
