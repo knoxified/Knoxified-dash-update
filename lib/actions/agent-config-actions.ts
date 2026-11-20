@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logAuditEvent } from "@/lib/actions/compliance-actions";
 
 export async function getAgentConfig() {
   const supabase = await createClient();
@@ -37,6 +38,7 @@ export async function getAgentConfig() {
         agent_nickname: row.agent_nickname,
         agent_avatar: row.agent_avatar,
         call_recording_enabled: row.call_recording_enabled,
+        ai_disclosure_enabled: row.ai_disclosure_enabled,
         website_url: row.website_url,
         website_summary: row.website_summary,
         website_scanned_at: row.website_scanned_at,
@@ -220,5 +222,30 @@ export async function toggleCallRecording(enable: boolean, consentAcknowledged: 
 
   revalidatePath("/agent-config");
   revalidatePath("/conversations");
+  return { success: true };
+}
+
+// Tells callers, in the opening line, that they are speaking with an AI agent. Off by default and
+// never forced -- the owner decides -- but the dashboard warns it should normally be on, and every
+// change is written to the audit log so there is a record of who chose what and when.
+export async function toggleAiDisclosure(enable: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("agent_configs")
+    .update({ ai_disclosure_enabled: enable })
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+
+  try {
+    await logAuditEvent("AI Disclosure Toggled", `Changed 'AI disclosure in greeting' to ${enable ? "On" : "Off"}.`);
+  } catch {
+    // The audit write must never undo a successful setting change.
+  }
+
+  revalidatePath("/agent-config");
   return { success: true };
 }

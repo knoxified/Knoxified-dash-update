@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { getAgentConfig, updateAgentConfig, toggleCallRecording } from "@/lib/actions/agent-config-actions";
+import { getAgentConfig, updateAgentConfig, toggleCallRecording, toggleAiDisclosure } from "@/lib/actions/agent-config-actions";
 import { Select } from "@/components/ui/Select";
 import { getWebcallPreviewSystem, setWebcallPreviewSystem, setPreferredVoice } from "@/lib/actions/agent-identity-actions";
 import { useSystems } from "@/lib/services/hooks";
@@ -96,6 +96,8 @@ export default function AgentConfigPage() {
   const [showRecordingConsentModal, setShowRecordingConsentModal] = useState(false);
   const [acceptedTermsCheckbox, setAcceptedTermsCheckbox] = useState(false);
   const [isTogglingRecording, startRecordingTransition] = useTransition();
+  const [aiDisclosureEnabled, setAiDisclosureEnabled] = useState(false);
+  const [isTogglingAi, startAiTransition] = useTransition();
 
   useEffect(() => {
     async function loadData() {
@@ -117,6 +119,7 @@ export default function AgentConfigPage() {
           agent_avatar: agentConfig?.agent_avatar || AVATAR_OPTIONS[0].key,
         });
         setRecordingEnabled(Boolean(agentConfig?.call_recording_enabled));
+        setAiDisclosureEnabled(Boolean(agentConfig?.ai_disclosure_enabled));
         setWebsiteSummary(agentConfig?.website_summary || "");
         setFaqs(Array.isArray(agentConfig?.faqs) ? agentConfig.faqs : []);
         setScannedAt(agentConfig?.website_scanned_at || null);
@@ -291,6 +294,19 @@ export default function AgentConfigPage() {
     } else {
       setShowRecordingConsentModal(true);
     }
+  };
+
+  const handleAiDisclosureToggle = () => {
+    const next = !aiDisclosureEnabled;
+    startAiTransition(async () => {
+      const result = await toggleAiDisclosure(next);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      setAiDisclosureEnabled(next);
+      toast.success(next ? "AI disclosure turned on. Callers will hear it in the opening line." : "AI disclosure turned off.");
+    });
   };
 
   const handleConfirmRecordingConsent = () => {
@@ -552,6 +568,36 @@ export default function AgentConfigPage() {
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${recordingEnabled ? "translate-x-6" : "translate-x-1"}`} />
               </button>
+            </div>
+          </div>
+
+          <div className="h-px bg-slate-200 dark:bg-white/5 w-full"></div>
+
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck size={16} className="text-sky-500" /> AI Disclosure
+            </h2>
+            <div className="bg-slate-50 dark:bg-[#020617] rounded-lg p-4 border border-slate-200 dark:border-white/10 space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">Tell callers they are speaking with an AI</p>
+                  <p className="text-xs text-slate-500 dark:text-[#888] max-w-md">
+                    Off by default. When on, the opening line includes it, for example &quot;Hello, this is Alex from your business, an AI agent.&quot;
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAiDisclosureToggle}
+                  disabled={isTogglingAi}
+                  aria-pressed={aiDisclosureEnabled}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 disabled:opacity-50 ${aiDisclosureEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/10"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${aiDisclosureEnabled ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+              <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                Important: laws in a growing number of places require you to tell people they are speaking with an AI, and this should normally be on. We don&apos;t force it, so if you turn it off you are responsible for meeting the rules that apply to your business and callers.
+              </p>
             </div>
           </div>
           </div>
