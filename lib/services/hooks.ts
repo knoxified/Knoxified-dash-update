@@ -1,4 +1,5 @@
 "use client";
+import { getBillingWindow } from '@/lib/billing-period';
 import { createClient } from "@/lib/supabase/client";
 
 import { useEffect, useState } from "react";
@@ -68,7 +69,7 @@ export function useDashboardMetrics(dateRange: string = "7d") {
         // Use public.users to get plan_id and join with public.plans
         const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('plan_id, plans(limit_voice_minutes, limit_credits)')
+          .select('plan_id, billing_period_start, billing_period_end, plans(limit_voice_minutes, limit_credits)')
           .eq('id', user.id)
           .single();
 
@@ -96,7 +97,11 @@ export function useDashboardMetrics(dateRange: string = "7d") {
         const { data: voiceUsage } = await supabase
           .from('voice_usage')
           .select('minutes_used, seconds_used')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .gte('created_at', getBillingWindow({
+            periodStart: (userData as any)?.billing_period_start,
+            periodEnd: (userData as any)?.billing_period_end,
+          }).usageStart.toISOString());
         // Stored as exact seconds; show whole minutes only (rows from before the switch fall back to minutes * 60).
   const totalVoice = Math.floor((voiceUsage?.reduce((acc: number, row: any) => acc + (row.seconds_used > 0 ? row.seconds_used : (row.minutes_used || 0) * 60), 0) || 0) / 60);
 

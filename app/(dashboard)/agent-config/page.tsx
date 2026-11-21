@@ -65,6 +65,9 @@ export default function AgentConfigPage() {
   const voicePct = voiceHasLimit ? Math.min(Math.round((voiceUsed / (voiceLimit as number)) * 100), 100) : 0;
   const voiceRemaining = voiceHasLimit ? Math.max((voiceLimit as number) - voiceUsed, 0) : null;
   const billingInterval: string | undefined = usageWs?.plan?.billing_interval;
+  const fmtDate = (iso?: string | null) => iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
+  const renewsOn = fmtDate(usageWs?.workspace?.usage?.renewsAt);
+  const resetsOn = fmtDate(usageWs?.workspace?.usage?.resetsAt);
   
   const [form, setForm] = useState({
     agent_persona: "",
@@ -379,6 +382,8 @@ export default function AgentConfigPage() {
               {billingInterval && (
                 <p className="font-semibold mb-1">Billing Cycle: {billingInterval.charAt(0).toUpperCase() + billingInterval.slice(1)}</p>
               )}
+              {renewsOn && <p className="text-slate-300 dark:text-slate-600 mb-1">Renews on {renewsOn}</p>}
+              {resetsOn && <p className="text-slate-300 dark:text-slate-600 mb-2">Minutes reset on {resetsOn}</p>}
               {voiceHasLimit ? (
                 <>
                   <div className="flex justify-between border-t border-white/20 dark:border-slate-900/10 pt-2">

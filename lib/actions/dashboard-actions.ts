@@ -1,5 +1,6 @@
 "use server";
 
+import { getBillingWindow } from '@/lib/billing-period';
 import { createClient } from "../supabase/server";
 
 export async function getRealSystems() {
@@ -295,15 +296,19 @@ export async function getRealWorkspace() {
   }
 
   // Fetch real usage
-  const { data: voiceUsage } = await supabase.from('voice_usage').select('minutes_used, seconds_used').eq('user_id', authUser.id);
+  // Count usage from the start of this customer's current monthly window (matches the voice agent).
+  const win = getBillingWindow({ periodStart: user.billing_period_start, periodEnd: user.billing_period_end });
+  const { data: voiceUsage } = await supabase.from('voice_usage').select('minutes_used, seconds_used').eq('user_id', authUser.id).gte('created_at', win.usageStart.toISOString());
   // Stored as exact seconds; show whole minutes only (rows from before the switch fall back to minutes * 60).
   const totalVoice = Math.floor((voiceUsage?.reduce((acc: number, row: any) => acc + (row.seconds_used > 0 ? row.seconds_used : (row.minutes_used || 0) * 60), 0) || 0) / 60);
 
   const { data: userAutomations } = await supabase.from('user_automations').select('id').eq('user_id', authUser.id).eq('is_enabled', true);
   const activeAutomations = userAutomations?.length || 0;
 
-  const { data: usageData } = await supabase.from('usage').select('feature_key, used_quantity').eq('user_id', authUser.id);
-  const totalEmails = usageData?.filter((r: any) => r.feature_key === 'emails').reduce((acc: number, row: any) => acc + (row.used_quantity || 0), 0) || 0;
+  // Email sending is limited per calendar month in the database, so count it the same way.
+  const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();
+  const { data: usageData } = await supabase.from('usage').select('feature_key, used_quantity, created_at').eq('user_id', authUser.id);
+  const totalEmails = usageData?.filter((r: any) => r.feature_key === 'emails' && r.created_at >= monthStart).reduce((acc: number, row: any) => acc + (row.used_quantity || 0), 0) || 0;
   const totalCredits = usageData?.filter((r: any) => r.feature_key === 'credits').reduce((acc: number, row: any) => acc + (row.used_quantity || 0), 0) || 0;
 
   // Partner bonus minutes/credits are added on top of the plan limits.
@@ -329,7 +334,9 @@ export async function getRealWorkspace() {
         activeAutomations,
         voiceMinutes: totalVoice,
         emailSent: totalEmails,
-        credits: totalCredits
+        credits: totalCredits,
+        resetsAt: win.usageEnd.toISOString(),
+        renewsAt: win.renewsAt ? win.renewsAt.toISOString() : null
       }
     },
     plan

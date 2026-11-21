@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { discountedPrice, isOfferEligiblePlan } from "@/lib/discount-pricing";
+import { billingPeriodFor } from "@/lib/billing-period";
 
 /**
  * POST /api/webhooks/flutterwave
@@ -102,10 +103,26 @@ export async function POST(request: Request) {
     if (email) {
       const { data: renewingUser } = await supabaseAdmin
         .from("users")
-        .select("id")
+        .select("id, billing_period_start, plans(billing_interval)")
         .eq("email", email)
         .maybeSingle();
       if (renewingUser?.id) {
+        // Start the new billing period from this charge. Only ever moves forward, so a
+        // retried or out-of-order delivery of an older charge can't set it back.
+        const renewalPlan: any = Array.isArray(renewingUser.plans) ? renewingUser.plans[0] : renewingUser.plans;
+        const paidAt = verifyData.created_at ? new Date(verifyData.created_at) : new Date();
+        const period = billingPeriodFor(paidAt, renewalPlan?.billing_interval);
+        const lastStart = renewingUser.billing_period_start ? new Date(renewingUser.billing_period_start) : null;
+        if (!lastStart || period.start.getTime() > lastStart.getTime()) {
+          const { error: periodError } = await supabaseAdmin
+            .from("users")
+            .update({
+              billing_period_start: period.start.toISOString(),
+              billing_period_end: period.end.toISOString(),
+            })
+            .eq("id", renewingUser.id);
+          if (periodError) console.error("Failed to update billing period on renewal:", periodError);
+        }
         await recordCommission(renewingUser.id, verifyData, transactionId);
         return new Response("OK", { status: 200 });
       }
@@ -147,6 +164,14 @@ export async function POST(request: Request) {
     credits_locked: false,
     credits_locked_reason: null,
   };
+
+  // A new paid plan starts a new billing period from the time of payment.
+  {
+    const paidAt = verifyData.created_at ? new Date(verifyData.created_at) : new Date();
+    const period = billingPeriodFor(paidAt, plan?.billing_interval);
+    updatePayload.billing_period_start = period.start.toISOString();
+    updatePayload.billing_period_end = period.end.toISOString();
+  }
 
   const { error: updateError } = await supabaseAdmin
     .from("users")
