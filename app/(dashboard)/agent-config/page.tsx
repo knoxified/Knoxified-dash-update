@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { getAgentConfig, updateAgentConfig, toggleCallRecording, toggleAiDisclosure } from "@/lib/actions/agent-config-actions";
 import { Select } from "@/components/ui/Select";
 import { getWebcallPreviewSystem, setWebcallPreviewSystem, setPreferredVoice } from "@/lib/actions/agent-identity-actions";
-import { useSystems } from "@/lib/services/hooks";
+import { useSystems, useWorkspace } from "@/lib/services/hooks";
 import { SystemPicker } from "@/components/ui/SystemPicker";
 import Link from "next/link";
 import { scanWebsite, saveWebsiteKnowledge, type Faq } from "@/lib/actions/website-scan-actions";
@@ -55,6 +55,16 @@ export default function AgentConfigPage() {
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"agent" | "business" | "numbers">("agent");
+  // Live plan usage (same source as the sidebar and dashboard): minutes used from
+  // voice_usage, limit from the plan plus any partner bonus minutes.
+  const { data: usageWs } = useWorkspace();
+  const voiceUsed: number = usageWs?.workspace?.usage?.voiceMinutes ?? 0;
+  const voiceLimit: number | undefined = usageWs?.plan?.limit_voice_minutes;
+  const voiceUnlimited = voiceLimit === 0;
+  const voiceHasLimit = typeof voiceLimit === "number" && voiceLimit > 0;
+  const voicePct = voiceHasLimit ? Math.min(Math.round((voiceUsed / (voiceLimit as number)) * 100), 100) : 0;
+  const voiceRemaining = voiceHasLimit ? Math.max((voiceLimit as number) - voiceUsed, 0) : null;
+  const billingInterval: string | undefined = usageWs?.plan?.billing_interval;
   
   const [form, setForm] = useState({
     agent_persona: "",
@@ -341,6 +351,54 @@ export default function AgentConfigPage() {
             Manage your agent, your business details, and your phone numbers.
           </p>
         </div>
+
+        {/* Voice minutes: live from the user's plan and recorded call usage */}
+        {usageWs?.plan && (
+          <div className="flex flex-col items-end relative group">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-[#888] uppercase tracking-wider mb-1 cursor-help">
+              <span>Voice Minutes</span>
+              <Info size={14} className="text-sky-500" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-bold text-slate-900 dark:text-white">{voiceUsed.toLocaleString()}</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-[#888]">
+                {voiceUnlimited ? "used · Unlimited" : voiceHasLimit ? `/ ${(voiceLimit as number).toLocaleString()} used` : "used"}
+              </span>
+            </div>
+            {voiceHasLimit && (
+              <div className="w-32 bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden mt-1">
+                <div
+                  className={`h-full rounded-full ${voicePct > 80 ? "bg-red-500" : "bg-sky-500 dark:bg-[#00E5FF]"}`}
+                  style={{ width: `${voicePct}%` }}
+                ></div>
+              </div>
+            )}
+
+            {/* Tooltip Content */}
+            <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs rounded-lg p-3 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              {billingInterval && (
+                <p className="font-semibold mb-1">Billing Cycle: {billingInterval.charAt(0).toUpperCase() + billingInterval.slice(1)}</p>
+              )}
+              {voiceHasLimit ? (
+                <>
+                  <div className="flex justify-between border-t border-white/20 dark:border-slate-900/10 pt-2">
+                    <span>Current Usage:</span>
+                    <span className="font-bold">{voicePct}%</span>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span>Remaining:</span>
+                    <span className="font-bold text-emerald-400 dark:text-emerald-600">{(voiceRemaining ?? 0).toLocaleString()} mins</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between">
+                  <span>Used:</span>
+                  <span className="font-bold">{voiceUsed.toLocaleString()} mins</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
 
