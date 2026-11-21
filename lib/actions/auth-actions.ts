@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 export async function login(formData: FormData) {
   try {
@@ -60,8 +61,14 @@ export async function resetPassword(formData: FormData) {
 
     const supabase = await createClient();
 
-    // Provide the callback URL using process.env or fallback to localhost
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Send the reset link back to the site the request came from. The old
+    // NEXT_PUBLIC_SITE_URL setting was never defined in production, so every reset
+    // email pointed at localhost, which Supabase rejects and replaces with the
+    // marketing site. An explicit NEXT_PUBLIC_SITE_URL still wins if one is set.
+    const h = await headers();
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    const proto = h.get('x-forwarded-proto') ?? 'https';
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || (host ? `${proto}://${host}` : 'http://localhost:3000');
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/api/auth/confirm?next=/reset-password`,
