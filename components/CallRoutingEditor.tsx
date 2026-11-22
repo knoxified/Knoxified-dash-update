@@ -65,7 +65,7 @@ export function CallRoutingEditor() {
           calls to a person. Rules never override what your system handles, and they&apos;re checked in order.
         </p>
         <p className="text-xs text-slate-400 dark:text-white/30 mt-2">
-          Live transfers currently work on Telnyx phone calls only. On other call types a transfer rule is skipped and the agent answers normally.
+          Live transfers currently work on Telnyx and SignalWire phone calls only. On other call types a transfer rule is skipped and the agent answers normally.
         </p>
       </div>
 
