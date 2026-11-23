@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { SiteTracker } from '@/components/SiteTracker';
 
 const inter = Inter({
   variable: "--font-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} bg-slate-50 dark:bg-[#060d19] text-slate-900 dark:text-[#e2e8f0] font-sans antialiased min-h-screen`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <SiteTracker />
           <Toaster 
             position="bottom-right" 
             richColors 
