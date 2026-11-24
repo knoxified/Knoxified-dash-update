@@ -60,6 +60,7 @@ function sessionContext(): Ctx {
 export function track(event: string, props: Record<string, string | number | boolean | null> = {}) {
   if (typeof window === 'undefined') return;
   try {
+    if (document.cookie.includes('kx_internal=1')) return; // set by the private desk login
     (window as unknown as { dataLayer?: unknown[] }).dataLayer?.push({ event: `kx_${event}`, ...props });
 
     const ctx = sessionContext();
