@@ -57,7 +57,7 @@ function sessionContext(): Ctx {
   return ctx;
 }
 
-export function track(event: string, props: Record<string, string | number | boolean | null> = {}) {
+export function track(event: string, props: Record<string, string | number | boolean | null> = {}, pathOverride?: string) {
   if (typeof window === 'undefined') return;
   try {
     if (document.cookie.includes('kx_internal=1')) return; // set by the private desk login
@@ -67,7 +67,7 @@ export function track(event: string, props: Record<string, string | number | boo
     const body = JSON.stringify({
       event,
       props,
-      path: window.location.pathname,
+      path: pathOverride ?? window.location.pathname,
       host: window.location.hostname,
       visitorId: visitorId(),
       sessionId: ctx.sessionId,
