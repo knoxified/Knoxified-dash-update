@@ -33,6 +33,7 @@ export const AUTOMATION_CATALOG_KEYS: Record<string, string> = {
   mailcraft: "mailcraft_sequence",
   followflow: "email_sequence_send",
   appointmate: "appointment_booking",
+  invoiceai: "invoice_send",
 };
 
 export const AUTOMATIONS: Automation[] = [
