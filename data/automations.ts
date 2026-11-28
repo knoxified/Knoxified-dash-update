@@ -34,6 +34,7 @@ export const AUTOMATION_CATALOG_KEYS: Record<string, string> = {
   followflow: "email_sequence_send",
   appointmate: "appointment_booking",
   invoiceai: "invoice_send",
+  docuflow: "doc_send",
 };
 
 export const AUTOMATIONS: Automation[] = [

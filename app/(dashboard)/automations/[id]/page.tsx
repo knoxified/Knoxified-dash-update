@@ -12,6 +12,7 @@ import AutomationRunner from "@/components/AutomationRunner";
 import AppointMateBoard from "./AppointMateBoard";
 import GenericAutomationBoard from "./GenericAutomationBoard";
 import InvoiceAIBoard from "./InvoiceAIBoard";
+import DocuFlowBoard from "./DocuFlowBoard";
 export default function AutomationDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -69,6 +70,8 @@ export default function AutomationDetailsPage() {
         <AppointMateBoard automation={automation} />
       ) : id === "invoiceai" ? (
         <InvoiceAIBoard />
+      ) : id === "docuflow" ? (
+        <DocuFlowBoard />
       ) : (
         <GenericAutomationBoard automation={automation} />
       )}

@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/forgot-password') &&
     !request.nextUrl.pathname.startsWith('/reset-password') &&
     !request.nextUrl.pathname.startsWith('/invoice/') &&
+    !request.nextUrl.pathname.startsWith('/doc/') &&
     !request.nextUrl.pathname.startsWith('/api') &&
     !request.nextUrl.pathname.startsWith('/auth')
   ) {
